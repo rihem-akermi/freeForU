@@ -2,24 +2,24 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
+    <main className="flex flex-col gap-16 min-h-screen items-center justify-center">
       <Link
         href="/dashboard/admin"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        Aller au Dashboard Admin →
+        🧑‍✈️ Aller au Dashboard Admin →
       </Link>
       <Link
         href="/"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        Aller au Dashboard Client →
+        🙆‍♀️ Aller au Dashboard Client →
       </Link>
       <Link
         href="/"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        Aller au Dashboard Agent →
+        👩‍🏭 Aller au Dashboard Agent →
       </Link>
     </main>
   );
