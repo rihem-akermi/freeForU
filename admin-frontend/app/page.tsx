@@ -9,6 +9,18 @@ export default function Home() {
       >
         Aller au Dashboard Admin →
       </Link>
+      <Link
+        href="/"
+        className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
+      >
+        Aller au Dashboard Client →
+      </Link>
+      <Link
+        href="/"
+        className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
+      >
+        Aller au Dashboard Agent →
+      </Link>
     </main>
   );
 }
