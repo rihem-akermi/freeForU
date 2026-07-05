@@ -39,7 +39,7 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
                   <td className="px-4 py-3">{agent.name}</td>
                   <td className="px-4 py-3 text-stone-500">{agent.category}</td>
                   <td className="px-4 py-3 text-stone-500">{agent.phone}</td>
-                  <td className="px-4 py-3 text-stone-500">{agent.address}</td>
+                  <td className="px-4 py-3 text-stone-500">{agent.ville}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-1 text-xs ${

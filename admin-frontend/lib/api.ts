@@ -1,27 +1,36 @@
-import { Users, Agents, Reservations, User, Agent, Reservation } from "./data";
+import { Agents, Reservations, User, Agent, Reservation } from "./data";
 
 export type { User, Agent, Reservation };
 
 /* USER */
 export async function getUsers(): Promise<User[]> {
-  //normalement m database
-  //normalement requete vers la base
-  //fetch("url du nestjs")
-  return Users; 
+  const response = await fetch("http://localhost:3001/users");
+  const Users = await response.json()
+  console.log(Users)
+  return Users
 }
-export async function addUser(user : User) {
-  // i don't know what i am supposed to do exactly hereand if the params are true
+export async function addUser(user: Omit<User, "id" | "created_at">): Promise<User> {
+  console.log("📤 Envoi addUser :", user);
+  const response = await fetch("http://localhost:3001/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user),
+  });
+  const newUser = await response.json();
+  console.log("📥 User créé reçu :", newUser);
+  return newUser; // 👈 contient l'id généré par PostgreSQL, utile pour l'affichage
 }
 
 export async function updateUser(id: string, data: Partial<User>): Promise<void> {
-  //url + method + body  
   console.log("mise à jour du user", id, data);
 }
 
-export async function deleteUser(id: string): Promise<void> {
-  //fetc("url",{
-  //method : "DELETE"})
-  console.log("suppression du user", id);
+export async function deleteUser(id: number): Promise<void> {
+  console.log("🗑️ Suppression du user :", id);
+  await fetch(`http://localhost:3001/users/${id}`, {
+    method: "DELETE",
+  });
+
 }
 
 /* Agent*/
@@ -63,32 +72,3 @@ export async function updateReservation(id: string, data: Partial<Reservation>):
 }
 
 
-/*
-
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: "CLIENT" | "AGENT" | "ADMIN";
-  createdAt: string;
-};
-
-export type Agent = {
-  id: string;
-  userId: string;
-  name: string;
-  category: string;
-  phone: string;
-  address: string;
-  published: boolean;
-};
-
-export type Reservation = {
-  id: string;
-  clientName: string;
-  agentName: string;
-  date: string;
-  status: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE";
-};
-
-*/
