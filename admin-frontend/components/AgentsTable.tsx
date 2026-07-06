@@ -1,7 +1,6 @@
 'use client'
 
 import { Agent , deleteAgent, updateAgent } from "@/lib/api";
-import { escape } from "querystring";
 import { useState } from "react";
 
 export default function AgentsTable({initialAgents} : {initialAgents : Agent[]}){

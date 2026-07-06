@@ -1,9 +1,9 @@
 export type User = {
-  id: number,
+  id: number ,
   name: string,
   email: string,
   password : string,
-  role: "CLIENT" | "AGENT" | "ADMIN",
+  role: "CLIENT" | "ADMIN",
   ville: string ,
   created_at: string,
 };
@@ -20,16 +20,12 @@ export type Agent = {
 };
 
 export type Reservation = {
-  id: string;
-  clientName: string;
-  agentName: string;
-  date: string;
+  id: string;    
+  client_id :string 
+  client_name: string;
+  agent_id : string ;
+  agent_name: string;
+  date_reservation : string;
   status: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE";
+  created_at : string
 };
-
-
-
-export const Reservations: Reservation[] = [
-  { id: "r1", clientName: "Sarra Ben Ali", agentName: "Karim Plombier", date: "2026-07-10", status: "CONFIRMEE" },
-  { id: "r2", clientName: "Sarra Ben Ali", agentName: "Yassine Technicien", date: "2026-07-15", status: "EN_ATTENTE" },
-];

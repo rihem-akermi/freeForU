@@ -1,5 +1,4 @@
-import { url } from "inspector";
-import { Reservations, User, Agent, Reservation } from "./data";
+import { User, Agent, Reservation } from "./data";
 
 export type { User, Agent, Reservation };
 
@@ -59,7 +58,7 @@ export async function deleteUser(id: number): Promise<User> {
 
 export async function getAgents(): Promise<Agent[]> {
   const res = await fetch(backendUrl + "/agents")
-  const Agents = res.json()
+  const Agents = await res.json()
   return Agents
 }
 
@@ -109,20 +108,37 @@ export async function deleteAgent(id: string): Promise<Agent> {
 /*Reservation*/
 
 export async function getReservations(): Promise<Reservation[]> {
-  return Reservations;
-}
-
-export async function addReservation(reservation : Reservation) {
-  // i don't know what i am supposed to do exactly hereand if the params are true
-}
-
-export async function deleteReservation(id: string): Promise<void> {
-  console.log("suppression de l'Reservation", id);
-}
-
-export async function updateReservation(id: string, data: Partial<Reservation>): Promise<void> {
-  //backendUrl + method + body  
-  console.log("mise à jour du user", id, data);
+  const res = await fetch(`${backendUrl}/reservations`)
+  const reservations = await res.json()
+  return reservations 
 }
 
 
+export async function addReservation(reservation: { clientId: number; agentId: number; dateReservation: string }): Promise<Reservation> {
+  const response = await fetch(backendUrl + "/reservations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(reservation),
+  });
+  const newReservation = await response.json();
+  return newReservation;
+}
+
+export async function deleteReservation(id: string): Promise<Reservation> {
+  const res = await fetch(`${backendUrl}/reservations/${id}`, {
+    method: "DELETE",
+  });
+  const deletedReservation = await res.json()
+  return deletedReservation
+
+}
+
+export async function updateReservation(id: string, status: string): Promise<Reservation> {
+  const response = await fetch(`${backendUrl}/reservations/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  const updated = await response.json();
+  return updated;
+}
