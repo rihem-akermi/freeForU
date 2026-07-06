@@ -20,7 +20,7 @@ export class AgentsController {
         return newAgent 
     }
 
-    @Patch(':id')
+    @Patch(":id")
     async updateAgent(
         @Body() body:{published:boolean},
         @Param('id') id : string 

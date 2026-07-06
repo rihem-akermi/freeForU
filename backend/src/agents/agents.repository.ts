@@ -22,10 +22,14 @@ export class AgentsRepository {
     }
 
     async updateAgent(published : boolean , id : number ){
-        await this.databaseService.query(`update agents 
+        const result = await this.databaseService.query(`update agents 
                                     set published = $1 
-                                    where id = $2`,
-                                [published , id]) }
+                                    where id = $2 
+                                    RETURNING *`,
+                                [published , id])
+        const updatedAgent = result.rows[0]
+        return updatedAgent
+                            }
 
     async deleteAgent(id:number){
         const result = await this.databaseService.query(`delete from agents where id = $1 returning *`,[id])
