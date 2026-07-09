@@ -1,6 +1,6 @@
 import { getUsers, getAgents, getReservations } from "@/lib/api";
 
-export default async function AdminOverviewPage() {
+export default async function DashBoard() {
   const users = await getUsers();
   const agents = await getAgents();
   const reservations = await getReservations();

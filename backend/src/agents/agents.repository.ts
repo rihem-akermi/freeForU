@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { Query, QueryResult } from "pg";
+import { QueryResult } from "pg";
 import { DatabaseService } from "src/database/database.service";
+import { UpdatedAgentDto } from "./dto/update-agent.dto";
+import { CreateAgentDto } from "./dto/create-agent.dto";
 
 @Injectable()
 export class AgentsRepository {
@@ -12,21 +14,44 @@ export class AgentsRepository {
         return allAgents
     }
 
-    async addAgent(name : string , category:string , phone:string , password:string , ville:string , published:boolean){
-        const result = await this.databaseService.query(`INSERT INTO agents (name, category, phone, password, ville ,published) 
-            VALUES ($1, $2, $3, $4, $5,$6) 
+    async addAgent(newAgent:CreateAgentDto){
+        const result = await this.databaseService.query(`INSERT INTO agents (cin, name, category, email, phone, password, ville ,published) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
             RETURNING *`,
-            [name,category,phone,password,ville,published])
+            [newAgent.cin,newAgent.name,newAgent.category,newAgent.email,newAgent.phone,newAgent.password,newAgent.ville,newAgent.published])
+            
         const newRow =  result.rows[0] //the inserted row
         return newRow
     }
 
-    async updateAgent(published : boolean , id : number ){
-        const result = await this.databaseService.query(`update agents 
-                                    set published = $1 
-                                    where id = $2 
-                                    RETURNING *`,
-                                [published , id])
+    async updateAgent(agent : UpdatedAgentDto , id : number ){
+        const fields = Object.keys(agent);
+
+        const values = Object.values(agent);
+
+        if (fields.length === 0) {
+            return null; //nothing to update
+        }
+
+        const setQuery = fields
+            .map((field, index) => `${field} = $${index + 1}`)
+            .join(", ");
+
+            //.join convert it to a string 
+
+        const query = `
+            UPDATE agents
+            SET ${setQuery}
+            WHERE id = $${fields.length + 1}
+            RETURNING *
+        `;
+        
+        const result = await this.databaseService.query(
+            query,
+            [...values, id] 
+        );
+        
+        
         const updatedAgent = result.rows[0]
         return updatedAgent
                             }

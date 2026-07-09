@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { reservationsRepository } from './reservations.repository';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
 
 @Injectable()
 export class ReservationsService {
@@ -9,18 +10,18 @@ export class ReservationsService {
         return await this.reservationsRepository.findAll() 
     }
 
-    async createReservation(clientId: number, agentId: number, dateReservation: string){
-        const newRes = await this.reservationsRepository.create(clientId,agentId,dateReservation)
+    async createReservation(clientCin: string, agentCin: string, dateReservation: string){
+        const newRes = await this.reservationsRepository.create(clientCin, agentCin, dateReservation)
         return newRes
     }
 
-    async updateStatus(id: number, status: string) {
+    async updateReservation(id: number, part: UpdateReservationDto) {
         const VALID_STATUSES = ['EN_ATTENTE', 'CONFIRMEE', 'ANNULEE'];
-        if (!VALID_STATUSES.includes(status)) {
-            throw new BadRequestException(`Status invalide : ${status}`);
-            }
-        const updatedStatus =  await this.reservationsRepository.updateStatus(id, status);
-        return updatedStatus
+        if (part.status && !VALID_STATUSES.includes(part.status)) {
+            throw new BadRequestException(`Status invalide : ${part.status}`);
+        }
+        const updated =  await this.reservationsRepository.updateReservation(id, part);
+        return updated
     }
 
   async deleteReservation(id: number) {

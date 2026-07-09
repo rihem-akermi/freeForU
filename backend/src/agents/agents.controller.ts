@@ -1,6 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { Get , Post , Patch , Delete ,Body , Param } from '@nestjs/common';
+import { UpdatedAgentDto } from './dto/update-agent.dto';
+import { CreateAgentDto } from './dto/create-agent.dto';
 
 @Controller('agents')
 export class AgentsController {
@@ -14,18 +16,19 @@ export class AgentsController {
     }
 
     @Post()
-    async addAgent(@Body() body : {name : string , category:string , phone:string , password:string , ville:string , published:boolean})
+    async addAgent(@Body() body : CreateAgentDto )
     {
-        const newAgent = await this.agentsService.addNewAgent(body.name , body.category , body.phone , body.password , body.ville , body.published)
+        const newAgent = await this.agentsService.addNewAgent(body)
         return newAgent 
     }
 
     @Patch(":id")
     async updateAgent(
-        @Body() body:{published:boolean},
+        @Body() body: Partial<UpdatedAgentDto>,
         @Param('id') id : string 
     ){
-        const updatedAgent = await this.agentsService.updateAgent(body.published ,Number(id))
+        console.log("new infos about the agent : ", body)
+        const updatedAgent = await this.agentsService.updateAgent(body,Number(id))
         return updatedAgent
     }
 

@@ -4,22 +4,22 @@ export default function Home() {
   return (
     <main className="flex flex-col gap-16 min-h-screen items-center justify-center">
       <Link
-        href="/dashboard/admin"
+        href="/admin"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        🧑‍✈️ Aller au Dashboard Admin →
+        🧑‍✈️ Signup / Login Admin →
       </Link>
       <Link
         href="/"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        🙆‍♀️ Aller au Dashboard Client →
+        🙆‍♀️ Signup / Login Client →
       </Link>
       <Link
         href="/"
         className="rounded-lg bg-stone-900 px-6 py-3 text-white hover:bg-stone-700"
       >
-        👩‍🏭 Aller au Dashboard Agent →
+        👩‍🏭 Signup / Login Agent →
       </Link>
     </main>
   );

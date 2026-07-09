@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatedUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -13,10 +15,14 @@ export class UsersService {
     return users;//table
   }
 
-  async createUser(name: string, email: string, password: string, role: string, ville: string) {
+  async createUser(newUser: CreateUserDto) {
     console.log('⚙️ UsersService.createUser() called');
-    // le hashage de mot de passe
-    return this.usersRepository.create(name, email, password, role, ville);
+    return this.usersRepository.create(newUser);
+  }
+
+  async updateUser(part: UpdatedUserDto, id: number) {
+    console.log('⚙️ UsersService.updateUser() called');
+    return this.usersRepository.update(part, id);
   }
 
   async deleteUser(id: number) {

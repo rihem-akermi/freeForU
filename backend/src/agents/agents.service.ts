@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgentsRepository } from './agents.repository';
+import { UpdatedAgentDto } from './dto/update-agent.dto';
+import { CreateAgentDto } from './dto/create-agent.dto';
 
 @Injectable()
 export class AgentsService {
@@ -10,13 +12,13 @@ export class AgentsService {
         return agents 
     }
 
-    async addNewAgent(name : string , category:string , phone:string , password:string , ville:string , published:boolean) : Promise<any>{
-        const agent = this.agentsRepository.addAgent(name,category,phone,password,ville,published)
+    async addNewAgent(newAgent :CreateAgentDto) : Promise<any>{
+        const agent = this.agentsRepository.addAgent(newAgent)
         return agent 
     }
 
-    async updateAgent(published : boolean , id : number) : Promise<any>{
-        const agent = this.agentsRepository.updateAgent(published , id)
+    async updateAgent(part : UpdatedAgentDto, id : number) : Promise<any>{
+        const agent = this.agentsRepository.updateAgent(part, id)
         return agent 
     }
 

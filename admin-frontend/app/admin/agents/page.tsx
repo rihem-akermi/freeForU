@@ -7,6 +7,5 @@ export default async function AgentsPage() {
     <div>
       <h1 className="mb-6 text-2xl font-medium text-stone-900">Agents</h1>
       <AgentsTable initialAgents={initialAgents} />
-    </div>
-  );
+    </div>);
 }

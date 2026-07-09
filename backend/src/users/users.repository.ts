@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatedUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -16,12 +18,13 @@ export class UsersRepository {
     return result.rows; // tableau des lignes from PostgreSQL
   }
 
-  async create(name: string, email: string, password: string, role: string, ville: string) {
-    console.log('➕ UsersRepository.create() called with :', name, email, role, ville);
+  async create(newUser: CreateUserDto) {
+    console.log('➕ UsersRepository.create() called with :', newUser.cin, newUser.name, newUser.email, newUser.phone, newUser.role, newUser.ville);
     const result = await this.databaseService.query(
-      `INSERT INTO users (name, email, password, role, ville)
-       VALUES (${name}, ${email}, ${password}, ${role}, ${ville})
-       RETURNING *`
+      `INSERT INTO users (cin, name, email, phone, password, role, ville)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [newUser.cin, newUser.name, newUser.email, newUser.phone, newUser.password, newUser.role, newUser.ville]
     );
 
     /*
@@ -29,7 +32,31 @@ export class UsersRepository {
     [name, email, password, role, ville], );
     est plus securisé 
     */
-    return result.rows[0]; // 👈 RETURNING * redonne la ligne cree
+    return result.rows[0]; 
+  }
+
+  async update(part: UpdatedUserDto, id: number) {
+    console.log('✏️ UsersRepository.update() called pour id :', id);
+    const fields = Object.keys(part);
+    const values = Object.values(part);
+
+    if (fields.length === 0) {
+      return null;
+    }
+
+    const setQuery = fields
+      .map((field, index) => `${field} = $${index + 1}`)
+      .join(', ');
+
+    const query = `
+      UPDATE users
+      SET ${setQuery}
+      WHERE id = $${fields.length + 1}
+      RETURNING *
+    `;
+
+    const result = await this.databaseService.query(query, [...values, id]);
+    return result.rows[0];
   }
 
   async delete(id: number) {

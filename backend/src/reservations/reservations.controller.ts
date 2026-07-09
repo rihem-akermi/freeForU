@@ -1,5 +1,7 @@
 import { Controller, Delete, Get , Body,Post , Param , Patch } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
+import { CreateReservationDto } from './dto/create-reservation.dto';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
 
 @Controller('reservations')
 export class ReservationsController {
@@ -13,14 +15,14 @@ export class ReservationsController {
         return reservations}
 
     @Post()
-     async addReservation(@Body() body: { clientId: number; agentId: number; dateReservation: string }) {
-    return await this.reservationsService.createReservation(body.clientId, body.agentId, body.dateReservation);
-  }
+    async addReservation(@Body() body: CreateReservationDto) {
+      return await this.reservationsService.createReservation(body.clientCin, body.agentCin, body.dateReservation);
+    }
 
    @Patch(':id')
-  async updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
-    return await this.reservationsService.updateStatus(Number(id), body.status);
-  }
+    async updateReservation(@Param('id') id: string, @Body() body: UpdateReservationDto) {
+      return await this.reservationsService.updateReservation(Number(id), body);
+    }
 
     @Delete(':id')
   async deleteReservation(@Param('id') id: string) {

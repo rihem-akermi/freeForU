@@ -1,5 +1,7 @@
-import { Body, Controller, Get ,Post , Delete , Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Delete, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatedUserDto } from './dto/update-user.dto';
 
 @Controller('users') 
 export class UsersController {
@@ -12,11 +14,17 @@ export class UsersController {
   }
 
   @Post()
-  async addUser(@Body() body :{name: string;email: string ;password: string; role: string; ville: string})
-    {
+  async addUser(@Body() body: CreateUserDto) {
     console.log('🌐 POST /users reçu avec :', body);
-    return this.usersService.createUser(body.name, body.email, body.password, body.role, body.ville);
-    }
+    return this.usersService.createUser(body);
+  }
+
+  @Patch(':id')
+  async updateUser(@Body() body: UpdatedUserDto, @Param('id') id: string) {
+    console.log('🌐 PATCH /users/' + id + ' reçu avec :', body);
+    return this.usersService.updateUser(body, Number(id));
+  }
+    
   
   @Delete(':id')
     async deleteUser(@Param('id') id: string) {

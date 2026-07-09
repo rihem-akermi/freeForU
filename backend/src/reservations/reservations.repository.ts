@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "src/database/database.service";
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class reservationsRepository {
@@ -10,7 +11,9 @@ export class reservationsRepository {
       SELECT 
         reservations.id,
         reservations.client_id,
+          users.cin AS client_cin,
         reservations.agent_id,
+          agents.cin AS agent_cin,
         users.name AS client_name,
         agents.name AS agent_name,
         reservations.date_reservation,
@@ -24,24 +27,84 @@ export class reservationsRepository {
     return result.rows;//table mrig des reservations
   }
 
-  async create(clientId: number, agentId: number, dateReservation: string) {
-    const result = await this.databaseService.query(
-      `INSERT INTO reservations (client_id, agent_id, date_reservation)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [clientId, agentId, dateReservation],
+  async create(clientCin: string, agentCin: string, dateReservation: string) {
+    const clientResult = await this.databaseService.query(
+      `SELECT id, cin, name FROM users WHERE cin = $1 AND role = 'CLIENT' LIMIT 1`,
+      [clientCin],
     );
-    const newReservation =  result.rows[0];
-    return newReservation
+
+    const agentResult = await this.databaseService.query(
+      `SELECT id, cin, name FROM agents WHERE cin = $1 LIMIT 1`,
+      [agentCin],
+    );
+
+    const client = clientResult.rows[0];
+    const agent = agentResult.rows[0];
+
+    if (!client) {
+      throw new BadRequestException(`Le client avec le CIN ${clientCin} n'existe pas.`);
+    }
+
+    if (!agent) {
+      throw new BadRequestException(`L'agent avec le CIN ${agentCin} n'existe pas.`);
+    }
+
+    const result = await this.databaseService.query(
+      `INSERT INTO reservations (client_id, agent_id, date_reservation, status)
+       VALUES ($1, $2, $3, 'EN_ATTENTE')
+       RETURNING id`,
+      [client.id, agent.id, dateReservation],
+    );
+
+    const createdId = result.rows[0]?.id;
+    const createdReservation = await this.databaseService.query(
+      `SELECT 
+        reservations.id,
+        reservations.client_id,
+        users.cin AS client_cin,
+        reservations.agent_id,
+        agents.cin AS agent_cin,
+        users.name AS client_name,
+        agents.name AS agent_name,
+        reservations.date_reservation,
+        reservations.status,
+        reservations.created_at
+      FROM reservations
+      JOIN users ON reservations.client_id = users.id
+      JOIN agents ON reservations.agent_id = agents.id
+      WHERE reservations.id = $1
+      LIMIT 1`,
+      [createdId],
+    );
+
+    return createdReservation.rows[0];
   }
 
-  async updateStatus(id: number, status: string) {
+  async updateReservation(id: number, part: { status?: string; date_reservation?: string }) {
+    const fields = Object.keys(part);
+    const values = Object.values(part);
+
+    if (fields.length === 0) {
+      return null;
+    }
+
+    const setQuery = fields
+      .map((field, index) => `${field} = $${index + 1}`)
+      .join(', ');
+
+    const query = `
+      UPDATE reservations
+      SET ${setQuery}
+      WHERE id = $${fields.length + 1}
+      RETURNING *
+    `;
+
     const result = await this.databaseService.query(
-      `UPDATE reservations SET status = $1 WHERE id = $2 RETURNING *`,
-      [status, id],
+      query,
+      [...values, id],
     );
-    const updatedStatus = result.rows[0]; 
-    return updatedStatus
+    const updatedReservation = result.rows[0]; 
+    return updatedReservation
   }
 
   async delete(id: number) {

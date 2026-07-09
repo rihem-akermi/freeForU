@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const links = [
-  { href: "/dashboard/admin", label: "Vue d'ensemble"},
-  { href: "/dashboard/admin/users", label: "Utilisateurs" },
-  { href: "/dashboard/admin/agents", label: "Agents" },
-  { href: "/dashboard/admin/reservations", label: "Réservations" },
+  { href: "/admin", label: "Vue d'ensemble"},
+  { href: "/admin/users", label: "Utilisateurs" },
+  { href: "/admin/agents", label: "Agents" },
+  { href: "/admin/reservations", label: "Réservations" },
 ];
 
 export default function Sidebar() {
