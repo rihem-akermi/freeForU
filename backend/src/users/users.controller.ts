@@ -10,6 +10,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
+  @UseGuards(AuthGuard,RolesGuard)
+  @Roles("ADMIN")
   @Get()
   async getUsers() {
     //pas de guard, accessible librement pour l'instant
@@ -23,18 +25,18 @@ export class UsersController {
     return this.usersService.createUser(body);
   }
 
-  @Patch(':id')
   @UseGuards(AuthGuard,RolesGuard)
   @Roles('ADMIN')
+  @Patch(':id')
   async updateUser(@Body() body: UpdatedUserDto, @Param('id') id: string) {
     console.log('🌐 PATCH /users/' + id + ' reçu avec :', body);
     return this.usersService.updateUser(body, Number(id));
   }
     
   
-  @Delete(':id')
   @UseGuards(AuthGuard,RolesGuard)
   @Roles("ADMIN")
+  @Delete(':id')
     async deleteUser(@Param('id') id: string) {
         console.log('🌐 DELETE /users/' + id + ' reçu');
         return this.usersService.deleteUser(Number(id)); // 👈 les params d'URL sont TOUJOURS des strings, on convertit

@@ -1,6 +1,6 @@
 'use client'
 
-import { Agent ,addAgent, deleteAgent, updateAgent } from "@/lib/api";
+import { Agent ,addAgent, deleteAgent, updateAgent } from "@/lib/api/agents";
 import { useState } from "react";
 
 type NewAgentForm = Omit<Agent, "id" | "role">;

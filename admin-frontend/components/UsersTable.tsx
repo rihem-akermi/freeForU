@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, addUser, deleteUser, updateUser } from "@/lib/api";
+import { User, addUser, deleteUser, updateUser } from "@/lib/api/users";
 
 type NewUserForm = Omit<User, "id" | "created_at">;
 

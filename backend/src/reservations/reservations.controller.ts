@@ -14,30 +14,33 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 export class ReservationsController {
     constructor(private reservationsService : ReservationsService) { }
 
-
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles("ADMIN")
     @Get()
     async getReservations() {
         console.log("getting infos ")
         const reservations = await this.reservationsService.getAllReservations();//table
         return reservations}
 
-    @Post()
     @UseGuards(AuthGuard,RolesGuard)
     @Roles("ADMIN")
+    @Post()
     async addReservation(@Body() body: CreateReservationDto) {
       return await this.reservationsService.createReservation(body.clientCin, body.agentCin, body.dateReservation);
     }
 
-   @Patch(':id')
+
    @UseGuards(AuthGuard,RolesGuard)
-     @Roles("ADMIN")
+   @Roles("ADMIN") 
+   @Patch(':id')
     async updateReservation(@Param('id') id: string, @Body() body: UpdateReservationDto) {
       return await this.reservationsService.updateReservation(Number(id), body);
     }
 
-    @Delete(':id')
+
     @UseGuards(AuthGuard,RolesGuard)
-      @Roles("ADMIN")
+    @Roles("ADMIN")
+    @Delete(':id')
   async deleteReservation(@Param('id') id: string) {
     return await this.reservationsService.deleteReservation(Number(id));
   }

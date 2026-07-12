@@ -1,5 +1,5 @@
 import AgentsTable from "@/components/AgentsTable";
-import { getAgents } from "@/lib/api";
+import { getAgents } from "@/lib/api/agents";
 
 export default async function AgentsPage() {
   const initialAgents = await getAgents()

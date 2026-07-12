@@ -1,6 +1,9 @@
-import { getUsers, getAgents, getReservations } from "@/lib/api";
+import { getAgents } from "@/lib/api/agents";
+import { getReservations } from "@/lib/api/reservations";
+import { getUsers } from "@/lib/api/users";
 
-export default async function DashBoard() {
+
+export default async function PageAdmin() {
   const users = await getUsers();
   const agents = await getAgents();
   const reservations = await getReservations();

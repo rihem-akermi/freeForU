@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react";
-import { Reservation, addReservation, deleteReservation, updateReservation } from "@/lib/api";
+import { Reservation, addReservation, deleteReservation, updateReservation } from "@/lib/api/reservations";
 
 const STATUS_OPTIONS = ["EN_ATTENTE", "CONFIRMEE", "ANNULEE"] as const;
 

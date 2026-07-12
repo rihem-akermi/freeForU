@@ -12,15 +12,17 @@ export class AgentsController {
     constructor(private agentsService : AgentsService){
     }
 
+    @UseGuards(AuthGuard,RolesGuard)
+    @Roles("ADMIN")
     @Get()
     async getAgents(){
         const agents = await this.agentsService.getAllAgents() 
         return agents
     }
 
-    @Post()
     @UseGuards(AuthGuard,RolesGuard)
     @Roles("ADMIN")
+    @Post()
     async addAgent(@Body() body : CreateAgentDto )
     {
         const newAgent = await this.agentsService.addNewAgent(body)
@@ -28,9 +30,9 @@ export class AgentsController {
     }
 
     
-    @Patch(":id")
     @UseGuards(AuthGuard,RolesGuard)
     @Roles("ADMIN")
+    @Patch(":id")
     async updateAgent(
         @Body() body: Partial<UpdatedAgentDto>,
         @Param('id') id : number ){
@@ -40,9 +42,9 @@ export class AgentsController {
     }
 
     
-    @Delete(':id')
     @UseGuards(AuthGuard,RolesGuard)
     @Roles("ADMIN")
+    @Delete(':id')
     async deleteAgent(@Param ('id') id : number){
             const deletedAgent = await this.agentsService.deleteAgent(id)
             return deletedAgent
