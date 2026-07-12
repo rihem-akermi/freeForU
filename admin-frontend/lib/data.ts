@@ -11,7 +11,7 @@ export type User = {
 };
 
 export type Agent = {
-  id: string;
+  id: number;
   cin: string;
   name: string;
   category: string;

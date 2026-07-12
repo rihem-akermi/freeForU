@@ -31,7 +31,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async query(text: string, params?: any[]) {
     //when i will write an SQL request it will go here 
-    console.log('📤 SQL envoyé :', text, params ?? '');
     const result = await this.pool.query(text, params);
 
     console.log('📥 Résultat reçu :', result.rowCount, 'ligne(s)');

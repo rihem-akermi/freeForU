@@ -10,12 +10,12 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
     
     const [agents , setAgents] = useState(initialAgents)
     
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [editedForm, setEditedForm] = useState<Partial<Agent>>({});
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [newAgent, setNewAgent] = useState<NewAgentForm>({
-      cin: "",
+        cin: "",
         name: "",
         category: "",
         email: "",
@@ -31,7 +31,7 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
     // without [] : ->   field: "Ali"
   }
 
-  async function handleSaveEdit(id: string) {
+  async function handleSaveEdit(id: number) {
   try {
     const updated = await updateAgent(id, editedForm);
     setAgents((prev) =>
@@ -55,14 +55,14 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
       });
     }  
 
-  function handleEditKeyDown(e: React.KeyboardEvent, id: string) {
+  function handleEditKeyDown(e: React.KeyboardEvent, id: number) {
     if (e.key === "Enter") {
       handleSaveEdit(id);
     }
     
   }
 
-    async function handleDelete(id:string ){
+    async function handleDelete(id:number ){
         await deleteAgent(id)
         setAgents((prev)=>{
             return(
@@ -73,7 +73,7 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
         })
     }
 
-    async function handleStatus(id : string , published : boolean){
+    async function handleStatus(id : number , published : boolean){
       await updateAgent(id, {published : !published}) //partial 
       setAgents((prev) => {
         return (

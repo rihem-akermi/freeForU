@@ -62,13 +62,13 @@ export async function addAgent(agent : Omit<Agent, "id" | "role">) :Promise<Agen
 }
 
 
-export async function updateAgent(id: string, data: Partial<Agent>): Promise<Agent> {
+export async function updateAgent(id: number, data: Partial<Agent>): Promise<Agent> {
   const res = await axios.patch<Agent>(`${backendUrl}/agents/${id}`,data)
   const updatedAgent = res.data
   return updatedAgent
 }
 
-export async function deleteAgent(id: string): Promise<Agent> {
+export async function deleteAgent(id: number): Promise<Agent> {
 
   const res = await axios.delete<Agent>(`${backendUrl}/agents/${id}`)
   const deletedAgent = res.data
