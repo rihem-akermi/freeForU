@@ -1,0 +1,47 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 3rem;
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.links a {
+  text-decoration: none;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.links a:hover {
+  color: var(--color-primary);
+}
+
+/* on distingue les liens d'action (login/signup) des liens de navigation */
+.ctaLink {
+  background: var(--color-primary);
+  color: white !important;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.ctaLink:hover {
+  background: var(--color-primary-dark) !important;
+}

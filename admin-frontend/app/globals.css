@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
+:root {
+  --color-bg: #f5f3ff;          /* fond général très pâle */
+  --color-bg-alt: #eef2ff;      /* fond alterné entre sections */
+  --color-primary: #818cf8;     /* indigo pastel (boutons, accents) */
+  --color-primary-dark: #6366f1;/* indigo un peu plus foncé (hover) */
+  --color-text-dark: #312e81;   /* titres */
+  --color-text-body: #4b5563;   /* paragraphes */
+  --color-card: #e0e7ff;        /* fond des cartes */
+  --color-white: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: #f5f5f4;
-  color: #1c1917;
+  background: var(--color-bg);
 }

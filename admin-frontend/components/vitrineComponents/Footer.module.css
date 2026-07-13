@@ -1,0 +1,25 @@
+/* Footer.module.css */
+.footer {
+  padding: 2.5rem;
+  text-align: center;
+  background: var(--color-text-dark);
+  color: white;
+}
+
+.links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.6rem;
+}
+
+.links a {
+  color: white;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.links a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}

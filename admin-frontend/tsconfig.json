@@ -20,6 +20,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ] ,
+      "$/*" : [
+        "./app/*"
+      ],
+      "#/*" : [
+        "./components/vitrineComponents/*"
       ]
     },
     "plugins": [

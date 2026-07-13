@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api/auth";
+import styles from "./login.module.css";
 
 import Cookies from "js-cookie";
 
@@ -41,36 +42,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cyan-50">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm">
-        <h1 className="mb-6 text-xl font-medium text-stone-900">Connexion</h1>
+  <div className={styles.container}>
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <h1 className={styles.title}>Connexion</h1>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className={styles.error}>{error}</p>}
 
-        <label className="mb-1 block text-sm text-stone-600">Email</label>
-        <input
-          type="email"
-          placeholder="example@gmail.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 w-full rounded border border-stone-300 px-3 py-2"
-          required
-        />
+      <label className={styles.label}>Email</label>
+      <input
+        type="email"
+        placeholder="example@gmail.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={styles.input}
+        required
+      />
 
-        <label className="mb-1 block text-sm text-stone-600">Mot de passe</label>
-        <input
-          type="password"
-          placeholder="**********"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mb-6 w-full rounded border border-stone-300 px-3 py-2"
-          required
-        />
+      <label className={styles.label}>Mot de passe</label>
+      <input
+        type="password"
+        placeholder="********"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className={styles.input}
+        required
+      />
 
-        <button type="submit" className="w-full rounded bg-stone-900 py-2 text-white hover:bg-stone-700">
-          Se connecter
-        </button>
-      </form>
-    </div>
-  );
+      <button type="submit" className={styles.button}>
+        Se connecter
+      </button>
+    </form>
+  </div>
+);
 }
