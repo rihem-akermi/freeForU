@@ -78,4 +78,27 @@ export class AuthService {
     return { accessToken, refreshToken };
     
   }
+
+  async refreshAccessToken(refreshToken: string) {
+  console.log('🔄 AuthService.refreshAccessToken() appelé');
+
+  try {
+    const payload = this.jwtService.verify(refreshToken, {
+      secret: process.env.JWT_REFRESH_SECRET, // 👈 le BON secret, celui du refresh
+    });
+
+    console.log('✅ Refresh token valide, payload :', payload);
+
+    // 👇 on génère UNIQUEMENT un nouvel access token, pas un nouveau refresh
+    const newAccessToken = this.jwtService.sign(
+      { sub: payload.sub, role: payload.role },
+      { secret: process.env.JWT_ACCESS_SECRET, expiresIn: '15m' },
+    );
+
+    return { accessToken: newAccessToken };
+  } catch (error) {
+    console.log('❌ Refresh token invalide ou expiré');
+    throw new UnauthorizedException('Session expirée, veuillez vous reconnecter');
+  }
+}
 }

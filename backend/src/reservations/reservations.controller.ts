@@ -14,8 +14,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 export class ReservationsController {
     constructor(private reservationsService : ReservationsService) { }
 
-    @UseGuards(AuthGuard,RolesGuard)
-    @Roles("ADMIN")
+    
     @Get()
     async getReservations() {
         console.log("getting infos ")

@@ -1,5 +1,5 @@
 import { User } from "../data"
-import api from "./intercepteur";
+import api from "./interceptor";
 export type {User}
 
 

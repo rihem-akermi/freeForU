@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api/auth";
 
+import Cookies from "js-cookie";
+
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,8 +20,8 @@ export default function LoginPage() {
     try {
       const { user, accessToken, refreshToken } = await login(email, password);
 
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      Cookies.set("accessToken", accessToken, { expires: 1/96 }); // 👈 1/96 jour ≈ 15 min
+      Cookies.set("refreshToken", refreshToken, { expires: 7 }); // 👈 7 jours
 
       console.log("👤 Connecté en tant que :", user.role);
 

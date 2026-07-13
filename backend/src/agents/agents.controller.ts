@@ -12,8 +12,7 @@ export class AgentsController {
     constructor(private agentsService : AgentsService){
     }
 
-    @UseGuards(AuthGuard,RolesGuard)
-    @Roles("ADMIN")
+    
     @Get()
     async getAgents(){
         const agents = await this.agentsService.getAllAgents() 

@@ -1,6 +1,6 @@
 
 import { Agent } from "../data"
-import api from "./intercepteur"
+import api from "./interceptor"
 export type {Agent}
 
 export async function getAgents(): Promise<Agent[]> {

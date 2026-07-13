@@ -1,5 +1,5 @@
 import { Reservation } from "../data";
-import api from "./intercepteur";
+import api from "./interceptor";
 export type {Reservation}
 
 /*Reservation*/

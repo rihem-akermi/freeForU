@@ -10,8 +10,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @UseGuards(AuthGuard,RolesGuard)
-  @Roles("ADMIN")
+ 
   @Get()
   async getUsers() {
     //pas de guard, accessible librement pour l'instant

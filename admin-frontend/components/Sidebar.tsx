@@ -1,4 +1,6 @@
+'use client'
 import Link from "next/link";
+import { logout } from "@/lib/api/auth";
 
 const links = [
   { href: "/admin", label: "Vue d'ensemble"},
@@ -21,7 +23,11 @@ export default function Sidebar() {
             {link.label}
           </Link>
         ))}
+        <button onClick={logout} className="rounded-md px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 mt-190">
+          🚪 Déconnexion
+        </button>
       </nav>
+      
     </aside>
   );
 }

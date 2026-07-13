@@ -9,14 +9,12 @@ export class AuthGuard implements CanActivate {
 
     //Get the current HTTP request.
     const request = context.switchToHttp().getRequest();
-    //vérification du header Authorization => read Authorization: Bearer eyJhbGc...
-    const authHeader = request.headers['authorization'];
+    const token = request.cookies?.['accessToken'] //depuis le cookie, plus le header Authorization
 
-    if (!authHeader) {
+    if (!token) {
       throw new UnauthorizedException('Token manquant');
     }
 
-    const token = authHeader.split(' ')[1]; // Bearer abc.def.ghi => abc.def.ghi on eleve the bearer 
 
     try {
         //verifie payload + signature + expiration +secret 
@@ -25,7 +23,7 @@ export class AuthGuard implements CanActivate {
       });
 
       request.user = payload; 
-      return true; //
+      return true; 
     } catch (error) {
       console.log('❌ Token invalide ou expiré');
       throw new UnauthorizedException('Token invalide ou expiré');
