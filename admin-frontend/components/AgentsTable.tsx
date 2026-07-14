@@ -15,7 +15,6 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [newAgent, setNewAgent] = useState<NewAgentForm>({
-        cin: "",
         name: "",
         category: "",
         email: "",
@@ -98,7 +97,6 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
         setAgents((prev) => [...prev, created]);
         setShowAddForm(false);
         setNewAgent({
-          cin: "",
           name: "",
           category: "",
           phone: "",
@@ -123,12 +121,6 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
 
            {showAddForm && (
           <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border-2 border-stone-900 bg-stone-50 p-4">
-            <input
-              placeholder="CIN"
-              value={newAgent.cin}
-              onChange={(e) => handleNewAgentChange("cin", e.target.value)}
-              className="rounded border px-2 py-1"
-            />
             <input
               placeholder="Nom et Prenom"
               value={newAgent.name}
@@ -178,8 +170,8 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
           <table className="w-full overflow-hidden rounded-lg border-2 border-stone-900 bg-white text-sm">
             <thead className="bg-stone-50 text-left text-stone-500">
               <tr>
-                <th className="px-4 py-3 font-normal">Nom</th>
-                <th className="px-4 py-3 font-normal">CIN</th>
+                <th className="px-4 py-3 font-normal">ID</th>
+                <th className="px-4 py-3 font-normal">Nom ET Prenom</th>
                 <th className="px-4 py-3 font-normal">Categorie</th>
                 <th className="px-4 py-3 font-normal">Email</th>
                 <th className="px-4 py-3 font-normal">Téléphone</th>
@@ -194,7 +186,11 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
 
                 return (
                 <tr key={agent.id} className="border-t border-stone-100">
-                  <td className="px-4 py-3">
+                  
+
+                <td className="px-4 py-3 text-stone-500">{agent.id}</td>
+
+                <td className="px-4 py-3">
                   {isTheAgentToEdit ? (
                     <input
                       autoFocus
@@ -205,19 +201,6 @@ export default function AgentsTable({initialAgents} : {initialAgents : Agent[]})
                     />
                   ) : (
                     agent.name
-                  )}
-                </td>
-
-                <td className="px-4 py-3 text-stone-500">
-                  {isTheAgentToEdit ? (
-                    <input
-                      value={editedForm.cin ?? ""}
-                      onChange={(e) => handleTheInputToEditChange("cin", e.target.value)}
-                      onKeyDown={(e) => handleEditKeyDown(e, agent.id)}
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    agent.cin
                   )}
                 </td>
 

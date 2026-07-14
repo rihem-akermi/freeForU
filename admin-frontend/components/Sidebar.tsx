@@ -23,7 +23,7 @@ export default function Sidebar() {
             {link.label}
           </Link>
         ))}
-        <button onClick={logout} className="rounded-md px-3 py-2 text-sm text-stone-700 hover:bg-stone-100 mt-190">
+        <button onClick={logout} className="rounded-md px-2 py-2 text-sm text-stone-700 hover:bg-stone-100 text-left ">
           🚪 Déconnexion
         </button>
       </nav>

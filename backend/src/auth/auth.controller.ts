@@ -58,6 +58,15 @@ export class AuthController {
   console.log('🍪 Nouveau cookie accessToken posé');
   return { message: 'Token renouvelé' }; // 👈 plus besoin de renvoyer le token dans le body
 }
+
+@Post('signup')
+async signup(@Body() body: {
+  name: string; email: string; password: string; ville: string; phone: string;
+  role: 'CLIENT' | 'AGENT'; category?: string;
+}) {
+  const created = await this.authService.signup(body);
+  return { message: 'Compte créé avec succès', user: created };
+}
   
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response) {

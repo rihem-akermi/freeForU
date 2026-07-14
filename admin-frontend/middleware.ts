@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-    // elle empêche l'utilisateur lambda de juste taper /admin dans l'URL sans être connecté
   const token = request.cookies.get("accessToken");
 
   if (!token) {
     console.log("❌ Pas de token, redirection vers /login");
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));//a complete URL not just a path
   }
+
 
   console.log("✅ Token présent, accès autorisé");
   return NextResponse.next(); //laisse passer vers la page demandée

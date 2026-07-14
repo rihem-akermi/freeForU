@@ -25,7 +25,7 @@ export class ReservationsController {
     @Roles("ADMIN")
     @Post()
     async addReservation(@Body() body: CreateReservationDto) {
-      return await this.reservationsService.createReservation(body.clientCin, body.agentCin, body.dateReservation);
+        return await this.reservationsService.createReservation(body.clientId, body.agentId, body.dateReservation);
     }
 
 

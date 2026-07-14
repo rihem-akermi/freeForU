@@ -8,77 +8,159 @@ export class reservationsRepository {
 
     async findAll() {
     const result = await this.databaseService.query(`
-      SELECT 
-        reservations.id,
-        reservations.client_id,
-          users.cin AS client_cin,
-        reservations.agent_id,
-          agents.cin AS agent_cin,
-        users.name AS client_name,
-        agents.name AS agent_name,
-        reservations.date_reservation,
-        reservations.status,
-        reservations.created_at
-      FROM reservations
-      JOIN users ON reservations.client_id = users.id
-      JOIN agents ON reservations.agent_id = agents.id
-      ORDER BY reservations.created_at DESC
+      SELECT
+    reservations.id,
+    reservations.client_id,
+    reservations.agent_id,
+
+    users.name AS client_name,
+    users.phone AS client_phone,
+    users.email AS client_email,
+    users.ville AS client_ville,
+
+    agents.name AS agent_name,
+    agents.phone AS agent_phone,
+    agents.email AS agent_email,
+    agents.ville AS agent_ville,
+
+    reservations.date_reservation,
+    reservations.status,
+    reservations.created_at
+
+    FROM reservations
+
+    JOIN users
+    ON reservations.client_id = users.id
+
+    JOIN agents
+    ON reservations.agent_id = agents.id
+
+    ORDER BY reservations.created_at DESC;
     `);
     return result.rows;//table mrig des reservations
   }
 
-  async create(clientCin: string, agentCin: string, dateReservation: string) {
-    const clientResult = await this.databaseService.query(
-      `SELECT id, cin, name FROM users WHERE cin = $1 AND role = 'CLIENT' LIMIT 1`,
-      [clientCin],
+  async create(clientId: string, agentId: string, dateReservation: string) {
+
+  // Verify client exists
+  const clientResult = await this.databaseService.query(
+    `
+    SELECT id
+    FROM users
+    WHERE id = $1 AND role = 'CLIENT'
+    LIMIT 1
+    `,
+    [clientId],
+  );
+
+
+  // Verify agent exists
+  const agentResult = await this.databaseService.query(
+    `
+    SELECT id
+    FROM agents
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [agentId],
+  );
+
+
+  const client = clientResult.rows[0];
+  const agent = agentResult.rows[0];
+
+
+  if (!client) {
+    throw new BadRequestException(
+      `Le client avec l'ID ${clientId} n'existe pas.`
     );
-
-    const agentResult = await this.databaseService.query(
-      `SELECT id, cin, name FROM agents WHERE cin = $1 LIMIT 1`,
-      [agentCin],
-    );
-
-    const client = clientResult.rows[0];
-    const agent = agentResult.rows[0];
-
-    if (!client) {
-      throw new BadRequestException(`Le client avec le CIN ${clientCin} n'existe pas.`);
-    }
-
-    if (!agent) {
-      throw new BadRequestException(`L'agent avec le CIN ${agentCin} n'existe pas.`);
-    }
-
-    const result = await this.databaseService.query(
-      `INSERT INTO reservations (client_id, agent_id, date_reservation, status)
-       VALUES ($1, $2, $3, 'EN_ATTENTE')
-       RETURNING id`,
-      [client.id, agent.id, dateReservation],
-    );
-
-    const createdId = result.rows[0]?.id;
-    const createdReservation = await this.databaseService.query(
-      `SELECT 
-        reservations.id,
-        reservations.client_id,
-        users.cin AS client_cin,
-        reservations.agent_id,
-        agents.cin AS agent_cin,
-        users.name AS client_name,
-        agents.name AS agent_name,
-        reservations.date_reservation,
-        reservations.status,
-        reservations.created_at
-      FROM reservations
-      JOIN users ON reservations.client_id = users.id
-      JOIN agents ON reservations.agent_id = agents.id
-      WHERE reservations.id = $1
-      LIMIT 1`,
-      [createdId],
-    );
-
-    return createdReservation.rows[0];
   }
+
+
+  if (!agent) {
+    throw new BadRequestException(
+      `L'agent avec l'ID ${agentId} n'existe pas.`
+    );
+  }
+
+
+
+  // Insert only IDs (no duplicated information)
+  const result = await this.databaseService.query(
+    `
+    INSERT INTO reservations
+    (
+      client_id,
+      agent_id,
+      date_reservation,
+      status
+    )
+
+    VALUES
+    ($1, $2, $3, 'EN_ATTENTE')
+
+    RETURNING id
+    `,
+    [
+      client.id,
+      agent.id,
+      dateReservation
+    ],
+  );
+
+
+  const createdId = result.rows[0].id;
+
+
+
+  // Return complete reservation information
+  const createdReservation = await this.databaseService.query(
+    `
+    SELECT
+
+      reservations.id,
+      reservations.client_id,
+      reservations.agent_id,
+
+
+      users.name AS client_name,
+      users.phone AS client_phone,
+      users.email AS client_email,
+      users.ville AS client_ville,
+
+
+      agents.name AS agent_name,
+      agents.phone AS agent_phone,
+      agents.email AS agent_email,
+      agents.ville AS agent_ville,
+
+
+      reservations.date_reservation,
+      reservations.status,
+      reservations.created_at
+
+
+    FROM reservations
+
+
+    JOIN users
+    ON reservations.client_id = users.id
+
+
+    JOIN agents
+    ON reservations.agent_id = agents.id
+
+
+    WHERE reservations.id = $1
+
+    LIMIT 1
+    `,
+    [createdId],
+  );
+
+
+  return createdReservation.rows[0];
+}
 
   async updateReservation(id: number, part: { status?: string; date_reservation?: string }) {
     const fields = Object.keys(part);

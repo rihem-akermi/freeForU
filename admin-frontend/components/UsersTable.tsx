@@ -19,7 +19,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [newUser, setNewUser] = useState<NewUserForm>({
-    cin: "",
     name: "",
     email: "",
     phone: "",
@@ -45,7 +44,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   function handleEditClick(user: User) {
     setEditingId(user.id);
     setEditedForm({
-      cin: user.cin,
       name: user.name,
       email: user.email,
       phone: user.phone,
@@ -68,7 +66,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     setUsers((prev) => [...prev, created]);
     setShowAddForm(false);
     setNewUser({
-      cin: "",
       name: "",
       email: "",
       phone: "",
@@ -76,7 +73,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       role: "CLIENT",
       ville: "",
     });
-      }
+  }
 
   return (
     <div>
@@ -91,12 +88,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
       {showAddForm && (
         <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border-2 border-stone-900 bg-stone-50 p-4">
-          <input
-            placeholder="CIN"
-            value={newUser.cin}
-            onChange={(e) => handleNewUserChange("cin", e.target.value)}
-            className="rounded border px-2 py-1"
-          />
           <input
             placeholder="Nom"
             value={newUser.name}
@@ -148,7 +139,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       <table className="w-full overflow-hidden rounded-lg border border-stone-200 bg-white text-sm">
         <thead className="bg-stone-50 text-left text-stone-500">
           <tr>
-            <th className="px-4 py-3 font-normal">CIN</th>
+            <th className="px-4 py-3 font-normal">ID</th>
             <th className="px-4 py-3 font-normal">Nom</th>
             <th className="px-4 py-3 font-normal">Email</th>
             <th className="px-4 py-3 font-normal">Téléphone</th>
@@ -165,17 +156,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
             return (
               <tr key={user.id} className="border-t border-stone-100">
                 <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <input
-                      autoFocus
-                      placeholder={user.cin}
-                      value={editedForm.cin ?? ""}
-                      onChange={(e) => handleEditedUserChange("cin", e.target.value)}
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    user.cin
-                  )}
+                  {user.id}
                 </td>
                 <td className="px-4 py-3">
                   {isEditing ? (

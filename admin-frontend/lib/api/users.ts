@@ -3,7 +3,14 @@ import api from "./interceptor";
 export type {User}
 
 
-/* USER */
+export type ClientSearchResult = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  ville: string;
+};
+
 export async function getUsers(): Promise<User[]> {
   const response = await api.get<User[]>("/users");
   const Users = response.data
@@ -39,4 +46,17 @@ export async function deleteUser(id: number): Promise<User> {
   //but in general delete returns void is better 
   // or
   //  you can retun a message {"messgae" : "deleted"}
+}
+
+export async function searchClients(name: string): Promise<ClientSearchResult[]> {
+
+  if (!name.trim()) {
+    return [];
+  }
+
+  const response = await api.get<ClientSearchResult[]>(
+    `/users/search?name=${name}`
+  );
+
+  return response.data;
 }

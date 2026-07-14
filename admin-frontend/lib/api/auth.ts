@@ -1,5 +1,4 @@
 import api from "./interceptor";
-import Cookies from "js-cookie";
 
 export async function login(email: string, password: string) {
 
@@ -7,7 +6,7 @@ export async function login(email: string, password: string) {
     { email,
       password 
     })
-  const validUser =  response.data //  { user : without password, accessToken, refreshToken }
+  const validUser =  response.data
   return validUser
 }
 

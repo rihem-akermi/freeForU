@@ -26,4 +26,8 @@ export class AgentsService {
         const agent = this.agentsRepository.deleteAgent(id)
         return agent 
     }
+
+    async searchAgents(name: string) {
+        return await this.agentsRepository.searchAgents(name);
+    }
 }

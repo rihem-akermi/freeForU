@@ -18,10 +18,10 @@ export class UsersRepository {
 
   async create(newUser: CreateUserDto) {
     const result = await this.databaseService.query(
-      `INSERT INTO users (cin, name, email, phone, password, role, ville)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (name, email, phone, password, role, ville)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [newUser.cin, newUser.name, newUser.email, newUser.phone, newUser.password, newUser.role, newUser.ville]
+      [newUser.name, newUser.email, newUser.phone, newUser.password, newUser.role, newUser.ville]
     );
 
     /*
@@ -62,5 +62,32 @@ export class UsersRepository {
     );
     return result.rows[0]; // undefined si l'id n'existait pas
   }
+
+  async searchClients(name: string) {
+
+  const result = await this.databaseService.query(
+    `
+    SELECT
+      id,
+      name,
+      phone,
+      ville,
+      email
+
+    FROM users
+
+    WHERE role = 'CLIENT'
+    AND name ILIKE $1
+
+    ORDER BY name
+
+    LIMIT 10
+    `,
+    [`${name}%`],
+  );
+
+
+  return result.rows;
+}
 
 }

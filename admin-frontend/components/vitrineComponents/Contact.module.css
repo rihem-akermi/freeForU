@@ -5,6 +5,7 @@
   opacity: 0;
   transform: translateY(40px);
   transition: opacity 0.8s ease, transform 0.8s ease;
+  /*ease → lent → rapide → lent*/
   min-height:100vh;
   display:flex;
   flex-direction:column;

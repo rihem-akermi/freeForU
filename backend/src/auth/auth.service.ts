@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException , ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthRepository } from './auth.repository';
 import { JwtService } from '@nestjs/jwt';
@@ -100,5 +100,36 @@ export class AuthService {
     console.log('❌ Refresh token invalide ou expiré');
     throw new UnauthorizedException('Session expirée, veuillez vous reconnecter');
   }
+  }
+
+  async signup(data: {
+  name: string; email: string; password: string; ville: string; phone: string;
+  role: 'CLIENT' | 'AGENT'; category?: string;
+  }) {
+
+  const existingUser = await this.authRepository.findUserByEmail(data.email);
+  const existingAgent = await this.authRepository.findAgentByEmail(data.email);
+  
+  if (existingUser.rows.length > 0 || existingAgent.rows.length > 0) {
+    throw new ConflictException('Cet email est déjà utilisé');//409
+  }
+
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  let created;
+  if (data.role === 'AGENT') {
+    if (!data.category) {
+      throw new ConflictException('La catégorie est requise pour un agent');//409
+    }
+    created = await this.authRepository.createAgent({ ...data, password: hashedPassword, category: data.category });
+  } else {
+    created = await this.authRepository.createUser({ ...data, password: hashedPassword });
+  }
+
+  console.log('✅ Compte créé avec succès :', created.id);
+  const { password: _, ...safeCreated } = created;
+  return safeCreated;
+  
 }
+
 }

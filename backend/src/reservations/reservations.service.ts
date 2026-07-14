@@ -10,8 +10,8 @@ export class ReservationsService {
         return await this.reservationsRepository.findAll() 
     }
 
-    async createReservation(clientCin: string, agentCin: string, dateReservation: string){
-        const newRes = await this.reservationsRepository.create(clientCin, agentCin, dateReservation)
+    async createReservation(clientId: string, agentId: string, dateReservation: string){
+        const newRes = await this.reservationsRepository.create(clientId, agentId, dateReservation)
         return newRes
     }
 

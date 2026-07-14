@@ -1,4 +1,4 @@
-import { Controller, UseGuards } from '@nestjs/common';
+import { Controller, Query, UseGuards } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { Get , Post , Patch , Delete ,Body , Param } from '@nestjs/common';
 import { UpdatedAgentDto } from './dto/update-agent.dto';
@@ -47,8 +47,14 @@ export class AgentsController {
     async deleteAgent(@Param ('id') id : number){
             const deletedAgent = await this.agentsService.deleteAgent(id)
             return deletedAgent
-        }
+    }
     
+    @Get('search')
+async searchAgents(@Query('name') name: string) {
+
+  return this.agentsService.searchAgents(name);
+
+}
 
 }
 

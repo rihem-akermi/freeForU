@@ -1,0 +1,95 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg);
+  padding: 1.5rem 1rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 30rem;
+  background-color: var(--color-white);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(49, 46, 129, 0.08);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-text-dark);
+  margin-bottom: 1.5rem;
+}
+
+.error {
+  font-size: 0.875rem;
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text-body);
+  margin-bottom: 0.25rem;
+}
+
+.input,
+.select {
+  width: 100%;
+  border: 1px solid var(--color-card);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  background-color: var(--color-white);
+  color: var(--color-text-dark);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-primary);
+}
+
+.categoryField {
+  background-color: var(--color-bg-alt);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.submitButton {
+  width: 100%;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.625rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submitButton:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.loginLink {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text-body);
+}
+
+.loginLink a {
+  color: var(--color-primary-dark);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.loginLink a:hover {
+  text-decoration: underline;
+}

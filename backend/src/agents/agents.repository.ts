@@ -15,10 +15,10 @@ export class AgentsRepository {
     }
 
     async addAgent(newAgent:CreateAgentDto){
-        const result = await this.databaseService.query(`INSERT INTO agents (cin, name, category, email, phone, password, ville ,published) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+        const result = await this.databaseService.query(`INSERT INTO agents (name, category, email, phone, password, ville ,published) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7) 
             RETURNING *`,
-            [newAgent.cin,newAgent.name,newAgent.category,newAgent.email,newAgent.phone,newAgent.password,newAgent.ville,newAgent.published])
+            [newAgent.name,newAgent.category,newAgent.email,newAgent.phone,newAgent.password,newAgent.ville,newAgent.published])
             
         const newRow =  result.rows[0] //the inserted row
         return newRow
@@ -61,5 +61,31 @@ export class AgentsRepository {
         const deletedRow = result.rows[0]
         return deletedRow
     }
+
+    async searchAgents(name: string) {
+
+  const result = await this.databaseService.query(
+    `
+    SELECT
+      id,
+      name,
+      phone,
+      ville,
+      email
+
+    FROM agents
+
+    WHERE name ILIKE $1
+
+    ORDER BY name
+
+    LIMIT 10
+    `,
+    [`${name}%`],
+  );
+
+
+  return result.rows;
+}
     
 }

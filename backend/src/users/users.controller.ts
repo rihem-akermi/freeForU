@@ -6,6 +6,8 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
+import { Query } from '@nestjs/common';
+
 @Controller('users') 
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -40,4 +42,12 @@ export class UsersController {
         console.log('🌐 DELETE /users/' + id + ' reçu');
         return this.usersService.deleteUser(Number(id)); // 👈 les params d'URL sont TOUJOURS des strings, on convertit
     }
+
+
+  @Get('search')
+  async searchClients(@Query('name') name: string) {
+
+  return this.usersService.searchClients(name);
+
+}
 }
