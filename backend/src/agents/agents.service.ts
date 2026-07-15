@@ -1,33 +1,47 @@
 import { Injectable } from '@nestjs/common';
 import { AgentsRepository } from './agents.repository';
-import { UpdatedAgentDto } from './dto/update-agent.dto';
 import { CreateAgentDto } from './dto/create-agent.dto';
+import { UpdatedAgentDto } from './dto/update-agent.dto';
+
 
 @Injectable()
 export class AgentsService {
-    constructor(private agentsRepository : AgentsRepository){}
 
-    async getAllAgents(): Promise<any[]> {
-        const agents = await this.agentsRepository.findAll()
-        return agents 
-    }
 
-    async addNewAgent(newAgent :CreateAgentDto) : Promise<any>{
-        const agent = this.agentsRepository.addAgent(newAgent)
-        return agent 
-    }
+  constructor(private agentsRepository:AgentsRepository){}
 
-    async updateAgent(part : UpdatedAgentDto, id : number) : Promise<any>{
-        const agent = this.agentsRepository.updateAgent(part, id)
-        return agent 
-    }
 
-    async deleteAgent(id : number ) : Promise<any>{
-        const agent = this.agentsRepository.deleteAgent(id)
-        return agent 
-    }
 
-    async searchAgents(name: string) {
-        return await this.agentsRepository.searchAgents(name);
-    }
+  getAllAgents(){
+return this.agentsRepository.findAll();
+}
+
+
+
+  addNewAgent(agent:CreateAgentDto){
+return this.agentsRepository.addAgent(agent);
+}
+
+
+
+  updateAgent(
+agent:UpdatedAgentDto,
+id:number
+){
+return this.agentsRepository.updateAgent(agent,id);
+}
+
+
+
+  deleteAgent(id:number){
+return this.agentsRepository.deleteAgent(id);
+}
+
+
+
+  searchAgents(name:string){
+return this.agentsRepository.searchAgents(name);
+}
+
+
 }

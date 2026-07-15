@@ -24,7 +24,8 @@ export async function addUser(user: Omit<User, "id" | "created_at">): Promise<Us
   )
   
   const newUser = response.data
-  return newUser; }
+  return newUser; 
+}
 
 export async function updateUser(id: number, data: Partial<User>): Promise<User> {
   const response = await api.patch<User>("/users/" + id, 

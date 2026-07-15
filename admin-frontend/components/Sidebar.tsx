@@ -4,9 +4,11 @@ import { logout } from "@/lib/api/auth";
 
 const links = [
   { href: "/admin", label: "Vue d'ensemble"},
-  { href: "/admin/users", label: "Utilisateurs" },
+  { href: "/admin/users", label: "Clients" },
   { href: "/admin/agents", label: "Agents" },
   { href: "/admin/reservations", label: "Réservations" },
+  { href: "/admin/contacts", label: "Contacts" },
+
 ];
 
 export default function Sidebar() {

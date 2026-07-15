@@ -9,18 +9,26 @@ export type User = {
   created_at: string,
 };
 
-export type Agent = {
+
+export interface Agent {
   id: number;
   name: string;
   category: string;
+  ville : string ;
   email: string;
   phone: string;
-  password : string;
-  ville: string;
-  role : "AGENT",
-  published: boolean;
-};
+  role: "AGENT";
+}
 
+
+export type CreateAgentData = {
+  name: string;
+  email: string;
+  phone: string;
+  ville: string;
+  password: string;
+  category_id: number;
+};
 
 export type Reservation = {
   id: string;
@@ -42,3 +50,11 @@ export type Reservation = {
   status: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE";
   created_at: string;
 };
+
+export type Contact = {
+  idcontact : number , 
+  name : string , 
+  email : string , 
+  message : string 
+  created_at : string 
+}

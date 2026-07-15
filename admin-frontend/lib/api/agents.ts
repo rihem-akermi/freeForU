@@ -1,57 +1,143 @@
-
-import { Agent } from "../data"
-import api from "./interceptor"
-export type {Agent}
+import api from "./interceptor";
+import {Agent} from "../data";
 
 
-export type AgentSearchResult = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  ville: string;
+export type {Agent};
+
+
+
+export type CreateAgentData = {
+
+name:string;
+
+email:string;
+
+phone:string;
+
+ville:string;
+
+password:string;
+
+category_id:number;
+
 };
 
 
-export async function getAgents(): Promise<Agent[]> {
-  const res = await api.get<Agent[]>("/agents")
-  const Agents = res.data
-  return Agents
+
+export type UpdateAgentData =
+Partial<CreateAgentData>
+& {
+
+photo_url?:string;
+
+bio?:string;
+
+zone?:string;
+
+service_mode?:string;
+
+tarif_min?:number;
+
+tarif_max?:number;
+
+age?:number;
+
+sexe?:string;
+
+experience_years?:number;
+
+social_links?:object;
+
+id_card_url?:string;
+
+work_certificate_url?:string;
+
+};
+
+
+
+export async function getAgents():Promise<Agent[]>{
+
+const res = await api.get<Agent[]>("/agents");
+
+return res.data;
+
 }
 
-export async function addAgent(agent : Omit<Agent, "id" | "role">) :Promise<Agent> {
-  /*  Omit<Agent, "id" | "role">
-  Take the Agent type, but remove the fields id and role.
-  */
-  const res = await api.post<Agent>("/agents",agent)
 
-  const newAgent = res.data
-  return newAgent
+
+
+
+export async function addAgent(
+agent:CreateAgentData
+):Promise<Agent>{
+
+const res =
+await api.post<Agent>("/agents",agent);
+
+return res.data;
+
 }
 
 
-export async function updateAgent(id: number, data: Partial<Agent>): Promise<Agent> {
-  const res = await api.patch<Agent>(`/agents/${id}`,data)
-  const updatedAgent = res.data
-  return updatedAgent
+
+
+
+export async function updateAgent(
+id:number,
+data:UpdateAgentData
+):Promise<Agent>{
+
+
+const res =
+await api.patch<Agent>(
+`/agents/${id}`,
+data
+);
+
+
+return res.data;
+
 }
 
-export async function deleteAgent(id: number): Promise<Agent> {
 
-  const res = await api.delete<Agent>(`/agents/${id}`)
-  const deletedAgent = res.data
-  return deletedAgent
+
+
+
+export async function deleteAgent(
+id:number
+):Promise<Agent>{
+
+
+const res =
+await api.delete<Agent>(
+`/agents/${id}`
+);
+
+
+return res.data;
+
 }
 
-export async function searchAgents(name: string): Promise<AgentSearchResult[]> {
 
-  if (!name.trim()) {
-    return [];
-  }
 
-  const response = await api.get<AgentSearchResult[]>(
-    `/agents/search?name=${name}`
-  );
 
-  return response.data;
+
+export async function searchAgents(
+name:string
+){
+
+
+if(!name.trim())
+return [];
+
+
+const res =
+await api.get(
+`/agents/search?name=${name}`
+);
+
+
+return res.data;
+
 }

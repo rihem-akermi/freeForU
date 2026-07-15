@@ -1,91 +1,206 @@
 import { Injectable } from "@nestjs/common";
-import { QueryResult } from "pg";
 import { DatabaseService } from "src/database/database.service";
-import { UpdatedAgentDto } from "./dto/update-agent.dto";
 import { CreateAgentDto } from "./dto/create-agent.dto";
+import { UpdatedAgentDto } from "./dto/update-agent.dto";
+
 
 @Injectable()
 export class AgentsRepository {
-    constructor (private databaseService : DatabaseService){}
 
-    async findAll(){
-        const request : QueryResult = await this.databaseService.query("select * from agents")
-        const allAgents = request.rows //table any[] 
-        return allAgents
-    }
+  constructor(
+  private databaseService: DatabaseService){}
 
-    async addAgent(newAgent:CreateAgentDto){
-        const result = await this.databaseService.query(`INSERT INTO agents (name, category, email, phone, password, ville ,published) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7) 
-            RETURNING *`,
-            [newAgent.name,newAgent.category,newAgent.email,newAgent.phone,newAgent.password,newAgent.ville,newAgent.published])
-            
-        const newRow =  result.rows[0] //the inserted row
-        return newRow
-    }
+  async findAll(){
+  const result = await this.databaseService.query(`
+      SELECT
+      a.id,
+      a.name,
+      c.nom AS category,
+      a.ville,
+      a.email,
+      a.phone,
+      a.role
 
-    async updateAgent(agent : UpdatedAgentDto , id : number ){
-        const fields = Object.keys(agent);
+      FROM agents a
 
-        const values = Object.values(agent);
+      LEFT JOIN categories c
+      ON a.category_id = c.id
 
-        if (fields.length === 0) {
-            return null; //nothing to update
-        }
+      ORDER BY a.id
+      `
+  );
 
-        const setQuery = fields
-            .map((field, index) => `${field} = $${index + 1}`)
-            .join(", ");
+  return result.rows;
 
-            //.join convert it to a string 
+  }
 
-        const query = `
-            UPDATE agents
-            SET ${setQuery}
-            WHERE id = $${fields.length + 1}
-            RETURNING *
-        `;
-        
-        const result = await this.databaseService.query(
-            query,
-            [...values, id] 
-        );
-        
-        
-        const updatedAgent = result.rows[0]
-        return updatedAgent
-                            }
+  async addAgent(agent:CreateAgentDto){
+    const insert = await this.databaseService.query(
+    `
+    INSERT INTO agents
+    (
+    name,
+    email,
+    phone,
+    ville,
+    password,
+    category_id,
+    role
+    )
 
-    async deleteAgent(id:number){
-        const result = await this.databaseService.query(`delete from agents where id = $1 returning *`,[id])
-        const deletedRow = result.rows[0]
-        return deletedRow
-    }
+    VALUES
+    ($1,$2,$3,$4,$5,$6,'AGENT')
 
-    async searchAgents(name: string) {
+    RETURNING id
+    `,
+    [
+    agent.name,
+    agent.email,
+    agent.phone,
+    agent.ville,
+    agent.password,
+    agent.category_id
+    ]
+    );
 
-  const result = await this.databaseService.query(
+
+
+    const id = insert.rows[0].id;
+
+
+    const result = await this.databaseService.query(
     `
     SELECT
-      id,
-      name,
-      phone,
-      ville,
-      email
+    a.id,
+    a.name,
+    c.nom AS category,
+    a.email,
+    a.phone,
+    a.role
 
-    FROM agents
+    FROM agents a
 
-    WHERE name ILIKE $1
+    LEFT JOIN categories c
+    ON a.category_id = c.id
 
-    ORDER BY name
-
-    LIMIT 10
+    WHERE a.id=$1
     `,
-    [`${name}%`],
+    [id]
+    );
+
+
+    return result.rows[0];
+
+  }
+
+  async updateAgent(
+    agent:UpdatedAgentDto,
+    id:number){
+
+
+    const fields = Object.keys(agent);
+    const values = Object.values(agent);
+
+
+    if(fields.length===0)
+    return null;
+
+
+
+    const setQuery = fields
+    .map((field,index)=>`${field}=$${index+1}`)
+    .join(",");
+
+
+
+    await this.databaseService.query(
+    `
+    UPDATE agents
+    SET ${setQuery}
+    WHERE id=$${fields.length+1}
+    `,
+    [
+    ...values,
+    id
+    ]
+    );
+
+
+
+    const result = await this.databaseService.query(
+    `
+    SELECT
+    a.id,
+    a.name,
+    c.nom AS category,
+    a.email,
+    a.phone,
+    a.role
+
+    FROM agents a
+
+    LEFT JOIN categories c
+    ON a.category_id=c.id
+
+    WHERE a.id=$1
+    `,
+    [id]
+    );
+
+
+
+    return result.rows[0];
+
+  }
+
+  async deleteAgent(id:number){
+
+    const result = await this.databaseService.query(
+    `
+    DELETE FROM agents
+    WHERE id=$1
+    RETURNING *
+    `,
+    [id]
+    );
+
+
+    return result.rows[0];
+
+  }
+
+  async searchAgents(name:string){
+
+
+  const result = await this.databaseService.query(
+  `
+  SELECT
+  a.id,
+  a.name,
+  a.phone,
+  a.email,
+  a.ville,
+  c.nom AS category
+
+  FROM agents a
+
+  LEFT JOIN categories c
+  ON a.category_id=c.id
+
+  WHERE a.name ILIKE $1
+
+  ORDER BY a.name
+
+  LIMIT 10
+  `,
+  [
+  `${name}%`
+  ]
   );
 
 
   return result.rows;
-}
-    
+
+  }
+
 }

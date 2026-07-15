@@ -39,8 +39,7 @@ export class UsersController {
   @Roles("ADMIN")
   @Delete(':id')
     async deleteUser(@Param('id') id: string) {
-        console.log('🌐 DELETE /users/' + id + ' reçu');
-        return this.usersService.deleteUser(Number(id)); // 👈 les params d'URL sont TOUJOURS des strings, on convertit
+        return this.usersService.deleteUser(Number(id)); 
     }
 
 

@@ -1,26 +1,29 @@
-import { IsBoolean, IsString } from "class-validator";
+import { IsEmail, IsInt, IsNotEmpty, IsString, MinLength } from "class-validator";
 
 export class CreateAgentDto {
-  @IsString()
-  name!: string;
-  //name must be a string 
-  @IsString()
-  category!: string;
 
   @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+
+  @IsEmail()
   email!: string;
+
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
+
 
   @IsString()
   phone!: string;
 
-  @IsString()
-  password!: string;
 
   @IsString()
   ville!: string;
 
-  @IsBoolean()
-  published!: boolean;
 
+  @IsInt()
+  category_id!: number;
 }
-

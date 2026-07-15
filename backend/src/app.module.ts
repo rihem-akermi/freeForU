@@ -10,6 +10,7 @@ import { DatabaseModule } from './database/database.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { CategoriesModule } from './categories/categories.module';
 
 
 
@@ -18,7 +19,8 @@ import { ContactsModule } from './contacts/contacts.module';
   imports: [
     DatabaseModule, UsersModule, AgentsModule, ReservationsModule, AuthModule ,
     ConfigModule.forRoot(),
-    ContactsModule//charge automatiquement le .env
+    ContactsModule,
+    CategoriesModule//charge automatiquement le .env
   ],
   controllers: [],
   providers: [],

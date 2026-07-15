@@ -1,4 +1,5 @@
 import { getAgents } from "@/lib/api/agents";
+import { getContacts } from "@/lib/api/contacts";
 import { getReservations } from "@/lib/api/reservations";
 import { getUsers } from "@/lib/api/users";
 
@@ -7,11 +8,13 @@ export default async function PageAdmin() {
   const users = await getUsers();
   const agents = await getAgents();
   const reservations = await getReservations();
+  const contacts = await getContacts();
 
   const cards = [
-    { label: "Utilisateurs", value: users.length },
+    { label: "Clients", value: users.length },
     { label: "Agents", value: agents.length },
     { label: "Réservations", value: reservations.length },
+    { label: "Contacts" , value:contacts.length }
   ];
 
   return (

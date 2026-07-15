@@ -2,27 +2,37 @@
 import { useScrollReveal } from "$/hooks/useScrollReveal";
 import { useState } from "react";
 import styles from "./Contact.module.css";
+import { addContact } from "@/lib/api/contacts";
+
 
 export default function Contact() {
   const { ref, isVisible } = useScrollReveal();
   const [name,setName] = useState("")
   const [email,setEmail] = useState("")
-  const [text ,setText] = useState("")
+  const [message ,setMessage] = useState("")
   const [allData , setAllData] = useState({
-    name : "",
-    email : "",
-    text : ""
+    name,
+    email,
+    message
   })
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>){
-    e.preventDefault()
-    setAllData({
-         name : name ,
-         email : email , 
-         text : text
-      })
-    
-  }
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const contactData = {
+      name,
+      email,
+      message
+    };
+
+  const isCreated = await addContact(contactData);
+
+  console.log("is the contact created", isCreated);
+
+  setName("");
+  setEmail("");
+  setMessage("");
+}
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>){
     setName(e.target.value)
@@ -33,10 +43,8 @@ export default function Contact() {
   }
 
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>){
-    setText(e.target.value)
+    setMessage(e.target.value)
   }
-
-
 
   return (
     <section
@@ -61,7 +69,7 @@ export default function Contact() {
           required />
         <textarea 
           placeholder="Votre message" 
-          value={text}
+          value={message}
           rows={4} 
           onChange={(e)=>handleTextChange(e)}
           required />
