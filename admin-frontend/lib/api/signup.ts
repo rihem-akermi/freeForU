@@ -7,7 +7,7 @@ type SignupData = {
   ville: string;
   phone: string;
   role: "CLIENT" | "AGENT";
-  category?: string; //optinnel
+  category_id?:number; //optinnel
 };
 
 export async function signup(data: SignupData) {

@@ -104,7 +104,7 @@ export class AuthService {
 
   async signup(data: {
   name: string; email: string; password: string; ville: string; phone: string;
-  role: 'CLIENT' | 'AGENT'; category?: string;
+  role: 'CLIENT' | 'AGENT'; category_id?: number;
   }) {
 
   const existingUser = await this.authRepository.findUserByEmail(data.email);
@@ -118,10 +118,10 @@ export class AuthService {
 
   let created;
   if (data.role === 'AGENT') {
-    if (!data.category) {
+    if (!data.category_id) {
       throw new ConflictException('La catégorie est requise pour un agent');//409
     }
-    created = await this.authRepository.createAgent({ ...data, password: hashedPassword, category: data.category });
+    created = await this.authRepository.createAgent({ ...data, password: hashedPassword, category_id: data.category_id });
   } else {
     created = await this.authRepository.createUser({ ...data, password: hashedPassword });
   }

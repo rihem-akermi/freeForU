@@ -33,12 +33,26 @@ export class AuthRepository {
   }
 
   
-  async createAgent(data: { name: string; email: string; password: string; ville: string; phone: string; category: string }) {
+  async createAgent(data: { name: string; email: string; password: string; ville: string; phone: string; category_id: number }) {
   const result = await this.databaseService.query(
-    `INSERT INTO agents (name, email, password, role, ville, phone, category, published)
-     VALUES ($1, $2, $3, 'AGENT', $4, $5, $6, false)
-     RETURNING *`,
-    [data.name, data.email, data.password, data.ville, data.phone, data.category],
+    `
+    INSERT INTO agents
+    (
+    name,
+    email,
+    phone,
+    ville,
+    password,
+    category_id,
+    role
+    )
+
+    VALUES
+    ($1,$2,$3,$4,$5,$6,'AGENT')
+
+    RETURNING *
+    `,
+    [data.name, data.email, data.phone, data.ville, data.password, data.category_id],
   );
   return result.rows[0];
   }

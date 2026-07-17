@@ -62,7 +62,7 @@ export class AuthController {
 @Post('signup')
 async signup(@Body() body: {
   name: string; email: string; password: string; ville: string; phone: string;
-  role: 'CLIENT' | 'AGENT'; category?: string;
+  role: 'CLIENT' | 'AGENT'; category_id?: number;
 }) {
   const created = await this.authService.signup(body);
   return { message: 'Compte créé avec succès', user: created };

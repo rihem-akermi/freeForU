@@ -3,15 +3,12 @@ import { DatabaseService } from "src/database/database.service";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 
-
 @Injectable()
 export class AgentsRepository {
+  constructor(private databaseService: DatabaseService) {}
 
-  constructor(
-  private databaseService: DatabaseService){}
-
-  async findAll(){
-  const result = await this.databaseService.query(`
+  async findAll() {
+    const result = await this.databaseService.query(`
       SELECT
       a.id,
       a.name,
@@ -27,16 +24,53 @@ export class AgentsRepository {
       ON a.category_id = c.id
 
       ORDER BY a.id
-      `
-  );
+      `);
 
-  return result.rows;
-
+    return result.rows;
   }
 
-  async addAgent(agent:CreateAgentDto){
+  async findById(id: number) {
+    const result = await this.databaseService.query(
+      `
+    SELECT
+    a.id,
+    a.name,
+    a.email,
+    a.phone,
+    a.ville,
+    a.role,
+    a.category_id,
+    c.nom AS category,
+    a.photo_url,
+    a.bio,
+    a.zone,
+    a.service_mode,
+    a.tarif_min,
+    a.tarif_max,
+    a.age,
+    a.sexe,
+    a.experience_years,
+    a.social_links,
+    a.id_card_url,
+    a.work_certificate_url,
+    a.verification_status
+
+    FROM agents a
+
+    LEFT JOIN categories c
+    ON a.category_id = c.id
+
+    WHERE a.id = $1
+    `,
+      [id]
+    );
+
+    return result.rows[0];
+  }
+
+  async addAgent(agent: CreateAgentDto) {
     const insert = await this.databaseService.query(
-    `
+      `
     INSERT INTO agents
     (
     name,
@@ -53,23 +87,20 @@ export class AgentsRepository {
 
     RETURNING id
     `,
-    [
-    agent.name,
-    agent.email,
-    agent.phone,
-    agent.ville,
-    agent.password,
-    agent.category_id
-    ]
+      [
+        agent.name,
+        agent.email,
+        agent.phone,
+        agent.ville,
+        agent.password,
+        agent.category_id,
+      ]
     );
-
-
 
     const id = insert.rows[0].id;
 
-
     const result = await this.databaseService.query(
-    `
+      `
     SELECT
     a.id,
     a.name,
@@ -85,50 +116,33 @@ export class AgentsRepository {
 
     WHERE a.id=$1
     `,
-    [id]
+      [id]
     );
 
-
     return result.rows[0];
-
   }
 
-  async updateAgent(
-    agent:UpdatedAgentDto,
-    id:number){
-
-
+  async updateAgent(agent: UpdatedAgentDto, id: number) {
     const fields = Object.keys(agent);
     const values = Object.values(agent);
 
-
-    if(fields.length===0)
-    return null;
-
-
+    if (fields.length === 0) return null;
 
     const setQuery = fields
-    .map((field,index)=>`${field}=$${index+1}`)
-    .join(",");
-
-
+      .map((field, index) => `${field}=$${index + 1}`)
+      .join(",");
 
     await this.databaseService.query(
-    `
+      `
     UPDATE agents
     SET ${setQuery}
-    WHERE id=$${fields.length+1}
+    WHERE id=$${fields.length + 1}
     `,
-    [
-    ...values,
-    id
-    ]
+      [...values, id]
     );
 
-
-
     const result = await this.databaseService.query(
-    `
+      `
     SELECT
     a.id,
     a.name,
@@ -144,36 +158,28 @@ export class AgentsRepository {
 
     WHERE a.id=$1
     `,
-    [id]
+      [id]
     );
 
-
-
     return result.rows[0];
-
   }
 
-  async deleteAgent(id:number){
-
+  async deleteAgent(id: number) {
     const result = await this.databaseService.query(
-    `
+      `
     DELETE FROM agents
     WHERE id=$1
     RETURNING *
     `,
-    [id]
+      [id]
     );
 
-
     return result.rows[0];
-
   }
 
-  async searchAgents(name:string){
-
-
-  const result = await this.databaseService.query(
-  `
+  async searchAgents(name: string) {
+    const result = await this.databaseService.query(
+      `
   SELECT
   a.id,
   a.name,
@@ -193,14 +199,9 @@ export class AgentsRepository {
 
   LIMIT 10
   `,
-  [
-  `${name}%`
-  ]
-  );
+      [`${name}%`]
+    );
 
-
-  return result.rows;
-
+    return result.rows;
   }
-
 }

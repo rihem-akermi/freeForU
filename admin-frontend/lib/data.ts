@@ -1,15 +1,15 @@
 export type User = {
-  id: number ,
-  name: string,
-  email: string,
-  phone: string,
-  password : string,
-  role: "CLIENT" | "ADMIN",
-  ville: string ,
-  created_at: string,
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: "CLIENT" | "ADMIN";
+  ville: string;
+  created_at: string;
 };
 
-
+/*
 export interface Agent {
   id: number;
   name: string;
@@ -19,8 +19,32 @@ export interface Agent {
   phone: string;
   role: "AGENT";
 }
+*/
 
-
+export interface Agent {
+  id: number;
+  name: string;
+  category: string;
+  category_id?: number;
+  ville: string;
+  email: string;
+  phone: string;
+  role: "AGENT";
+  photo_url?: string;
+  bio?: string;
+  zone?: string;
+  service_mode?: string;
+  tarif_min?: number;
+  tarif_max?: number;
+  age?: number;
+  sexe?: string;
+  experience_years?: number;
+  social_links?: Record<string, string>;
+  id_card_url?: string;
+  work_certificate_url?: string;
+  verification_status?: string;
+}
+/*
 export type CreateAgentData = {
   name: string;
   email: string;
@@ -29,7 +53,7 @@ export type CreateAgentData = {
   password: string;
   category_id: number;
 };
-
+*/
 export type Reservation = {
   id: string;
 
@@ -52,9 +76,9 @@ export type Reservation = {
 };
 
 export type Contact = {
-  idcontact : number , 
-  name : string , 
-  email : string , 
-  message : string 
-  created_at : string 
-}
+  idcontact: number;
+  name: string;
+  email: string;
+  message: string;
+  created_at: string;
+};
