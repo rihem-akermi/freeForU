@@ -78,11 +78,12 @@ export async function searchAgents(name: string) {
 
 export async function getMyProfile(): Promise<Agent> {
   const res = await api.get<Agent>("/agents/me");
-
+  console.log("profile : ", res.data);
   return res.data;
 }
 
 export async function updateMyProfile(data: UpdateAgentData): Promise<Agent> {
+  // le backend sait déjà qui fait la requête grâce au token dans les cookies
   const res = await api.patch<Agent>("/agents/me", data);
 
   return res.data;

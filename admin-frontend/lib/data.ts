@@ -39,10 +39,10 @@ export interface Agent {
   age?: number;
   sexe?: string;
   experience_years?: number;
-  social_links?: Record<string, string>;
+  social_links?: Record<string, string>;//? : record
   id_card_url?: string;
   work_certificate_url?: string;
-  verification_status?: string;
+  verification_status?: string; //attestation
 }
 /*
 export type CreateAgentData = {
@@ -82,3 +82,8 @@ export type Contact = {
   message: string;
   created_at: string;
 };
+
+export type Category = {
+  id : number ; 
+  name : string 
+}

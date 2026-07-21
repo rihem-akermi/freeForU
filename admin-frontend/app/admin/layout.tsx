@@ -6,9 +6,14 @@ const adminLinks = [
   { href: "/admin/agents", label: "Agents" },
   { href: "/admin/reservations", label: "Réservations" },
   { href: "/admin/contacts", label: "Contacts" },
+  { href: "/admin/categories", label: "Categories" },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-screen">
       <Sidebar title="Admin" links={adminLinks} />

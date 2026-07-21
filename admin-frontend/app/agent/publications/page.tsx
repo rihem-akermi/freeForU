@@ -1,62 +1,49 @@
-// app/agent/publications/page.tsx
 'use client'
-import { useState } from "react";
-
-type Publication = {
-  id: number;
-  photo_url: string;
-  description: string;
-  status: "en_attente" | "approuvee" | "rejetee";
-  created_at: string;
-};
-
-// Mock — sera remplacé par un fetch GET /agent/publications
-const mockPublications: Publication[] = [
-  {
-    id: 1,
-    photo_url: "https://placehold.co/300x200",
-    description: "Installation complète de sanitaires pour salle de bain neuve, devis gratuit sur place.",
-    status: "approuvee",
-    created_at: "2026-07-02",
-  },
-  {
-    id: 2,
-    photo_url: "https://placehold.co/300x200",
-    description: "Réparation urgente de fuite d'eau, disponible 7j/7 dans la région de Sfax.",
-    status: "en_attente",
-    created_at: "2026-07-10",
-  },
-  {
-    id: 3,
-    photo_url: "https://placehold.co/300x200",
-    description: "Rénovation complète de tuyauterie ancienne, matériaux inclus.",
-    status: "rejetee",
-    created_at: "2026-06-28",
-  },
-];
+import { useEffect, useState } from "react";
+import { getMyPublications, createPublication, Publication } from "@/lib/api/publications";
 
 export default function MesPublicationsPage() {
-  const [publications, setPublications] = useState<Publication[]>(mockPublications);
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [description, setDescription] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState("");
 
-  const handlePublish = () => {
+  useEffect(() => {
+    loadPublications();
+  }, []);
+
+  async function loadPublications() {
+    setLoading(true);
+    try {
+      const data = await getMyPublications();
+      setPublications(data);
+    } catch (err) {
+      console.error(err);
+      setError("Impossible de charger vos publications.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handlePublish = async () => {
     if (!description.trim()) return;
-
-    // Mock — sera remplacé par POST /agent/publications
-    const newPub: Publication = {
-      id: Date.now(),
-      photo_url: photoFile ? URL.createObjectURL(photoFile) : "https://placehold.co/300x200",
-      description,
-      status: "en_attente",
-      created_at: new Date().toISOString().slice(0, 10),
-    };
-
-    setPublications((prev) => [newPub, ...prev]);
-    setDescription("");
-    setPhotoFile(null);
-    setShowForm(false);
+    setPublishing(true);
+    setError("");
+    try {
+      const newPub = await createPublication({ description, photo: photoFile ?? undefined });
+      setPublications((prev) => [newPub, ...prev]);
+      setDescription("");
+      setPhotoFile(null);
+      setShowForm(false);
+    } catch (err) {
+      console.error(err);
+      setError("Erreur lors de la publication, réessayez.");
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -73,13 +60,12 @@ export default function MesPublicationsPage() {
         </button>
       </div>
 
-      {/* --- Formulaire d'ajout --- */}
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
       {showForm && (
         <div className="bg-[var(--color-card)] rounded-lg p-5 mb-6 space-y-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-[var(--color-text-body)]">
-              Photo
-            </label>
+            <label className="text-xs font-medium text-[var(--color-text-body)]">Photo</label>
             <input
               type="file"
               accept="image/*"
@@ -107,38 +93,42 @@ export default function MesPublicationsPage() {
 
           <button
             onClick={handlePublish}
-            className="rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-5 py-2.5 text-sm font-medium transition"
+            disabled={publishing}
+            className="rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-5 py-2.5 text-sm font-medium transition disabled:opacity-50"
           >
-            Publier
+            {publishing ? "Publication..." : "Publier"}
           </button>
         </div>
       )}
 
-      {/* --- Historique --- */}
-      <div className="space-y-4">
-        {publications.length === 0 && (
-          <p className="text-sm text-[var(--color-text-body)]">
-            Vous n'avez pas encore publié. Cliquez sur "+ Ajouter une publication" pour commencer.
-          </p>
-        )}
+      {loading ? (
+        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
+      ) : (
+        <div className="space-y-4">
+          {publications.length === 0 && (
+            <p className="text-sm text-[var(--color-text-body)]">
+              Vous n'avez pas encore publié. Cliquez sur "+ Ajouter une publication" pour commencer.
+            </p>
+          )}
 
-        {publications.map((pub) => (
-          <div key={pub.id} className="flex gap-4 bg-white border border-stone-200 rounded-lg p-4">
-            <img
-              src={pub.photo_url}
-              alt=""
-              className="w-28 h-20 object-cover rounded-md shrink-0"
-            />
-            <div className="flex-1 flex flex-col justify-between">
-              <p className="text-sm text-[var(--color-text-dark)]">{pub.description}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-[var(--color-text-body)]">{pub.created_at}</span>
-                <PublicationStatusBadge status={pub.status} />
+          {publications.map((pub) => (
+            <div key={pub.id} className="flex gap-4 bg-white border border-stone-200 rounded-lg p-4">
+              <img
+                src={pub.photo_url}
+                alt=""
+                className="w-28 h-20 object-cover rounded-md shrink-0"
+              />
+              <div className="flex-1 flex flex-col justify-between">
+                <p className="text-sm text-[var(--color-text-dark)]">{pub.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-[var(--color-text-body)]">{pub.created_at}</span>
+                  <PublicationStatusBadge status={pub.status} />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

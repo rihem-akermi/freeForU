@@ -64,7 +64,7 @@ export class AgentsRepository {
     `,
       [id]
     );
-
+    console.log(`profile ${id} of from db` , result.rows[0])
     return result.rows[0];
   }
 

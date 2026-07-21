@@ -7,27 +7,27 @@ import { UpdatedAgentDto } from "./dto/update-agent.dto";
 export class AgentsService {
   constructor(private agentsRepository: AgentsRepository) {}
 
-  getAllAgents() {
-    return this.agentsRepository.findAll();
+  async getAllAgents() {
+    return await this.agentsRepository.findAll();
   }
 
-  getAgentById(id: number) {
-    return this.agentsRepository.findById(id);
+  async getAgentById(id: number) {
+    return await this.agentsRepository.findById(id);
   }
 
-  addNewAgent(agent: CreateAgentDto) {
-    return this.agentsRepository.addAgent(agent);
+  async addNewAgent(agent: CreateAgentDto) {
+    return await this.agentsRepository.addAgent(agent);
   }
 
-  updateAgent(agent: UpdatedAgentDto, id: number) {
-    return this.agentsRepository.updateAgent(agent, id);
+  async updateAgent(agent: UpdatedAgentDto, id: number) {
+    return await this.agentsRepository.updateAgent(agent, id);
   }
 
-  deleteAgent(id: number) {
-    return this.agentsRepository.deleteAgent(id);
+  async deleteAgent(id: number) {
+    return await this.agentsRepository.deleteAgent(id);
   }
 
-  searchAgents(name: string) {
-    return this.agentsRepository.searchAgents(name);
+  async searchAgents(name: string) {
+    return await this.agentsRepository.searchAgents(name);
   }
 }

@@ -11,6 +11,7 @@ import { ReservationsModule } from './reservations/reservations.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CategoriesModule } from './categories/categories.module';
+import { PublicationsModule } from './publications/publications.module';
 
 
 
@@ -20,7 +21,8 @@ import { CategoriesModule } from './categories/categories.module';
     DatabaseModule, UsersModule, AgentsModule, ReservationsModule, AuthModule ,
     ConfigModule.forRoot(),
     ContactsModule,
-    CategoriesModule//charge automatiquement le .env
+    CategoriesModule,
+    PublicationsModule//charge automatiquement le .env
   ],
   controllers: [],
   providers: [],

@@ -1,22 +1,28 @@
 import api from "./interceptor";
+import { Category } from "../data";
 
-
-export type Category = {
-
-id:number;
-
-nom:string;
-
+type newCategory = {
+  name : string 
 }
 
+export async function getCategories(): Promise<Category[]> {
+  const response = await api.get<Category[]>("/categories");
 
+  return response.data;
+}
 
-export async function getCategories():Promise<Category[]>{
+export async function addCategory({name}:newCategory) {
+  const response = await api.post<Category>("/categories", { name });
 
-const response =
-await api.get<Category[]>("/categories");
+  return response.data;
+}
 
+export async function updateCategory(id: number,{name} : newCategory ) {
+  const response = await api.patch<Category>(`/categories/${id}`, { name });
 
-return response.data;
+  return response.data;
+}
 
+export async function deleteCategory(id: number) {
+  return await api.delete(`categories/${id}`);
 }
