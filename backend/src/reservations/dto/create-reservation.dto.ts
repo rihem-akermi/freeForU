@@ -1,11 +1,11 @@
-import { IsString } from 'class-validator';
+import { IsInt, IsString } from 'class-validator';
 
 export class CreateReservationDto {
-  @IsString()
-  clientId!: string;
+  @IsInt()
+  clientId!: number;
 
-  @IsString()
-  agentId!: string;
+  @IsInt()
+  agentId!: number;
 
   @IsString()
   dateReservation!: string;

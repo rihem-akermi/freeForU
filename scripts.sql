@@ -33,7 +33,15 @@ WHERE contype = 'f'
 AND connamespace = 'public'::regnamespace
 ORDER BY table_name;
 
-/**/
+/*les tables et leurs colonnes dans ma db*/
+
+SELECT 
+    table_name,
+    column_name,
+    data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+ORDER BY table_name, ordinal_position;
 
 /**/
 

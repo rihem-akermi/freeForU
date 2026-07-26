@@ -1,207 +1,113 @@
 import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "src/database/database.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 
 @Injectable()
 export class AgentsRepository {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    const result = await this.databaseService.query(`
-      SELECT
-      a.id,
-      a.name,
-      c.nom AS category,
-      a.ville,
-      a.email,
-      a.phone,
-      a.role
+    return this.prisma.agents.findMany({
+      include: {
+        categories: true,
+      },
+      orderBy: {
+        id: "asc",
+      },
+    });
 
-      FROM agents a
+  /*
+  probleme du category : 
+  {
+  "id": 1,
+  "name": "Ali",
 
-      LEFT JOIN categories c
-      ON a.category_id = c.id
-
-      ORDER BY a.id
-      `);
-
-    return result.rows;
+  
+  "categories": {
+    "id": 2,
+    "nom": "Photographe"
+  }
+}
+  */
+    
   }
 
   async findById(id: number) {
-    const result = await this.databaseService.query(
-      `
-    SELECT
-    a.id,
-    a.name,
-    a.email,
-    a.phone,
-    a.ville,
-    a.role,
-    a.category_id,
-    c.nom AS category,
-    a.photo_url,
-    a.bio,
-    a.zone,
-    a.service_mode,
-    a.tarif_min,
-    a.tarif_max,
-    a.age,
-    a.sexe,
-    a.experience_years,
-    a.social_links,
-    a.id_card_url,
-    a.work_certificate_url,
-    a.verification_status
-
-    FROM agents a
-
-    LEFT JOIN categories c
-    ON a.category_id = c.id
-
-    WHERE a.id = $1
-    `,
-      [id]
-    );
-    console.log(`profile ${id} of from db` , result.rows[0])
-    return result.rows[0];
+    return this.prisma.agents.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        categories: true,
+      },
+    });
   }
 
   async addAgent(agent: CreateAgentDto) {
-    const insert = await this.databaseService.query(
-      `
-    INSERT INTO agents
-    (
-    name,
-    email,
-    phone,
-    ville,
-    password,
-    category_id,
-    role
-    )
-
-    VALUES
-    ($1,$2,$3,$4,$5,$6,'AGENT')
-
-    RETURNING id
-    `,
-      [
-        agent.name,
-        agent.email,
-        agent.phone,
-        agent.ville,
-        agent.password,
-        agent.category_id,
-      ]
-    );
-
-    const id = insert.rows[0].id;
-
-    const result = await this.databaseService.query(
-      `
-    SELECT
-    a.id,
-    a.name,
-    c.nom AS category,
-    a.email,
-    a.phone,
-    a.role
-
-    FROM agents a
-
-    LEFT JOIN categories c
-    ON a.category_id = c.id
-
-    WHERE a.id=$1
-    `,
-      [id]
-    );
-
-    return result.rows[0];
+    return this.prisma.agents.create({
+      data: {
+        name: agent.name,
+        email: agent.email,
+        phone: agent.phone,
+        ville: agent.ville,
+        password: agent.password,
+        category_id: agent.category_id,
+        role: "AGENT",
+      },
+      include: {
+        categories: true,
+      },
+    });
   }
 
   async updateAgent(agent: UpdatedAgentDto, id: number) {
-    const fields = Object.keys(agent);
-    const values = Object.values(agent);
-
-    if (fields.length === 0) return null;
-
-    const setQuery = fields
-      .map((field, index) => `${field}=$${index + 1}`)
-      .join(",");
-
-    await this.databaseService.query(
-      `
-    UPDATE agents
-    SET ${setQuery}
-    WHERE id=$${fields.length + 1}
-    `,
-      [...values, id]
-    );
-
-    const result = await this.databaseService.query(
-      `
-    SELECT
-    a.id,
-    a.name,
-    c.nom AS category,
-    a.email,
-    a.phone,
-    a.role
-
-    FROM agents a
-
-    LEFT JOIN categories c
-    ON a.category_id=c.id
-
-    WHERE a.id=$1
-    `,
-      [id]
-    );
-
-    return result.rows[0];
+    return this.prisma.agents.update({
+      where: {
+        id,
+      },
+      data: agent,
+      include: {
+        categories: true,
+      },
+    });
   }
 
   async deleteAgent(id: number) {
-    const result = await this.databaseService.query(
-      `
-    DELETE FROM agents
-    WHERE id=$1
-    RETURNING *
-    `,
-      [id]
-    );
-
-    return result.rows[0];
+    return this.prisma.agents.delete({
+      where: {
+        id,
+      },
+    });
   }
 
   async searchAgents(name: string) {
-    const result = await this.databaseService.query(
-      `
-  SELECT
-  a.id,
-  a.name,
-  a.phone,
-  a.email,
-  a.ville,
-  c.nom AS category
+    return this.prisma.agents.findMany({
+      where: {
+        name: {
+          startsWith: name,
+          mode: "insensitive",
+        },
+      },
 
-  FROM agents a
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        ville: true,
+        categories: {
+          select: {
+            nom: true,
+          },
+        },
+      },
 
-  LEFT JOIN categories c
-  ON a.category_id=c.id
+      orderBy: {
+        name: "asc",
+      },
 
-  WHERE a.name ILIKE $1
-
-  ORDER BY a.name
-
-  LIMIT 10
-  `,
-      [`${name}%`]
-    );
-
-    return result.rows;
+      take: 10,
+    });
   }
 }

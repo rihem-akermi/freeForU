@@ -77,9 +77,7 @@ export class AgentsController {
   @Roles("AGENT")
   @Get("me")
   async getMyProfile(@Req() req ) {
-    console.log("the agent : ",req.user)
     const result = await this.agentsService.getAgentById(req.user.sub);
-    console.log("❌❌❌❌❌❌❌❌",result)
     return result
   }
 }

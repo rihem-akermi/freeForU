@@ -1,8 +1,124 @@
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  moduleFormat = "cjs"
+
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model agents {
+  id                   Int            @id @default(autoincrement())
+  name                 String         @db.VarChar(255)
+  phone                String?        @db.VarChar(255)
+  password             String         @db.VarChar(255)
+  ville                String?        @db.VarChar(255)
+  role                 String         @default("AGENT") @db.VarChar(20)
+  email                String?        @db.VarChar(255)
+  category_id          Int?
+  photo_url            String?        @db.VarChar(255)
+  bio                  String?
+  zone                 String?        @db.VarChar(150)
+  service_mode         String?        @db.VarChar(20)
+  tarif_min            Decimal?       @db.Decimal(10, 2)
+  tarif_max            Decimal?       @db.Decimal(10, 2)
+  age                  Int?
+  sexe                 String?        @db.VarChar(10)
+  experience_years     Int?
+  social_links         Json?
+  id_card_url          String?        @db.VarChar(255)
+  work_certificate_url String?        @db.VarChar(255)
+  verification_status  String?        @default("non_verifie") @db.VarChar(20)
+  categories           categories?    @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  offers               offers[]
+  publications         publications[]
+  reservations         reservations[]
+  reviews              reviews[]
+}
+
+model categories {
+  id     Int      @id @default(autoincrement())
+  nom    String   @unique @db.VarChar(100)
+  agents agents[]
+}
+
+model contacts {
+  idcontact  Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  email      String    @db.VarChar(255)
+  message    String
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model offers {
+  id          Int      @id @default(autoincrement())
+  agent_id    Int
+  title       String   @db.VarChar(150)
+  description String
+  cover_image String?  @db.VarChar(255)
+  min_price   Decimal? @db.Decimal(10, 2)
+  max_price   Decimal? @db.Decimal(10, 2)
+  status      String   @default("en_attente") @db.VarChar(20)
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  agents      agents   @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([active, status], map: "idx_offers_active_status")
+  @@index([agent_id], map: "idx_offers_agent_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model publications {
+  id          Int       @id @default(autoincrement())
+  agent_id    Int
+  photo_url   String?   @db.VarChar(255)
+  description String
+  status      String?   @default("en_attente") @db.VarChar(20)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  agents      agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reservations {
+  id               Int       @id @default(autoincrement())
+  client_id        Int
+  agent_id         Int
+  date_reservation DateTime  @db.Date
+  status           String    @default("en_attente") @db.VarChar(20)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  agents           agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reviews          reviews?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reviews {
+  id             Int          @id @default(autoincrement())
+  agent_id       Int
+  reservation_id Int          @unique
+  client_id      Int
+  rating         Int?
+  comment        String?
+  created_at     DateTime     @default(now()) @db.Timestamp(6)
+  agents         agents       @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reservations   reservations @relation(fields: [reservation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([agent_id], map: "idx_reviews_agent_id")
+}
+
+model users {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(255)
+  email        String         @unique @db.VarChar(255)
+  password     String         @db.VarChar(255)
+  role         String         @default("CLIENT") @db.VarChar(20)
+  created_at   DateTime?      @default(now()) @db.Timestamp(6)
+  ville        String?        @db.VarChar(100)
+  phone        String?        @db.VarChar(20)
+  reservations reservations[]
 }

@@ -43,6 +43,14 @@ export type UpdateAgentData = Partial<CreateAgentData> & {
   work_certificate_url?: string;
 };
 
+export type AgentSearchResult = {
+  id:number;
+  name:string;
+  phone:string | null;
+  email:string | null;
+  ville:string | null;
+}
+
 export async function getAgents(): Promise<Agent[]> {
   const res = await api.get<Agent[]>("/agents");
 
@@ -70,10 +78,14 @@ export async function deleteAgent(id: number): Promise<Agent> {
   return res.data;
 }
 
-export async function searchAgents(name: string) {
-  if (!name.trim()) return [];
-  const res = await api.get(`/agents/search?name=${name}`);
-  return res.data;
+export async function searchAgents(name:string):Promise<AgentSearchResult[]>{
+
+ const res = await api.get(
+   `/agents/search?name=${name}`
+ );
+
+ return res.data;
+
 }
 
 export async function getMyProfile(): Promise<Agent> {

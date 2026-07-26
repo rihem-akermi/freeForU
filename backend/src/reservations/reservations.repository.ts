@@ -1,201 +1,106 @@
-import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "src/database/database.service";
-import { BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class reservationsRepository {
-    constructor (private databaseService : DatabaseService){}
+  constructor(private prisma: PrismaService) {}
 
-    async findAll() {
-    const result = await this.databaseService.query(`
-      SELECT
-    reservations.id,
-    reservations.client_id,
-    reservations.agent_id,
+  async findAll() {
+    return this.prisma.reservations.findMany({
+      include: {
+        users: {
+          select: {
+            name: true,
+            phone: true,
+            email: true,
+            ville: true,
+          },
+        },
 
-    users.name AS client_name,
-    users.phone AS client_phone,
-    users.email AS client_email,
-    users.ville AS client_ville,
+        agents: {
+          select: {
+            name: true,
+            phone: true,
+            email: true,
+            ville: true,
+          },
+        },
+      },
 
-    agents.name AS agent_name,
-    agents.phone AS agent_phone,
-    agents.email AS agent_email,
-    agents.ville AS agent_ville,
-
-    reservations.date_reservation,
-    reservations.status,
-    reservations.created_at
-
-    FROM reservations
-
-    JOIN users
-    ON reservations.client_id = users.id
-
-    JOIN agents
-    ON reservations.agent_id = agents.id
-
-    ORDER BY reservations.created_at DESC;
-    `);
-    return result.rows;//table mrig des reservations
+      orderBy: {
+        created_at: "desc",
+      },
+    });
   }
 
-  async create(clientId: string, agentId: string, dateReservation: string) {
+  async create(clientId: number, agentId: number, dateReservation: string) {
+    const client = await this.prisma.users.findFirst({
+      where: {
+        id: clientId,
+        role: "CLIENT",
+      },
+    });
 
-  // Verify client exists
-  const clientResult = await this.databaseService.query(
-    `
-    SELECT id
-    FROM users
-    WHERE id = $1 AND role = 'CLIENT'
-    LIMIT 1
-    `,
-    [clientId],
-  );
-
-
-  // Verify agent exists
-  const agentResult = await this.databaseService.query(
-    `
-    SELECT id
-    FROM agents
-    WHERE id = $1
-    LIMIT 1
-    `,
-    [agentId],
-  );
-
-
-  const client = clientResult.rows[0];
-  const agent = agentResult.rows[0];
-
-
-  if (!client) {
-    throw new BadRequestException(
-      `Le client avec l'ID ${clientId} n'existe pas.`
-    );
-  }
-
-
-  if (!agent) {
-    throw new BadRequestException(
-      `L'agent avec l'ID ${agentId} n'existe pas.`
-    );
-  }
-
-
-
-  // Insert only IDs (no duplicated information)
-  const result = await this.databaseService.query(
-    `
-    INSERT INTO reservations
-    (
-      client_id,
-      agent_id,
-      date_reservation,
-      status
-    )
-
-    VALUES
-    ($1, $2, $3, 'EN_ATTENTE')
-
-    RETURNING id
-    `,
-    [
-      client.id,
-      agent.id,
-      dateReservation
-    ],
-  );
-
-
-  const createdId = result.rows[0].id;
-
-
-
-  // Return complete reservation information
-  const createdReservation = await this.databaseService.query(
-    `
-    SELECT
-
-      reservations.id,
-      reservations.client_id,
-      reservations.agent_id,
-
-
-      users.name AS client_name,
-      users.phone AS client_phone,
-      users.email AS client_email,
-      users.ville AS client_ville,
-
-
-      agents.name AS agent_name,
-      agents.phone AS agent_phone,
-      agents.email AS agent_email,
-      agents.ville AS agent_ville,
-
-
-      reservations.date_reservation,
-      reservations.status,
-      reservations.created_at
-
-
-    FROM reservations
-
-
-    JOIN users
-    ON reservations.client_id = users.id
-
-
-    JOIN agents
-    ON reservations.agent_id = agents.id
-
-
-    WHERE reservations.id = $1
-
-    LIMIT 1
-    `,
-    [createdId],
-  );
-
-
-  return createdReservation.rows[0];
-}
-
-  async updateReservation(id: number, part: { status?: string; date_reservation?: string }) {
-    const fields = Object.keys(part);
-    const values = Object.values(part);
-
-    if (fields.length === 0) {
-      return null;
+    if (!client) {
+      throw new BadRequestException(
+        `Le client avec l'ID ${clientId} n'existe pas.`
+      );
     }
 
-    const setQuery = fields
-      .map((field, index) => `${field} = $${index + 1}`)
-      .join(', ');
+    const agent = await this.prisma.agents.findUnique({
+      where: {
+        id: agentId,
+      },
+    });
 
-    const query = `
-      UPDATE reservations
-      SET ${setQuery}
-      WHERE id = $${fields.length + 1}
-      RETURNING *
-    `;
+    if (!agent) {
+      throw new BadRequestException(
+        `L'agent avec l'ID ${agentId} n'existe pas.`
+      );
+    }
 
-    const result = await this.databaseService.query(
-      query,
-      [...values, id],
-    );
-    const updatedReservation = result.rows[0]; 
-    return updatedReservation
+    return this.prisma.reservations.create({
+      data: {
+        client_id: clientId,
+        agent_id: agentId,
+        date_reservation: new Date(dateReservation),
+        status: "en_attente",
+      },
+
+      include: {
+        users: true,
+        agents: true,
+      },
+    });
+  }
+
+  async updateReservation(
+    id: number,
+    part: {
+      status?: string;
+      date_reservation?: string;
+    }
+  ) {
+    return this.prisma.reservations.update({
+      where: {
+        id,
+      },
+
+      data: {
+        ...part,
+
+        ...(part.date_reservation && {
+          date_reservation: new Date(part.date_reservation),
+        }),
+      },
+    });
   }
 
   async delete(id: number) {
-    const result = await this.databaseService.query(
-      'DELETE FROM reservations WHERE id = $1 RETURNING *',
-      [id],
-    );
-    const deletedReservation = result.rows[0];  
-    return deletedReservation
+    return this.prisma.reservations.delete({
+      where: {
+        id,
+      },
+    });
   }
-
 }

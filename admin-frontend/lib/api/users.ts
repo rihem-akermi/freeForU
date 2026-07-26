@@ -4,11 +4,11 @@ export type {User}
 
 
 export type ClientSearchResult = {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  ville: string;
+    id: number;
+    name: string;
+    phone: string | null;
+    email: string;
+    ville: string | null;
 };
 
 export async function getUsers(): Promise<User[]> {

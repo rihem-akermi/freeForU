@@ -9,19 +9,8 @@ export type User = {
   created_at: string;
 };
 
-/*
-export interface Agent {
-  id: number;
-  name: string;
-  category: string;
-  ville : string ;
-  email: string;
-  phone: string;
-  role: "AGENT";
-}
-*/
 
-export interface Agent {
+export type Agent = {
   id: number;
   name: string;
   category: string;
@@ -44,31 +33,28 @@ export interface Agent {
   work_certificate_url?: string;
   verification_status?: string; //attestation
 }
-/*
-export type CreateAgentData = {
-  name: string;
-  email: string;
-  phone: string;
-  ville: string;
-  password: string;
-  category_id: number;
-};
-*/
+
 export type Reservation = {
-  id: string;
+  id: number;
 
-  client_id: string;
-  agent_id: string;
+  client_id: number;
+  agent_id: number;
 
-  client_name: string;
-  client_phone: string;
-  client_email: string;
-  client_ville: string;
+  users: {
+    id: number;
+    name: string;
+    phone: string | null;
+    email: string;
+    ville: string | null;
+  };
 
-  agent_name: string;
-  agent_phone: string;
-  agent_email: string;
-  agent_ville: string;
+  agents: {
+    id: number;
+    name: string;
+    phone: string | null;
+    email: string | null;
+    ville: string | null;
+  };
 
   date_reservation: string;
   status: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE";

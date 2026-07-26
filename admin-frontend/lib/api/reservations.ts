@@ -11,8 +11,8 @@ export async function getReservations(): Promise<Reservation[]> {
 
 export async function addReservation(
   reservation: {
-    clientId: string;
-    agentId: string;
+    clientId: number;
+    agentId: number;
     dateReservation: string;
   }
 ): Promise<Reservation> {
@@ -26,13 +26,13 @@ export async function addReservation(
 }
 
 
-export async function updateReservation(id: string, data: Partial<Reservation>): Promise<Reservation> {
+export async function updateReservation(id: number, data: Partial<Reservation>): Promise<Reservation> {
   const response = await api.patch<Reservation>(`/reservations/${id}`, data);
   const updated = response.data
   return updated;
 }
 
-export async function deleteReservation(id: string): Promise<Reservation> {
+export async function deleteReservation(id: number): Promise<Reservation> {
   const res = await api.delete<Reservation>(`/reservations/${id}`,);
   const deletedReservation = res.data
   return deletedReservation

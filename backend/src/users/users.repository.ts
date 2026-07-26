@@ -1,93 +1,76 @@
-import { Injectable } from '@nestjs/common';
-import { DatabaseService } from '../database/database.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdatedUserDto } from './dto/update-user.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdatedUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersRepository {
-  constructor(private databaseService: DatabaseService) {
-      // 👆 injection : Nest donne automatiquement l'instance partagée de DatabaseService
-     // ya3ni k tetsan3 usersrepository toul nest ta3teha an existence instance of databaseService bech ykounouch multiple connexions 
-    }
+
+  constructor(private prisma: PrismaService) {}
+
 
   async findAll() {
-    const result = await this.databaseService.query('SELECT * FROM users');
-    console.log("table of " , result.rowCount , "rows")
-    return result.rows; // tableau des lignes from PostgreSQL
+    return this.prisma.users.findMany();
   }
+
 
   async create(newUser: CreateUserDto) {
-    const result = await this.databaseService.query(
-      `INSERT INTO users (name, email, phone, password, role, ville)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
-      [newUser.name, newUser.email, newUser.phone, newUser.password, newUser.role, newUser.ville]
-    );
-
-    /*
-    VALUES ($1, $2, $3, $4, $5) RETURNING *,
-    [name, email, password, role, ville], );
-    est plus securisé 
-    */
-    return result.rows[0]; 
+    return this.prisma.users.create({
+      data:{
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        password: newUser.password,
+        role: newUser.role,
+        ville: newUser.ville,
+      }
+    });
   }
 
-  async update(part: UpdatedUserDto, id: number) {
-    const fields = Object.keys(part);
-    const values = Object.values(part);
 
-    if (fields.length === 0) {
-      return null;
-    }
-
-    const setQuery = fields
-      .map((field, index) => `${field} = $${index + 1}`)
-      .join(', ');
-
-    const query = `
-      UPDATE users
-      SET ${setQuery}
-      WHERE id = $${fields.length + 1}
-      RETURNING *
-    `;
-
-    const result = await this.databaseService.query(query, [...values, id]);
-    return result.rows[0];
+  async update(part: UpdatedUserDto, id:number) {
+    return this.prisma.users.update({
+      where:{
+        id
+      },
+      data:part
+    });
   }
 
-  async delete(id: number) {
-    const result = await this.databaseService.query(
-      'DELETE FROM users WHERE id = $1 RETURNING *',
-      [id],
-    );
-    return result.rows[0]; // undefined si l'id n'existait pas
+
+  async delete(id:number) {
+    return this.prisma.users.delete({
+      where:{
+        id
+      }
+    });
   }
 
-  async searchClients(name: string) {
 
-  const result = await this.databaseService.query(
-    `
-    SELECT
-      id,
-      name,
-      phone,
-      ville,
-      email
+  async searchClients(name:string){
 
-    FROM users
+    return this.prisma.users.findMany({
+      where:{
+        role:"CLIENT",
+        name:{
+          startsWith:name,
+          mode:"insensitive"
+        }
+      },
 
-    WHERE role = 'CLIENT'
-    AND name ILIKE $1
+      select:{
+        id:true,
+        name:true,
+        phone:true,
+        ville:true,
+        email:true
+      },
 
-    ORDER BY name
+      orderBy:{
+        name:"asc"
+      },
 
-    LIMIT 10
-    `,
-    [`${name}%`],
-  );
-
-
-  return result.rows;
-}
-
+      take:10
+    });
+  }
 }

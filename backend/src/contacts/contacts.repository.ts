@@ -1,36 +1,30 @@
-import { DatabaseService } from "src/database/database.service";
-import { CreateContactDto } from "./dto/createContact.dto";
 import { Injectable } from "@nestjs/common";
+import { PrismaService } from "src/prisma/prisma.service";
+import { CreateContactDto } from "./dto/createContact.dto";
 
 @Injectable()
 export class ContactsRepository {
-    constructor (private databaseService : DatabaseService){}
+  constructor(private prisma: PrismaService) {}
 
+  async createContact(contact: CreateContactDto) {
+    return this.prisma.contacts.create({
+      data: {
+        name: contact.name,
+        email: contact.email,
+        message: contact.message,
+      },
+    });
+  }
 
-    async createContact (contact : CreateContactDto) {
-        const result = await this.databaseService.query(`
-            INSERT INTO contacts (name , email , message) 
-            VALUES ($1 , $2 ,$3)
-            returning * 
-            `,[contact.name, contact.email , contact.message])
+  async getContacts() {
+    return this.prisma.contacts.findMany();
+  }
 
-        return result.rows[0]
-    }
-
-    async getContacts (){
-        const result = await this.databaseService.query(`
-            select * from contacts 
-            `)
-        return result.rows
-    }
-
-    async deleteContact (id : number){
-        const result = await this.databaseService.query(`
-            DELETE FROM contacts 
-            WHERE idcontact = $1 
-            returning *`,
-        [id])
-        return result.rows[0]
-    }
-
+  async deleteContact(id: number) {
+    return this.prisma.contacts.delete({
+      where: {
+        idcontact: id,
+      },
+    });
+  }
 }

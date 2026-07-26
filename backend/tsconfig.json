@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
-    "resolvePackageJsonExports": true,
+    //"resolvePackageJsonExports": true, elle ne sert qu'en ESM
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,

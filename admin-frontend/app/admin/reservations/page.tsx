@@ -8,7 +8,7 @@ export default async function ReservationsPage() {
   return (
    <div>
          <h1 className="mb-6 text-2xl font-medium text-stone-900">Reservations</h1>
-         <ReservationsTable initialReservations={reservations} />
+         <ReservationsTable initialReservations={reservations}/>
        </div>
   )
   

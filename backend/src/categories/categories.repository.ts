@@ -1,55 +1,59 @@
 import { Injectable } from "@nestjs/common";
-import { DatabaseService } from "src/database/database.service";
+import { PrismaService } from "src/prisma/prisma.service";
 
 @Injectable()
 export class CategoriesRepository {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    const result = await this.databaseService.query(
-      `
-SELECT 
-id,
-nom as name 
+    const categories = await this.prisma.categories.findMany({
+      orderBy: {
+        id: "asc",
+      },
+    });
 
-FROM categories
+    //nom AS name
+    return categories.map(category => ({
+      id: category.id,
+      name: category.nom,
+    }));
 
-ORDER BY id
-`
-    );
-
-    return result.rows;
   }
 
   async addCategory(name: string) {
-    const result = await this.databaseService.query(
-      `
-      insert into categories (nom)
-      values($1)
-      returning id , nom as name `,
-      [name]
-    );
-    return result.rows[0];
+    const category = await this.prisma.categories.create({
+      data: {
+        nom: name,
+      },
+    });
+
+    return {
+      id: category.id,
+      name: category.nom,
+    };
   }
 
   async updateCategory(id: number, name: string) {
-    const result = await this.databaseService.query(
-      `
-      update categories 
-      set nom = $1
-      where id = $2
-      returning id , nom as name `,
-      [name, id]
-    );
-    return result.rows[0];
+    const category = await this.prisma.categories.update({
+      where: {
+        id,
+      },
+      data: {
+        nom: name,
+      },
+    });
+
+    return {
+      id: category.id,
+      name: category.nom,
+    };
   }
 
   async delete(id: number) {
-    return await this.databaseService.query(
-      ` 
-      delete from categories 
-      where id = $1`,
-      [id]
-    );
+    return this.prisma.categories.delete({
+      where: {
+        id,
+      },
+    });
   }
 }
