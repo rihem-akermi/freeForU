@@ -41,11 +41,6 @@ export class UpdatedAgentDto {
 
   @IsOptional()
   @IsString()
-  photo_url?: string;
-
-
-  @IsOptional()
-  @IsString()
   bio?: string;
 
 

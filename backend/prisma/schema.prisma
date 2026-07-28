@@ -1,8 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   moduleFormat = "cjs"
-
 }
 
 datasource db {
@@ -37,6 +36,8 @@ model agents {
   publications         publications[]
   reservations         reservations[]
   reviews              reviews[]
+
+
 }
 
 model categories {
@@ -67,6 +68,7 @@ model offers {
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @default(now()) @db.Timestamp(6)
   agents      agents   @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reservations reservations[]
 
   @@index([active, status], map: "idx_offers_active_status")
   @@index([agent_id], map: "idx_offers_agent_id")
@@ -74,13 +76,16 @@ model offers {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model publications {
-  id          Int       @id @default(autoincrement())
-  agent_id    Int
-  photo_url   String?   @db.VarChar(255)
-  description String
-  status      String?   @default("en_attente") @db.VarChar(20)
-  created_at  DateTime? @default(now()) @db.Timestamp(6)
-  agents      agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id           Int       @id @default(autoincrement())
+  agent_id     Int
+  titre        String?   @db.VarChar(150)
+  photo_url    String?   @db.VarChar(255)
+  description  String
+  status       String?   @default("en_attente") @db.VarChar(20)
+  likes_count  Int       @default(0)
+  saved_count  Int       @default(0)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  agents       agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -88,11 +93,16 @@ model reservations {
   id               Int       @id @default(autoincrement())
   client_id        Int
   agent_id         Int
+  offer_id         Int?
+  custom_request   String?
   date_reservation DateTime  @db.Date
   status           String    @default("en_attente") @db.VarChar(20)
+  agent_confirmed  Boolean   @default(false)
+  client_confirmed Boolean   @default(false)
   created_at       DateTime? @default(now()) @db.Timestamp(6)
   agents           agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users            users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  offers           offers?   @relation(fields: [offer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   reviews          reviews?
 }
 

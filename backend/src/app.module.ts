@@ -14,6 +14,8 @@ import { CategoriesModule } from './categories/categories.module';
 import { PublicationsModule } from './publications/publications.module';
 import { OffersModule } from './offers/offers.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 
 
@@ -26,7 +28,9 @@ import { PrismaModule } from './prisma/prisma.module';
     CategoriesModule,
     PublicationsModule,
     OffersModule,
-    PrismaModule
+    PrismaModule,
+    ReviewsModule,
+    UploadsModule
   ],
   controllers: [],
   providers: [],

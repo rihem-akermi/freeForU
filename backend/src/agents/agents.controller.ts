@@ -20,6 +20,9 @@ import { AuthGuard } from "src/auth/guards/auth.guard";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 
+import { UseInterceptors, UploadedFile } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+
 @Controller("agents")
 export class AgentsController {
   constructor(private agentsService: AgentsService) {}
@@ -41,8 +44,13 @@ export class AgentsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Patch("me")
-  async updateMyProfile(@Req() req , @Body() body: UpdatedAgentDto) {
-    return await this.agentsService.updateAgent(body, req.user.sub);
+  @UseInterceptors(FileInterceptor("photo"))
+  async updateMyProfile(
+    @Req() req,
+    @Body() body: UpdatedAgentDto,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    return await this.agentsService.updateAgent(body, req.user.sub, file);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
@@ -76,8 +84,8 @@ export class AgentsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Get("me")
-  async getMyProfile(@Req() req ) {
+  async getMyProfile(@Req() req) {
     const result = await this.agentsService.getAgentById(req.user.sub);
-    return result
+    return result;
   }
 }

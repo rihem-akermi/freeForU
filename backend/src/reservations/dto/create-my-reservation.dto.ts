@@ -1,10 +1,7 @@
-// dto/create-reservation.dto.ts (route ADMIN — inchangé + nouveaux champs)
+// dto/create-my-reservation.dto.ts (route CLIENT — pas de clientId, vient du token)
 import { IsInt, IsDateString, IsOptional, IsString } from "class-validator";
 
-export class CreateReservationDto {
-  @IsInt()
-  clientId!: number;
-
+export class CreateMyReservationDto {
   @IsInt()
   agentId!: number;
 

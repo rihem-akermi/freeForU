@@ -103,4 +103,70 @@ export class reservationsRepository {
       },
     });
   }
+
+async findById(id: number) {
+  return this.prisma.reservations.findUnique({ where: { id } });
+}
+
+async setAgentConfirmed(id: number) {
+  return this.prisma.reservations.update({
+    where: { id },
+    data: { agent_confirmed: true },
+  });
+}
+
+async setClientConfirmed(id: number) {
+  return this.prisma.reservations.update({
+    where: { id },
+    data: { client_confirmed: true },
+  });
+}
+
+async markAsTerminee(id: number) {
+  return this.prisma.reservations.update({
+    where: { id },
+    data: { status: "terminee" },
+  });
+}
+
+async createByAdmin(dto: {
+  clientId: number;
+  agentId: number;
+  dateReservation: string;
+  offerId?: number;
+  customRequest?: string;
+}) {
+  return this.prisma.reservations.create({
+    data: {
+      client_id: dto.clientId,
+      agent_id: dto.agentId,
+      date_reservation: new Date(dto.dateReservation),
+      offer_id: dto.offerId,
+      custom_request: dto.customRequest,
+      status: "en_attente",
+    },
+    include: { users: true, agents: true },
+  });
+}
+
+async createByClient(dto: {
+  clientId: number;
+  agentId: number;
+  dateReservation: string;
+  offerId?: number;
+  customRequest?: string;
+}) {
+  return this.prisma.reservations.create({
+    data: {
+      client_id: dto.clientId,
+      agent_id: dto.agentId,
+      date_reservation: new Date(dto.dateReservation),
+      offer_id: dto.offerId,
+      custom_request: dto.customRequest,
+      status: "en_attente",
+    },
+    include: { users: true, agents: true },
+  });
+}
+
 }
