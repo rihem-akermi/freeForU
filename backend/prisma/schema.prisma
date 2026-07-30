@@ -22,8 +22,6 @@ model agents {
   bio                  String?
   zone                 String?        @db.VarChar(150)
   service_mode         String?        @db.VarChar(20)
-  tarif_min            Decimal?       @db.Decimal(10, 2)
-  tarif_max            Decimal?       @db.Decimal(10, 2)
   age                  Int?
   sexe                 String?        @db.VarChar(10)
   experience_years     Int?

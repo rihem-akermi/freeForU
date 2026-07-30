@@ -1,9 +1,11 @@
+import { Type } from "class-transformer";
 import {
   IsEmail,
   IsInt,
   IsNumber,
   IsOptional,
-  IsString
+  IsString,
+  Min
 } from "class-validator";
 
 
@@ -35,6 +37,7 @@ export class UpdatedAgentDto {
 
 
   @IsOptional()
+  @Type(()=>Number)
   @IsInt()
   category_id?: number;
 
@@ -55,17 +58,9 @@ export class UpdatedAgentDto {
 
 
   @IsOptional()
-  @IsNumber()
-  tarif_min?: number;
-
-
-  @IsOptional()
-  @IsNumber()
-  tarif_max?: number;
-
-
-  @IsOptional()
+  @Type(()=>Number)
   @IsInt()
+  @Min(0)
   age?: number;
 
 
@@ -75,7 +70,9 @@ export class UpdatedAgentDto {
 
 
   @IsOptional()
+  @Type(()=>Number)
   @IsInt()
+  @Min(0)
   experience_years?: number;
 
 

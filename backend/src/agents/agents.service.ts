@@ -34,10 +34,15 @@ export class AgentsService {
       photoUrl = await this.uploadsService.uploadImage(file, "agents");
     }
 
-    return await this.agentsRepository.updateAgent(
-      { ...agent, ...(photoUrl && { photo_url: photoUrl }) },
-      id
-    );
+    const parsedAgent = {
+      ...agent,
+      ...(agent.social_links && typeof agent.social_links === "string"
+        ? { social_links: JSON.parse(agent.social_links) }
+        : {}),
+      ...(photoUrl && { photo_url: photoUrl }),
+    };
+
+    return await this.agentsRepository.updateAgent(parsedAgent, id);
   }
 
   async deleteAgent(id: number) {

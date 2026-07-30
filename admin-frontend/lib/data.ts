@@ -23,8 +23,6 @@ export type Agent = {
   bio?: string;
   zone?: string;
   service_mode?: string;
-  tarif_min?: number;
-  tarif_max?: number;
   age?: number;
   sexe?: string;
   experience_years?: number;
@@ -69,7 +67,29 @@ export type Contact = {
   created_at: string;
 };
 
-export type Category = {
+export type Category = {  
   id : number ; 
   name : string 
 }
+
+export type Publication = {
+  id: number;
+  photo_url: string;
+  titre: string;
+  description: string;
+  status: "en_attente" | "approuvee" | "rejetee";
+  created_at: string;
+};
+
+
+export type Offer = {
+  id: number;
+  title: string;
+  description: string;
+  cover_image: string | null;
+  min_price: string | null;
+  max_price: string | null;
+  status: "en_attente" | "approuvee" | "rejetee";
+  active: boolean;
+  created_at: string;
+};

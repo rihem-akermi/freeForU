@@ -49,7 +49,9 @@ export class OffersController {
     @Body() body: CreateOfferDto,
     @UploadedFile() file?: Express.Multer.File
   ) {
-    return this.offersService.createOffer(body, req.user.sub, file);
+    const result =await this.offersService.createOffer(body, req.user.sub, file);
+    console.log("the offer as a result after treating it : ", result)
+    return result
   }
 
   @UseGuards(AuthGuard, RolesGuard)
@@ -72,6 +74,7 @@ export class OffersController {
     @Body() body: UpdatedOfferDto,
     @UploadedFile() file?: Express.Multer.File
   ) {
+    console.log(body.active, typeof body.active);
     return this.offersService.updateMyOffer(body, id, req.user.sub, file);
   }
 

@@ -1,4 +1,5 @@
 // create-offer.dto.ts
+import { Type } from "class-transformer";
 import {
   IsString,
   IsNotEmpty,
@@ -19,13 +20,14 @@ export class CreateOfferDto {
   description!: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   min_price?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   max_price?: number;
-
 }

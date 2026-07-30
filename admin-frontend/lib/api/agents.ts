@@ -26,10 +26,6 @@ export type UpdateAgentData = Partial<CreateAgentData> & {
 
   service_mode?: string;
 
-  tarif_min?: number;
-
-  tarif_max?: number;
-
   age?: number;
 
   sexe?: string;
@@ -44,12 +40,12 @@ export type UpdateAgentData = Partial<CreateAgentData> & {
 };
 
 export type AgentSearchResult = {
-  id:number;
-  name:string;
-  phone:string | null;
-  email:string | null;
-  ville:string | null;
-}
+  id: number;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  ville: string | null;
+};
 
 export async function getAgents(): Promise<Agent[]> {
   const res = await api.get<Agent[]>("/agents");
@@ -78,14 +74,10 @@ export async function deleteAgent(id: number): Promise<Agent> {
   return res.data;
 }
 
-export async function searchAgents(name:string):Promise<AgentSearchResult[]>{
+export async function searchAgents(name: string): Promise<AgentSearchResult[]> {
+  const res = await api.get(`/agents/search?name=${name}`);
 
- const res = await api.get(
-   `/agents/search?name=${name}`
- );
-
- return res.data;
-
+  return res.data;
 }
 
 export async function getMyProfile(): Promise<Agent> {
@@ -94,9 +86,28 @@ export async function getMyProfile(): Promise<Agent> {
   return res.data;
 }
 
-export async function updateMyProfile(data: UpdateAgentData): Promise<Agent> {
-  // le backend sait déjà qui fait la requête grâce au token dans les cookies
-  const res = await api.patch<Agent>("/agents/me", data);
+export async function updateMyProfile(
+  data: UpdateAgentData,
+  photoFile?: File,
+): Promise<Agent> {
+  const formData = new FormData();
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+    if (key === "social_links") {
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, String(value));
+    }
+  });
+
+  if (photoFile) {
+    formData.append("photo", photoFile);
+  }
+
+  const res = await api.patch<Agent>("/agents/me", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
   return res.data;
 }

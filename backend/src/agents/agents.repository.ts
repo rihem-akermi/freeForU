@@ -22,8 +22,6 @@ export class AgentsRepository {
   {
   "id": 1,
   "name": "Ali",
-
-  
   "categories": {
     "id": 2,
     "nom": "Photographe"

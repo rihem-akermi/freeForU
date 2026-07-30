@@ -1,28 +1,28 @@
 import api from "./interceptor";
+import {Publication} from "../data"
 
-export type Publication = {
-  id: number;
-  photo_url: string;
-  description: string;
-  status: "en_attente" | "approuvee" | "rejetee";
-  created_at: string;
-};
-//still pubs for the admin 
+//still pubs for the admin
 //still///////***---**//++ */
 
+export async function getMyPublications(): Promise<Publication[]> {
+  const result = await api.get<Publication[]>("/publications/me");
+  return result.data;
+}
 
-// GET /agent/publications → toutes les pubs de l'agent connecté (via req.user.id, pattern /me)
-export async function getMyPublications(): Promise<Publication[]> { 
-    const result = await api.get<Publication[]>("/publications/me")
-    return result.data
- }
-
-// POST /agent/publications → crée une pub avec photo (multipart/form-data)
 export async function createPublication(data: {
+  titre: string;
   description: string;
   photo?: File;
-}): Promise<Publication> { 
-    const result = await api.post<Publication>("publications/me") 
-    return result.data
-    //still don't know what extra do i have to do 
- }
+}): Promise<Publication> {
+  const formData = new FormData();
+  formData.append("titre", data.titre);
+  formData.append("description", data.description);
+  if (data.photo) {
+    formData.append("photo", data.photo);
+  }
+
+  const result = await api.post<Publication>("/publications", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return result.data;
+}
