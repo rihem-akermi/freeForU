@@ -37,7 +37,7 @@ export class PublicationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Post()
-  @UseInterceptors(FileInterceptor("photo")) //champs photo du formulaire 
+  @UseInterceptors(FileInterceptor("photo")) //champs photo du formulaire
   async createPublication(
     @Req() req,
     @Body() body: CreatePublicationDto,
@@ -67,12 +67,19 @@ export class PublicationsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Patch(":id")
+  @UseInterceptors(FileInterceptor("photo"))
   async updateMyPublication(
     @Req() req,
     @Param("id", ParseIntPipe) id: number,
-    @Body() body: UpdatedPublicationDto
+    @Body() body: UpdatedPublicationDto,
+    @UploadedFile() file?: Express.Multer.File
   ) {
-    return this.publicationsService.updateMyPublication(body, id, req.user.sub);
+    return this.publicationsService.updateMyPublication(
+      body,
+      id,
+      req.user.sub,
+      file
+    );
   }
 
   @UseGuards(AuthGuard, RolesGuard)

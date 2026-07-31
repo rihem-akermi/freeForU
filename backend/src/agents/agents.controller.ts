@@ -27,6 +27,24 @@ import { FileInterceptor } from "@nestjs/platform-express";
 export class AgentsController {
   constructor(private agentsService: AgentsService) {}
 
+  @Get("search")
+  async searchAgents(@Query("name") name: string) {
+    return this.agentsService.searchAgents(name);
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
+  @Get("me")
+  async getMyProfile(@Req() req) {
+    const result = await this.agentsService.getAgentById(req.user.sub);
+    return result;
+  }
+
+   @Get(":id")
+  async getAgentById(@Param("id", ParseIntPipe) id: number) {
+    return this.agentsService.getAgentById(id);
+  }
+
   @Get()
   async getAgents() {
     return this.agentsService.getAllAgents();
@@ -74,18 +92,5 @@ export class AgentsController {
   @Delete(":id")
   async deleteAgent(@Param("id", ParseIntPipe) id: number) {
     return this.agentsService.deleteAgent(id);
-  }
-
-  @Get("search")
-  async searchAgents(@Query("name") name: string) {
-    return this.agentsService.searchAgents(name);
-  }
-
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles("AGENT")
-  @Get("me")
-  async getMyProfile(@Req() req) {
-    const result = await this.agentsService.getAgentById(req.user.sub);
-    return result;
   }
 }

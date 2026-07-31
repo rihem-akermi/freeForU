@@ -111,3 +111,8 @@ export async function updateMyProfile(
 
   return res.data;
 }
+
+export async function getAgentById(id: number): Promise<Agent> {
+  const res = await api.get<Agent>(`/agents/${id}`);
+  return res.data;
+}

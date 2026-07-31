@@ -41,13 +41,23 @@ export class PublicationsService {
   }
 
   async updateMyPublication(
-    dto: UpdatedPublicationDto,
-    id: number,
-    agentId: number
-  ) {
-    await this.checkOwnership(id, agentId);
-    return await this.publicationsRepository.update(dto, id);
+  dto: UpdatedPublicationDto,
+  id: number,
+  agentId: number,
+  file?: Express.Multer.File
+) {
+  await this.checkOwnership(id, agentId);
+
+  let photoUrl: string | undefined;
+  if (file) {
+    photoUrl = await this.uploadsService.uploadImage(file, "publications");
   }
+
+  return await this.publicationsRepository.update(
+    { ...dto, ...(photoUrl && { photo_url: photoUrl }) },
+    id
+  );
+}
 
   async deleteMyPublication(id: number, agentId: number) {
     await this.checkOwnership(id, agentId);

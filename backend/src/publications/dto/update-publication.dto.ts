@@ -1,4 +1,3 @@
-// dto/update-publication.dto.ts
 import { IsString, IsOptional, MaxLength } from "class-validator";
 
 export class UpdatedPublicationDto {
@@ -10,8 +9,4 @@ export class UpdatedPublicationDto {
   @IsOptional()
   @IsString()
   description?: string;
-
-  @IsOptional()
-  @IsString()
-  photo_url?: string;
 }
