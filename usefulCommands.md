@@ -1,5 +1,8 @@
-1. Quand on modifie schema.prisma : 
-npx prisma generate
+1. Quand on modifie schema.prisma et Regenerates the Prisma Client ❌Does NOT modify the database :
+   npx prisma generate
 
-2. Pisma lit la base est crée des models dépend des tables deja existantes : 
-npx prisma db pull
+2. Pisma lit la base est crée des models dépend des tables deja existantes :
+   npx prisma db pull
+
+3. if we change the database (by migration)
+   npx prisma migrate dev

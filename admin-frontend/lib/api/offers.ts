@@ -19,6 +19,12 @@ export async function getMyOffers(): Promise<Offer[]> {
   return result.data;
 }
 
+export async function getPublicOffers(categoryId?: number): Promise<Offer[]> {
+  const query = categoryId ? `?category_id=${categoryId}` : "";
+  const result = await api.get<Offer[]>(`/offers${query}`);
+  return result.data;
+}
+
 export async function createOffer(data: CreateOfferData): Promise<Offer> {
   console.log("the offer : ", data);
   const formData = new FormData();
@@ -44,7 +50,7 @@ export async function updateOffer(
   Object.entries(data).forEach(([key, value]) => {
     if (value === undefined || key === "photo") return;
     if (key === "active") {
-        console.log(key ," : ", value)
+      console.log(key, " : ", value);
       formData.append(key, value ? "true" : "false");
     } else {
       formData.append(key, String(value));

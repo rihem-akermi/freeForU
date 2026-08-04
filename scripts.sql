@@ -43,7 +43,10 @@ FROM information_schema.columns
 WHERE table_schema = 'public'
 ORDER BY table_name, ordinal_position;
 
-/**/
+/*change the name of a column */
+
+ALTER TABLE categories
+RENAME COLUMN nom TO name;
 
 /**/
 

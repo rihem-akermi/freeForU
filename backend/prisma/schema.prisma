@@ -34,13 +34,13 @@ model agents {
   publications         publications[]
   reservations         reservations[]
   reviews              reviews[]
-
-
+  agent_working_hours agent_working_hours[]
+  agent_blocked_slots  agent_blocked_slots[]
 }
 
 model categories {
   id     Int      @id @default(autoincrement())
-  nom    String   @unique @db.VarChar(100)
+  name    String   @unique @db.VarChar(100)
   agents agents[]
 }
 
@@ -102,6 +102,7 @@ model reservations {
   users            users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   offers           offers?   @relation(fields: [offer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   reviews          reviews?
+  heure_reservation DateTime? @db.Time
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -129,4 +130,25 @@ model users {
   ville        String?        @db.VarChar(100)
   phone        String?        @db.VarChar(20)
   reservations reservations[]
+}
+
+model agent_working_hours {
+  id         Int    @id @default(autoincrement())
+  agent_id   Int
+  day_of_week Int
+  start_time DateTime @db.Time
+  end_time   DateTime @db.Time
+  agents     agents @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+
+  @@unique([agent_id, day_of_week])
+}
+
+model agent_blocked_slots {
+  id         Int      @id @default(autoincrement())
+  agent_id   Int
+  date       DateTime @db.Date
+  start_time DateTime? @db.Time
+  end_time   DateTime? @db.Time
+  reason     String?  @db.VarChar(255)
+  agents     agents   @relation(fields: [agent_id], references: [id], onDelete: Cascade)
 }

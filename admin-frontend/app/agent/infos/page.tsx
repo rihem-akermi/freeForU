@@ -69,7 +69,7 @@ export default function MesInfosPage() {
           name: profile.name,
           phone: profile.phone,
           ville: profile.ville,
-          category_id: profile.category_id,
+          category_id: profile.categories.id,
           bio: profile.bio,
           zone: profile.zone,
           service_mode: profile.service_mode,
@@ -212,7 +212,7 @@ export default function MesInfosPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Catégorie">
             <select
-              value={profile.category_id ?? ""}
+              value={profile.categories.id ?? ""}
               onChange={(e) =>
                 handleChange("category_id", Number(e.target.value))
               }

@@ -17,7 +17,7 @@ type NewAgentForm = {
 
 type Category = {
   id: number;
-  nom: string;
+  name: string;
 };
 
 export default function AgentsTable({
@@ -75,7 +75,7 @@ export default function AgentsTable({
   }
 
   function handleEditClick(agent: Agent) {
-    const category = categories.find((c) => c.id === agent.category_id);
+    const category = categories.find((c) => c.id === agent.categories.id);
 
     setEditingId(agent.id);
 
@@ -186,7 +186,7 @@ export default function AgentsTable({
 
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.nom}
+                {category.name}
               </option>
             ))}
           </select>
@@ -263,12 +263,12 @@ export default function AgentsTable({
                     >
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.nom}
+                          {c.name}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    categories.find((c) => c.id === agent.category_id)?.nom
+                    categories.find((c) => c.id === agent.categories.id)?.name
                   )}
                 </td>
 

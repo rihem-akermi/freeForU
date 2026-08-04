@@ -52,7 +52,6 @@ export default function AgentProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* En-tête profil */}
       <div className="flex items-center gap-5 mb-6">
         <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-bg-alt)] shrink-0">
           {agent.photo_url ? (
@@ -71,7 +70,7 @@ export default function AgentProfilePage() {
             )}
           </div>
           <p className="text-sm text-[var(--color-text-body)]">
-            {agent.category} · {agent.ville}
+            {agent.categories.nom} · {agent.ville}
           </p>
           {summary && (
             <p className="text-sm text-amber-600 mt-1">

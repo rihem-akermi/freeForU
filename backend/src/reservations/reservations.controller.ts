@@ -23,6 +23,14 @@ import { CreateMyReservationDto } from "./dto/create-my-reservation.dto";
 export class ReservationsController {
   constructor(private reservationsService: ReservationsService) {}
 
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("CLIENT")
+  @Get("me")
+  async getMyReservations(@Req() req) {
+    return this.reservationsService.getMyReservations(req.user.sub);
+  }
+
+
   @Get()
   async getReservations() {
     console.log("getting infos ");
@@ -31,31 +39,30 @@ export class ReservationsController {
   }
 
   @UseGuards(AuthGuard, RolesGuard)
-@Roles("ADMIN")
-@Post()
-async addReservation(@Body() body: CreateReservationDto) {
-  return await this.reservationsService.createReservationByAdmin({
-    clientId: body.clientId,
-    agentId: body.agentId,
-    dateReservation: body.dateReservation,
-    offerId: body.offerId,
-    customRequest: body.customRequest,
-  });
-}
+  @Roles("ADMIN")
+  @Post()
+  async addReservation(@Body() body: CreateReservationDto) {
+    return await this.reservationsService.createReservationByAdmin({
+      clientId: body.clientId,
+      agentId: body.agentId,
+      dateReservation: body.dateReservation,
+      offerId: body.offerId,
+      customRequest: body.customRequest,
+    });
+  }
 
-// Nouvelle route CLIENT
-@UseGuards(AuthGuard, RolesGuard)
-@Roles("CLIENT")
-@Post("me")
-async createMyReservation(@Req() req, @Body() body: CreateMyReservationDto) {
-  return await this.reservationsService.createMyReservation(
-    body.agentId,
-    body.dateReservation,
-    req.user.sub,
-    body.offerId,
-    body.customRequest
-  );
-}
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("CLIENT")
+  @Post("me")
+  async createMyReservation(@Req() req, @Body() body: CreateMyReservationDto) {
+    return await this.reservationsService.createMyReservation(
+      body.agentId,
+      body.dateReservation,
+      req.user.sub,
+      body.offerId,
+      body.customRequest
+    );
+  }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT", "CLIENT")

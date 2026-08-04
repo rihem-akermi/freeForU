@@ -96,7 +96,7 @@ export class AgentsRepository {
         ville: true,
         categories: {
           select: {
-            nom: true,
+            name: true,
           },
         },
       },

@@ -12,8 +12,10 @@ export type User = {
 export type Agent = {
   id: number;
   name: string;
-  category: string;
-  category_id?: number;
+  categories:{
+    id:number ,
+    nom : string
+  }
   ville: string;
   email: string;
   phone: string;
@@ -92,6 +94,12 @@ export type Offer = {
   status: "en_attente" | "approuvee" | "rejetee";
   active: boolean;
   created_at: string;
+  agents?: {
+    id: number;
+    name: string;
+    ville: string | null;
+    photo_url: string | null;
+  };
 };
 
 export type Review = {

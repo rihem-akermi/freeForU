@@ -15,6 +15,10 @@ export class ReservationsService {
     return await this.reservationsRepository.findAll();
   }
 
+  async getMyReservations(clientId: number) {
+    return await this.reservationsRepository.findByClientId(clientId);
+  }
+
   async createReservation(
     clientId: number,
     agentId: number,
@@ -76,10 +80,11 @@ export class ReservationsService {
       await this.reservationsRepository.setClientConfirmed(reservationId);
     }
 
-    const refreshedRes = await this.reservationsRepository.findById(reservationId);
+    const refreshedRes =
+      await this.reservationsRepository.findById(reservationId);
 
     if (!refreshedRes) {
-      // if (!x) throw ... au lieu de x?. 
+      // if (!x) throw ... au lieu de x?.
       throw new NotFoundException("Réservation introuvable après mise à jour");
     }
 
@@ -90,44 +95,47 @@ export class ReservationsService {
     return refreshedRes;
   }
 
-  private validateOfferOrCustomRequest(offerId?: number, customRequest?: string) {
-  if (!offerId && !customRequest) {
-    throw new BadRequestException(
-      "Vous devez fournir soit une offre existante, soit une demande personnalisée"
-    );
+  private validateOfferOrCustomRequest(
+    offerId?: number,
+    customRequest?: string
+  ) {
+    if (!offerId && !customRequest) {
+      throw new BadRequestException(
+        "Vous devez fournir soit une offre existante, soit une demande personnalisée"
+      );
+    }
+    if (offerId && customRequest) {
+      throw new BadRequestException(
+        "Vous ne pouvez pas fournir à la fois une offre et une demande personnalisée"
+      );
+    }
   }
-  if (offerId && customRequest) {
-    throw new BadRequestException(
-      "Vous ne pouvez pas fournir à la fois une offre et une demande personnalisée"
-    );
+
+  async createReservationByAdmin(dto: {
+    clientId: number;
+    agentId: number;
+    dateReservation: string;
+    offerId?: number;
+    customRequest?: string;
+  }) {
+    this.validateOfferOrCustomRequest(dto.offerId, dto.customRequest);
+    return await this.reservationsRepository.createByAdmin(dto);
   }
-}
 
-async createReservationByAdmin(dto: {
-  clientId: number;
-  agentId: number;
-  dateReservation: string;
-  offerId?: number;
-  customRequest?: string;
-}) {
-  this.validateOfferOrCustomRequest(dto.offerId, dto.customRequest);
-  return await this.reservationsRepository.createByAdmin(dto);
-}
-
-async createMyReservation(
-  agentId: number,
-  dateReservation: string,
-  clientId: number,
-  offerId?: number,
-  customRequest?: string
-) {
-  this.validateOfferOrCustomRequest(offerId, customRequest);
-  return await this.reservationsRepository.createByClient({
-    clientId,
-    agentId,
-    dateReservation,
-    offerId,
-    customRequest,
-  });
-}
+  async createMyReservation(
+    agentId: number,
+    dateReservation: string,
+    clientId: number,
+    offerId?: number,
+    customRequest?: string
+  ) {
+    this.validateOfferOrCustomRequest(offerId, customRequest);
+    return await this.reservationsRepository.createByClient({
+      clientId,
+      agentId,
+      dateReservation,
+      offerId,
+      customRequest,
+    });
+  }
 }

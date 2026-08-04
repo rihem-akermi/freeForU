@@ -25,7 +25,6 @@ export async function addReservation(
   return response.data;
 }
 
-
 export async function updateReservation(id: number, data: Partial<Reservation>): Promise<Reservation> {
   const response = await api.patch<Reservation>(`/reservations/${id}`, data);
   const updated = response.data

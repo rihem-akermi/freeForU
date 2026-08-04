@@ -15,9 +15,12 @@ export class OffersService {
     private uploadsService: UploadsService
   ) {}
 
-  async getPublicOffers() {
-    return await this.offersRepository.findAllApprovedActive();
-  }
+
+
+
+  async getPublicOffers(categoryId?: number) {
+  return await this.offersRepository.findAllApprovedActive(categoryId);
+}
 
   async getMyOffers(agentId: number) {
     return await this.offersRepository.findByAgentId(agentId);

@@ -6,49 +6,32 @@ export class CategoriesRepository {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    const categories = await this.prisma.categories.findMany({
+    return await this.prisma.categories.findMany({
       orderBy: {
         id: "asc",
       },
     });
 
-    //nom AS name
-    return categories.map(category => ({
-      id: category.id,
-      name: category.nom,
-    }));
+  
 
   }
 
   async addCategory(name: string) {
-    const category = await this.prisma.categories.create({
-      data: {
-        nom: name,
-      },
-    });
+  return this.prisma.categories.create({
+    data: {
+      name,
+    },
+  });
+}
 
-    return {
-      id: category.id,
-      name: category.nom,
-    };
-  }
-
-  async updateCategory(id: number, name: string) {
-    const category = await this.prisma.categories.update({
-      where: {
-        id,
-      },
-      data: {
-        nom: name,
-      },
-    });
-
-    return {
-      id: category.id,
-      name: category.nom,
-    };
-  }
-
+ async updateCategory(id: number, name: string) {
+  return this.prisma.categories.update({
+    where: { id },
+    data: {
+      name,
+    },
+  });
+}
   async delete(id: number) {
     return this.prisma.categories.delete({
       where: {

@@ -9,6 +9,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Req,
+  Query,
 } from "@nestjs/common";
 
 import { OffersService } from "./offers.service";
@@ -28,11 +29,16 @@ export class OffersController {
   constructor(private offersService: OffersService) {}
 
   // page d'accueil client
+  
+
   @Get()
-  async getPublicOffers() {
-    return this.offersService.getPublicOffers();
+  async getPublicOffers(@Query("category_id") categoryId?: string) {
+    return this.offersService.getPublicOffers(
+      categoryId ? Number(categoryId) : undefined
+    );
   }
 
+  
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Get("me")
@@ -49,9 +55,13 @@ export class OffersController {
     @Body() body: CreateOfferDto,
     @UploadedFile() file?: Express.Multer.File
   ) {
-    const result =await this.offersService.createOffer(body, req.user.sub, file);
-    console.log("the offer as a result after treating it : ", result)
-    return result
+    const result = await this.offersService.createOffer(
+      body,
+      req.user.sub,
+      file
+    );
+    console.log("the offer as a result after treating it : ", result);
+    return result;
   }
 
   @UseGuards(AuthGuard, RolesGuard)

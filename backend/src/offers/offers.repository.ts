@@ -8,11 +8,14 @@ export class OffersRepository {
   constructor(private prisma: PrismaService) {}
 
   //page d'accueil client
-  async findAllApprovedActive() {
+
+
+  async findAllApprovedActive(categoryId?: number) {
     return this.prisma.offers.findMany({
       where: {
         status: "approuvee",
         active: true,
+        ...(categoryId && { agents: { category_id: categoryId } }),
       },
       include: {
         agents: {
@@ -21,12 +24,11 @@ export class OffersRepository {
             name: true,
             ville: true,
             photo_url: true,
+            category_id: true,
           },
         },
       },
-      orderBy: {
-        created_at: "desc",
-      },
+      orderBy: { created_at: "desc" },
     });
   }
 
@@ -80,11 +82,11 @@ export class OffersRepository {
   }
 
   async updateStatus(id: number, status: string) {
-  return this.prisma.offers.update({
-    where: { id },
-    data: { status },
-  });
-}
+    return this.prisma.offers.update({
+      where: { id },
+      data: { status },
+    });
+  }
 
   async deleteOffer(id: number) {
     return this.prisma.offers.delete({
