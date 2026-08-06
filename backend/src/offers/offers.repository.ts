@@ -9,7 +9,6 @@ export class OffersRepository {
 
   //page d'accueil client
 
-
   async findAllApprovedActive(categoryId?: number) {
     return this.prisma.offers.findMany({
       where: {
@@ -59,6 +58,13 @@ export class OffersRepository {
           },
         },
       },
+    });
+  }
+
+  async findApprovedActiveByAgentId(agentId: number) {
+    return this.prisma.offers.findMany({
+      where: { agent_id: agentId, status: "approuvee", active: true },
+      orderBy: { created_at: "desc" },
     });
   }
 

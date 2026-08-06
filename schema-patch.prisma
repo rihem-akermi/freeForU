@@ -1,0 +1,17 @@
+// Remplace le modèle agent_working_hours dans schema.prisma par celui-ci :
+
+model agent_working_hours {
+  id          Int       @id @default(autoincrement())
+  agent_id    Int
+  week_start  DateTime  @db.Date          // ← NOUVEAU : dimanche de la semaine (ex: 2026-08-02)
+  day_of_week Int                          // 0=dim … 6=sam
+  is_working  Boolean   @default(true)
+  start_time  DateTime? @db.Time
+  end_time    DateTime? @db.Time
+  agents      agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+
+  @@unique([agent_id, week_start, day_of_week])  // ← contrainte mise à jour
+}
+
+// Commande migration à lancer :
+// npx prisma migrate dev --name add_week_start_to_working_hours

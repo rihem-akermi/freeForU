@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { User, addUser, deleteUser, updateUser } from "@/lib/api/users";
+import { Toast } from "@/components/Toast";
 
-type NewUserForm = Omit<User, "id" | "created_at">;
+type NewUserForm = Omit<User, "id" | "created_at" | "role">;
+type UserEditableForm = Pick<User, "name" | "email" | "phone" | "ville">;
 
 function formatDate(dateValue: string) {
   const date = new Date(dateValue);
@@ -18,26 +20,43 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState(initialUsers);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const [newUser, setNewUser] = useState<NewUserForm>({
     name: "",
     email: "",
     phone: "",
     password: "",
-    role: "CLIENT",
     ville: "",
   });
-  const [editedForm, setEditedForm] = useState<Partial<User>>({});
+  const [editedForm, setEditedForm] = useState<Partial<UserEditableForm>>({});
 
   async function handleDelete(id: number) {
-    await deleteUser(id); // 
-    setUsers((prev) => prev.filter((user) => user.id !== id));
+    try {
+      await deleteUser(id);
+      setUsers((prev) => prev.filter((user) => user.id !== id));
+      setToast({
+        message: "Utilisateur supprimé avec succès.",
+        type: "success",
+      });
+    } catch (err: any) {
+      console.error(err);
+      const message =
+        err?.response?.data?.message ?? "Erreur lors de la suppression.";
+      setToast({ message, type: "error" });
+    }
   }
 
   function handleNewUserChange(field: keyof NewUserForm, value: string) {
     setNewUser((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleEditedUserChange(field: keyof User, value: string) {
+  function handleEditedUserChange(
+    field: keyof UserEditableForm,
+    value: string,
+  ) {
     setEditedForm((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -48,21 +67,20 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       email: user.email,
       phone: user.phone,
       ville: user.ville,
-      role: user.role,
     });
   }
 
   async function handleSaveEdit(id: number) {
     const updated = await updateUser(id, editedForm);
     setUsers((prev) =>
-      prev.map((user) => (user.id === id ? { ...user, ...updated } : user))
+      prev.map((user) => (user.id === id ? { ...user, ...updated } : user)),
     );
     setEditingId(null);
     setEditedForm({});
   }
 
   async function handleAddUser() {
-    const created = await addUser(newUser);
+    const created = await addUser({ ...newUser, role: "CLIENT" });
     setUsers((prev) => [...prev, created]);
     setShowAddForm(false);
     setNewUser({
@@ -70,13 +88,20 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
       email: "",
       phone: "",
       password: "",
-      role: "CLIENT",
       ville: "",
     });
   }
 
   return (
     <div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="mb-4 flex justify-end">
         <button
           onClick={() => setShowAddForm((prev) => !prev)}
@@ -119,14 +144,6 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
             onChange={(e) => handleNewUserChange("ville", e.target.value)}
             className="rounded border px-2 py-1"
           />
-          <select
-            value={newUser.role}
-            onChange={(e) => handleNewUserChange("role", e.target.value)}
-            className="rounded border px-2 py-1"
-          >
-            <option value="CLIENT">CLIENT</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
           <button
             onClick={handleAddUser}
             className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-white hover:scale-105"
@@ -155,15 +172,14 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
             return (
               <tr key={user.id} className="border-t border-stone-100">
-                <td className="px-4 py-3 text-stone-500">
-                  {user.id}
-                </td>
+                <td className="px-4 py-3 text-stone-500">{user.id}</td>
                 <td className="px-4 py-3">
                   {isEditing ? (
                     <input
-          
                       value={editedForm.name ?? ""}
-                      onChange={(e) => handleEditedUserChange("name", e.target.value)}
+                      onChange={(e) =>
+                        handleEditedUserChange("name", e.target.value)
+                      }
                       className="w-full rounded border px-1 py-0.5"
                     />
                   ) : (
@@ -174,7 +190,9 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                   {isEditing ? (
                     <input
                       value={editedForm.email ?? ""}
-                      onChange={(e) => handleEditedUserChange("email", e.target.value)}
+                      onChange={(e) =>
+                        handleEditedUserChange("email", e.target.value)
+                      }
                       className="w-full rounded border px-1 py-0.5"
                     />
                   ) : (
@@ -185,7 +203,9 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                   {isEditing ? (
                     <input
                       value={editedForm.phone ?? ""}
-                      onChange={(e) => handleEditedUserChange("phone", e.target.value)}
+                      onChange={(e) =>
+                        handleEditedUserChange("phone", e.target.value)
+                      }
                       className="w-full rounded border px-1 py-0.5"
                     />
                   ) : (
@@ -196,28 +216,19 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                   {isEditing ? (
                     <input
                       value={editedForm.ville ?? ""}
-                      onChange={(e) => handleEditedUserChange("ville", e.target.value)}
+                      onChange={(e) =>
+                        handleEditedUserChange("ville", e.target.value)
+                      }
                       className="w-full rounded border px-1 py-0.5"
                     />
                   ) : (
                     user.ville
                   )}
                 </td>
+                <td className="px-4 py-3 text-stone-500">{user.role}</td>
                 <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <select
-                      value={editedForm.role ?? "CLIENT"}
-                      onChange={(e) => handleEditedUserChange("role", e.target.value)}
-                      className="w-full rounded border px-1 py-0.5"
-                    >
-                      <option value="CLIENT">CLIENT</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
-                  ) : (
-                    user.role
-                  )}
+                  {formatDate(user.created_at)}
                 </td>
-                <td className="px-4 py-3 text-stone-500">{formatDate(user.created_at)}</td>
                 <td className="px-4 py-3 text-xl">
                   {isEditing ? (
                     <button

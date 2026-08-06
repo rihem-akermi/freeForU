@@ -34,7 +34,9 @@ export class reservationsRepository {
   }
 
   async findById(reservationId: number) {
-    return this.prisma.reservations.findUnique({ where: {id : reservationId } });
+    return this.prisma.reservations.findUnique({
+      where: { id: reservationId },
+    });
   }
   async findByClientId(clientId: number) {
     return this.prisma.reservations.findMany({
@@ -43,50 +45,93 @@ export class reservationsRepository {
         agents: {
           select: { id: true, name: true, ville: true, photo_url: true },
         },
+        offers: { select: { id: true, title: true } },
       },
       orderBy: { created_at: "desc" },
     });
   }
-  async create(clientId: number, agentId: number, dateReservation: string) {
-    const client = await this.prisma.users.findFirst({
+  async findByAgentAndDateRange(agentId: number, from: Date, to: Date) {
+    return this.prisma.reservations.findMany({
       where: {
-        id: clientId,
-        role: "CLIENT",
-      },
-    });
-
-    if (!client) {
-      throw new BadRequestException(
-        `Le client avec l'ID ${clientId} n'existe pas.`
-      );
-    }
-
-    const agent = await this.prisma.agents.findUnique({
-      where: {
-        id: agentId,
-      },
-    });
-
-    if (!agent) {
-      throw new BadRequestException(
-        `L'agent avec l'ID ${agentId} n'existe pas.`
-      );
-    }
-
-    return this.prisma.reservations.create({
-      data: {
-        client_id: clientId,
         agent_id: agentId,
-        date_reservation: new Date(dateReservation),
-        status: "en_attente",
-      },
-
-      include: {
-        users: true,
-        agents: true,
+        date_reservation: { gte: from, lte: to },
+        status: { not: "annulee" },
       },
     });
   }
+
+  async findByAgentAndDate(agentId: number, date: Date) {
+    return this.prisma.reservations.findMany({
+      where: {
+        agent_id: agentId,
+        date_reservation: date,
+        status: { not: "annulee" },
+      },
+      include: {
+        users: {
+          select: { id: true, name: true, phone: true, email: true },
+        },
+        offers: {
+          select: { id: true, title: true },
+        },
+      },
+      orderBy: { heure_reservation: "asc" },
+    });
+  }
+
+  async findConflict(agentId: number, date: string, heure: string) {
+    return this.prisma.reservations.findFirst({
+      where: {
+        agent_id: agentId,
+        date_reservation: new Date(date),
+        heure_reservation: new Date(`1970-01-01T${heure}:00`),
+        status: { not: "annulee" },
+      },
+    });
+  }
+
+  async createByClient(dto: {
+    clientId: number;
+    agentId: number;
+    dateReservation: string;
+    heureReservation: string;
+    offerId?: number;
+    customRequest?: string;
+  }) {
+    return this.prisma.reservations.create({
+      data: {
+        client_id: dto.clientId,
+        agent_id: dto.agentId,
+        date_reservation: new Date(dto.dateReservation),
+        heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
+        offer_id: dto.offerId,
+        custom_request: dto.customRequest,
+        status: "en_attente",
+      },
+      include: { users: true, agents: true },
+    });
+  }
+  async create(dto: {
+  clientId: number;
+  agentId: number;
+  dateReservation: string;
+  heureReservation: string;
+  offerId?: number;
+  customRequest?: string;
+}) {
+  return this.prisma.reservations.create({
+    data: {
+      client_id: dto.clientId,
+      agent_id: dto.agentId,
+      date_reservation: new Date(dto.dateReservation),
+      heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
+      offer_id: dto.offerId,
+      custom_request: dto.customRequest,
+      status: "en_attente",
+    },
+    include: { users: true, agents: true, offers: true },
+  });
+}
 
   async updateReservation(
     id: number,
@@ -140,26 +185,6 @@ export class reservationsRepository {
   }
 
   async createByAdmin(dto: {
-    clientId: number;
-    agentId: number;
-    dateReservation: string;
-    offerId?: number;
-    customRequest?: string;
-  }) {
-    return this.prisma.reservations.create({
-      data: {
-        client_id: dto.clientId,
-        agent_id: dto.agentId,
-        date_reservation: new Date(dto.dateReservation),
-        offer_id: dto.offerId,
-        custom_request: dto.customRequest,
-        status: "en_attente",
-      },
-      include: { users: true, agents: true },
-    });
-  }
-
-  async createByClient(dto: {
     clientId: number;
     agentId: number;
     dateReservation: string;

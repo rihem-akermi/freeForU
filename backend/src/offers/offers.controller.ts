@@ -29,7 +29,6 @@ export class OffersController {
   constructor(private offersService: OffersService) {}
 
   // page d'accueil client
-  
 
   @Get()
   async getPublicOffers(@Query("category_id") categoryId?: string) {
@@ -38,12 +37,23 @@ export class OffersController {
     );
   }
 
-  
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Get("me")
   async getMyOffers(@Req() req) {
     return this.offersService.getMyOffers(req.user.sub);
+  }
+
+  @Get("agent/:agentId")
+  async getAgentOffers(@Param("agentId", ParseIntPipe) agentId: number) {
+    return this.offersService.getAgentOffers(agentId);
+  }
+
+  // Route dynamique publique, toujours en dernier
+  // un modal : j'ai trop aimé l'idée : comme un cookie
+  @Get(":id")
+  async getOfferById(@Param("id", ParseIntPipe) id: number) {
+    return this.offersService.getOfferById(id);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
@@ -93,12 +103,5 @@ export class OffersController {
   @Delete(":id")
   async deleteMyOffer(@Req() req, @Param("id", ParseIntPipe) id: number) {
     return this.offersService.deleteMyOffer(id, req.user.sub);
-  }
-
-  // Route dynamique publique, toujours en dernier
-  // un modal : j'ai trop aimé l'idée : comme un cookie
-  @Get(":id")
-  async getOfferById(@Param("id", ParseIntPipe) id: number) {
-    return this.offersService.getOfferById(id);
   }
 }

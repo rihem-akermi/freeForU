@@ -1,5 +1,4 @@
-// dto/create-reservation.dto.ts (route ADMIN — inchangé + nouveaux champs)
-import { IsInt, IsDateString, IsOptional, IsString } from "class-validator";
+import { IsInt, IsDateString, IsOptional, IsString, Matches } from "class-validator";
 
 export class CreateReservationDto {
   @IsInt()
@@ -10,6 +9,10 @@ export class CreateReservationDto {
 
   @IsDateString()
   dateReservation!: string;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Format attendu: HH:mm" })
+  heureReservation!: string;
 
   @IsOptional()
   @IsInt()

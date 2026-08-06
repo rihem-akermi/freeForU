@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,6 +12,17 @@ import { UpdateReservationDto } from "./dto/update-reservation.dto";
 export class ReservationsService {
   constructor(private reservationsRepository: reservationsRepository) {}
 
+  async createReservation(dto: {
+    clientId: number;
+    agentId: number;
+    dateReservation: string;
+    heureReservation: string;
+    offerId?: number;
+    customRequest?: string;
+  }) {
+    return await this.reservationsRepository.create(dto);
+  }
+
   async getAllReservations() {
     return await this.reservationsRepository.findAll();
   }
@@ -18,18 +30,40 @@ export class ReservationsService {
   async getMyReservations(clientId: number) {
     return await this.reservationsRepository.findByClientId(clientId);
   }
+  async getAgentDayReservations(agentId: number, dateStr: string) {
+    const date = new Date(dateStr);
+    return await this.reservationsRepository.findByAgentAndDate(agentId, date);
+  }
 
-  async createReservation(
-    clientId: number,
+  async createMyReservation(
     agentId: number,
-    dateReservation: string
+    dateReservation: string,
+    heureReservation: string,
+    clientId: number,
+    offerId?: number,
+    customRequest?: string
   ) {
-    const newRes = await this.reservationsRepository.create(
+    this.validateOfferOrCustomRequest(offerId, customRequest);
+
+    const conflict = await this.reservationsRepository.findConflict(
+      agentId,
+      dateReservation,
+      heureReservation
+    );
+    if (conflict) {
+      throw new ConflictException(
+        "Ce créneau vient d'être réservé par quelqu'un d'autre, choisissez-en un autre"
+      );
+    }
+
+    return await this.createReservation({
       clientId,
       agentId,
-      dateReservation
-    );
-    return newRes;
+      dateReservation,
+      heureReservation,
+      offerId,
+      customRequest,
+    });
   }
 
   async updateReservation(id: number, part: UpdateReservationDto) {
@@ -115,27 +149,21 @@ export class ReservationsService {
     clientId: number;
     agentId: number;
     dateReservation: string;
+    heureReservation: string;
     offerId?: number;
     customRequest?: string;
   }) {
     this.validateOfferOrCustomRequest(dto.offerId, dto.customRequest);
-    return await this.reservationsRepository.createByAdmin(dto);
-  }
-
-  async createMyReservation(
-    agentId: number,
-    dateReservation: string,
-    clientId: number,
-    offerId?: number,
-    customRequest?: string
-  ) {
-    this.validateOfferOrCustomRequest(offerId, customRequest);
-    return await this.reservationsRepository.createByClient({
-      clientId,
-      agentId,
-      dateReservation,
-      offerId,
-      customRequest,
-    });
+    const conflict = await this.reservationsRepository.findConflict(
+      dto.agentId,
+      dto.dateReservation,
+      dto.heureReservation
+    );
+    if (conflict) {
+      throw new ConflictException(
+        "Ce créneau vient d'être réservé par quelqu'un d'autre, choisissez-en un autre"
+      );
+    }
+    return await this.createReservation(dto);
   }
 }

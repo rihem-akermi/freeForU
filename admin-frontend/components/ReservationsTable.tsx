@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Reservation,
   addReservation,
   deleteReservation,
   updateReservation,
@@ -10,6 +9,9 @@ import {
 
 import { searchClients, ClientSearchResult } from "@/lib/api/users";
 import { searchAgents, AgentSearchResult } from "@/lib/api/agents";
+import { getAgentOffers } from "@/lib/api/offers";
+import { Toast } from "@/components/Toast";
+import { Offer , Reservation} from "@/lib/data";
 
 const STATUS_OPTIONS = ["en_attente", "confirmee", "terminee", "annulee"] as const;
 
@@ -17,9 +19,23 @@ type NewReservationForm = {
   clientId: number;
   agentId: number;
   dateReservation: string;
+  heureReservation: string;
+  offerId: string; // "" ou "autre" ou l'id en string (valeur de <select>)
+  customRequest: string;
 
   clientName: string;
   agentName: string;
+};
+
+const emptyNewReservation: NewReservationForm = {
+  clientId: 0,
+  agentId: 0,
+  dateReservation: "",
+  heureReservation: "",
+  offerId: "",
+  customRequest: "",
+  clientName: "",
+  agentName: "",
 };
 
 type EditableReservation = Partial<
@@ -27,9 +43,7 @@ type EditableReservation = Partial<
 >;
 
 function toDateInputValue(value: string) {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
   return value.length >= 10 ? value.slice(0, 10) : value;
 }
 
@@ -38,7 +52,6 @@ function formatDate(dateValue: string) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-
   return `${day}/${month}/${year}`;
 }
 
@@ -49,45 +62,50 @@ export default function ReservationsPage({
 }) {
   const [clients, setClients] = useState<ClientSearchResult[]>([]);
   const [agents, setAgents] = useState<AgentSearchResult[]>([]);
+  const [agentOffers, setAgentOffers] = useState<Offer[]>([]);
 
-  const [selectedClient, setSelectedClient] =
-    useState<ClientSearchResult | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState<AgentSearchResult | null>(
-    null,
-  );
+  const [selectedClient, setSelectedClient] = useState<ClientSearchResult | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentSearchResult | null>(null);
 
   const [reservations, setReservations] = useState(initialReservations);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editedForm, setEditedForm] = useState<EditableReservation>({});
-  const [newReservation, setNewReservation] = useState<NewReservationForm>({
-    clientId: 0,
-    agentId: 0,
-    dateReservation: "",
+  const [newReservation, setNewReservation] = useState<NewReservationForm>(emptyNewReservation);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-    clientName: "",
-    agentName: "",
-  });
+  // Charge les offres de l'agent dès qu'il est sélectionné
+  useEffect(() => {
+    if (selectedAgent) {
+      getAgentOffers(selectedAgent.id).then(setAgentOffers).catch(console.error);
+    } else {
+      setAgentOffers([]);
+    }
+  }, [selectedAgent]);
 
   async function handleClientSearch(value: string) {
     handleAddChange("clientName", value);
-
     const result = await searchClients(value);
-
     setClients(result);
   }
 
   async function handleAgentSearch(value: string) {
     handleAddChange("agentName", value);
-
     const result = await searchAgents(value);
-
     setAgents(result);
   }
 
   async function handleDelete(id: number) {
-    await deleteReservation(id);
-    setReservations((prev) => prev.filter((res) => res.id !== id));
+    try {
+      await deleteReservation(id);
+      setReservations((prev) => prev.filter((res) => res.id !== id));
+      setToast({ message: "Réservation supprimée.", type: "success" });
+    } catch (error: any) {
+      setToast({
+        message: error?.response?.data?.message ?? "Erreur lors de la suppression.",
+        type: "error",
+      });
+    }
   }
 
   function handleAddChange(field: keyof NewReservationForm, value: string) {
@@ -107,44 +125,65 @@ export default function ReservationsPage({
   }
 
   async function handleSaveEdit(id: number) {
-    const updated = await updateReservation(id, editedForm);
-    setReservations((prev) =>
-      prev.map((res) => (res.id === id ? { ...res, ...updated } : res)),
-    );
-    setEditingId(null);
-    setEditedForm({});
+    try {
+      const updated = await updateReservation(id, editedForm);
+      setReservations((prev) => prev.map((res) => (res.id === id ? { ...res, ...updated } : res)));
+      setEditingId(null);
+      setEditedForm({});
+      setToast({ message: "Réservation modifiée.", type: "success" });
+    } catch (error: any) {
+      setToast({
+        message: error?.response?.data?.message ?? "Erreur lors de la modification.",
+        type: "error",
+      });
+    }
   }
 
   async function handleAddReservation() {
+    if (!selectedClient || !selectedAgent) {
+      setToast({ message: "Veuillez choisir un client et un agent dans la liste.", type: "error" });
+      return;
+    }
+    if (!newReservation.dateReservation || !newReservation.heureReservation) {
+      setToast({ message: "Veuillez renseigner une date et une heure.", type: "error" });
+      return;
+    }
+    if (!newReservation.offerId) {
+      setToast({ message: "Veuillez choisir une offre ou une demande personnalisée.", type: "error" });
+      return;
+    }
+    if (newReservation.offerId === "autre" && !newReservation.customRequest.trim()) {
+      setToast({ message: "Veuillez décrire la demande personnalisée.", type: "error" });
+      return;
+    }
+
     try {
-      if (!selectedClient || !selectedAgent) {
-        alert("Veuillez choisir un client et un agent dans la liste");
-        return;
-      }
       const created = await addReservation({
         clientId: selectedClient.id,
         agentId: selectedAgent.id,
         dateReservation: newReservation.dateReservation,
+        heureReservation: newReservation.heureReservation,
+        offerId: newReservation.offerId !== "autre" ? Number(newReservation.offerId) : undefined,
+        customRequest: newReservation.offerId === "autre" ? newReservation.customRequest : undefined,
       });
       setReservations((prev) => [created, ...prev]);
       setShowAddForm(false);
-      setNewReservation({
-        clientId: 0,
-        agentId: 0,
-        dateReservation: "",
-        clientName: "",
-        agentName: "",
-      });
+      setNewReservation(emptyNewReservation);
+      setSelectedClient(null);
+      setSelectedAgent(null);
+      setToast({ message: "Réservation créée avec succès.", type: "success" });
     } catch (error: any) {
-      alert(
-        error?.response?.data?.message ??
-          "Cette personne n'existe pas ou la réservation est invalide.",
-      );
+      setToast({
+        message: error?.response?.data?.message ?? "Cette réservation est invalide.",
+        type: "error",
+      });
     }
   }
 
   return (
     <div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
       <div className="mb-4 flex justify-end">
         <button
           onClick={() => setShowAddForm((prev) => !prev)}
@@ -161,7 +200,7 @@ export default function ReservationsPage({
               placeholder="Nom du client"
               value={newReservation.clientName}
               onChange={(e) => handleClientSearch(e.target.value)}
-              className="rounded border px-2 py-1"
+              className="rounded border px-2 py-1 w-full"
             />
             {clients.length > 0 && (
               <div className="absolute z-10 w-full bg-white border">
@@ -170,19 +209,13 @@ export default function ReservationsPage({
                     key={client.id}
                     onClick={() => {
                       setSelectedClient(client);
-                      setNewReservation((prev) => ({
-                        ...prev,
-                        clientId: client.id,
-                        clientName: client.name,
-                      }));
+                      setNewReservation((prev) => ({ ...prev, clientId: client.id, clientName: client.name }));
                       setClients([]);
                     }}
                     className="cursor-pointer p-2 hover:bg-stone-100"
                   >
                     <div>{client.name}</div>
-                    <div className="text-sm text-stone-500">
-                      📞 {client.phone} - 📍 {client.ville}
-                    </div>
+                    <div className="text-sm text-stone-500">📞 {client.phone} - 📍 {client.ville}</div>
                   </div>
                 ))}
               </div>
@@ -194,7 +227,7 @@ export default function ReservationsPage({
               placeholder="Nom de l'agent"
               value={newReservation.agentName}
               onChange={(e) => handleAgentSearch(e.target.value)}
-              className="rounded border px-2 py-1"
+              className="rounded border px-2 py-1 w-full"
             />
             {agents.length > 0 && (
               <div className="absolute z-10 w-full bg-white border">
@@ -203,20 +236,13 @@ export default function ReservationsPage({
                     key={agent.id}
                     onClick={() => {
                       setSelectedAgent(agent);
-                      setNewReservation((prev) => ({
-                        ...prev,
-                        agentId: agent.id,
-                        agentName: agent.name,
-                      }));
+                      setNewReservation((prev) => ({ ...prev, agentId: agent.id, agentName: agent.name }));
                       setAgents([]);
                     }}
                     className="cursor-pointer p-2 hover:bg-stone-100"
                   >
                     <div>{agent.name}</div>
-
-                    <div className="text-sm text-stone-500">
-                      📞 {agent.phone} - 📍 {agent.ville}
-                    </div>
+                    <div className="text-sm text-stone-500">📞 {agent.phone} - 📍 {agent.ville}</div>
                   </div>
                 ))}
               </div>
@@ -229,9 +255,44 @@ export default function ReservationsPage({
             onChange={(e) => handleAddChange("dateReservation", e.target.value)}
             className="rounded border px-2 py-1"
           />
+
+          <input
+            type="time"
+            value={newReservation.heureReservation}
+            onChange={(e) => handleAddChange("heureReservation", e.target.value)}
+            className="rounded border px-2 py-1"
+          />
+
+          <select
+            value={newReservation.offerId}
+            onChange={(e) => handleAddChange("offerId", e.target.value)}
+            disabled={!selectedAgent}
+            className="rounded border px-2 py-1 col-span-2 disabled:opacity-50"
+          >
+            <option value="">
+              {selectedAgent ? "-- Choisir une offre --" : "Sélectionnez d'abord un agent"}
+            </option>
+            {agentOffers.map((offer) => (
+              <option key={offer.id} value={offer.id}>
+                {offer.title} {offer.min_price ? `(${Number(offer.min_price)} DT+)` : ""}
+              </option>
+            ))}
+            <option value="autre">Autre — demande personnalisée</option>
+          </select>
+
+          {newReservation.offerId === "autre" && (
+            <textarea
+              placeholder="Décrire la demande personnalisée..."
+              value={newReservation.customRequest}
+              onChange={(e) => handleAddChange("customRequest", e.target.value)}
+              className="rounded border px-2 py-1 col-span-2"
+              rows={2}
+            />
+          )}
+
           <button
             onClick={handleAddReservation}
-            className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-white hover:scale-105"
+            className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-white hover:scale-105 col-span-2"
           >
             ✅ Enregistrer
           </button>
@@ -241,11 +302,11 @@ export default function ReservationsPage({
       <table className="w-full overflow-hidden rounded-lg border border-stone-200 bg-white text-sm">
         <thead className="bg-stone-50 text-left text-stone-500">
           <tr>
-            <th className="px-4 py-3 font-normal">ID client</th>
             <th className="px-4 py-3 font-normal">Client</th>
-            <th className="px-4 py-3 font-normal">ID agent</th>
             <th className="px-4 py-3 font-normal">Agent</th>
+            <th className="px-4 py-3 font-normal">Service</th>
             <th className="px-4 py-3 font-normal">Date</th>
+            <th className="px-4 py-3 font-normal">Heure</th>
             <th className="px-4 py-3 font-normal">Status</th>
             <th className="px-4 py-3 font-normal">Action</th>
           </tr>
@@ -253,47 +314,46 @@ export default function ReservationsPage({
         <tbody>
           {reservations.map((r) => {
             const isEditing = editingId === r.id;
+            const serviceLabel = r.offers?.title ?? r.custom_request ?? "—";
+            const hour = r.heure_reservation
+              ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+              : "—";
+
             return (
               <tr key={r.id} className="border-t border-stone-100">
-                <td className="px-4 py-3 text-stone-500">{r.client_id}</td>
-                <td>
-                  <div>{r.users.name}</div>
-                  <div className="text-xs text-stone-500">📞 {r.users.phone}</div>
+                <td className="px-4 py-3">
+                  <div>{r.users?.name}</div>
+                  <div className="text-xs text-stone-500">📞 {r.users?.phone}</div>
                 </td>
-                <td className="px-4 py-3 text-stone-500">{r.agent_id}</td>
-                <td>
-                  <div>{r.agents.name}</div>
-                  <div className="text-xs text-stone-500">📞 {r.agents.phone}</div>
+                <td className="px-4 py-3">
+                  <div>{r.agents?.name}</div>
+                  <div className="text-xs text-stone-500">📞 {r.agents?.phone}</div>
+                </td>
+                <td className="px-4 py-3 text-stone-500 max-w-[160px] truncate" title={serviceLabel}>
+                  {serviceLabel}
                 </td>
                 <td className="px-4 py-3 text-stone-500">
                   {isEditing ? (
                     <input
                       type="date"
-                      value={toDateInputValue(
-                        editedForm.date_reservation ?? "",
-                      )}
-                      onChange={(e) =>
-                        handleEditChange("date_reservation", e.target.value)
-                      }
+                      value={toDateInputValue(editedForm.date_reservation ?? "")}
+                      onChange={(e) => handleEditChange("date_reservation", e.target.value)}
                       className="rounded border px-1 py-0.5"
                     />
                   ) : (
                     formatDate(r.date_reservation)
                   )}
                 </td>
+                <td className="px-4 py-3 text-stone-500">{hour}</td>
                 <td className="px-4 py-3">
                   {isEditing ? (
                     <select
                       value={editedForm.status ?? "en_attente"}
-                      onChange={(e) =>
-                        handleEditChange("status", e.target.value)
-                      }
+                      onChange={(e) => handleEditChange("status", e.target.value)}
                       className="rounded border px-1 py-0.5"
                     >
                       {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
+                        <option key={status} value={status}>{status}</option>
                       ))}
                     </select>
                   ) : (
@@ -302,25 +362,16 @@ export default function ReservationsPage({
                 </td>
                 <td className="px-4 py-3 text-xl">
                   {isEditing ? (
-                    <button
-                      onClick={() => handleSaveEdit(r.id)}
-                      className="cursor-pointer hover:scale-135"
-                    >
+                    <button onClick={() => handleSaveEdit(r.id)} className="cursor-pointer hover:scale-135">
                       ✅
                     </button>
                   ) : (
                     <>
-                      <button
-                        onClick={() => handleDelete(r.id)}
-                        className="cursor-pointer hover:scale-135"
-                      >
+                      <button onClick={() => handleDelete(r.id)} className="cursor-pointer hover:scale-135">
                         🗑️
                       </button>
                       <span> / </span>
-                      <button
-                        onClick={() => handleEditClick(r)}
-                        className="cursor-pointer hover:scale-135"
-                      >
+                      <button onClick={() => handleEditClick(r)} className="cursor-pointer hover:scale-135">
                         🖋️
                       </button>
                     </>

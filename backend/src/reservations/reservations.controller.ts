@@ -8,6 +8,8 @@ import {
   Patch,
   ParseIntPipe,
   Req,
+  BadRequestException,
+  Query,
 } from "@nestjs/common";
 import { ReservationsService } from "./reservations.service";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
@@ -30,7 +32,12 @@ export class ReservationsController {
     return this.reservationsService.getMyReservations(req.user.sub);
   }
 
-
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
+  @Get("agent/me/day")
+  async getMyDayReservations(@Req() req, @Query("date") date: string) {
+    return this.reservationsService.getAgentDayReservations(req.user.sub, date);
+  }
   @Get()
   async getReservations() {
     console.log("getting infos ");
@@ -46,6 +53,7 @@ export class ReservationsController {
       clientId: body.clientId,
       agentId: body.agentId,
       dateReservation: body.dateReservation,
+      heureReservation: body.heureReservation,
       offerId: body.offerId,
       customRequest: body.customRequest,
     });
@@ -58,6 +66,7 @@ export class ReservationsController {
     return await this.reservationsService.createMyReservation(
       body.agentId,
       body.dateReservation,
+      body.heureReservation,
       req.user.sub,
       body.offerId,
       body.customRequest

@@ -18,6 +18,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { WorkingHoursModule } from './working-hours/working-hours.module';
 import { BlockedSlotsModule } from './blocked-slots/blocked-slots.module';
+import { AvailabilityModule } from './availability/availability.module';
 
 
 
@@ -34,7 +35,8 @@ import { BlockedSlotsModule } from './blocked-slots/blocked-slots.module';
     ReviewsModule,
     UploadsModule,
     WorkingHoursModule,
-    BlockedSlotsModule
+    BlockedSlotsModule,
+    AvailabilityModule
   ],
   controllers: [],
   providers: [],

@@ -1,13 +1,21 @@
-'use client'
+"use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getAgentById } from "@/lib/api/agents";
 import { getAgentPortfolio } from "@/lib/api/publications";
-import { getAgentReviews, getAgentRatingSummary, RatingSummary } from "@/lib/api/reviews";
+import {
+  getAgentReviews,
+  getAgentRatingSummary,
+  RatingSummary,
+} from "@/lib/api/reviews";
 import { formatDate } from "@/lib/utils/formatDate";
-import type { Agent ,Review ,Publication} from "@/lib/data";
+import type { Agent, Review, Publication } from "@/lib/data";
+import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
+import { DayAvailabilityModal } from "@/components/DayAvailabilityModal";
+import { ReservationForm } from "@/components/ReservationForm";
+import { Toast } from "@/components/Toast";
 
-type Tab = "infos" | "portfolio" | "avis";
+type Tab = "infos" | "portfolio" | "avis" | "disponibilites";
 
 export default function AgentProfilePage() {
   const params = useParams();
@@ -19,16 +27,26 @@ export default function AgentProfilePage() {
   const [summary, setSummary] = useState<RatingSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("infos");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [reservationSlot, setReservationSlot] = useState<{
+    date: string;
+    hour: string;
+  } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     async function loadAll() {
       try {
-        const [agentData, portfolioData, reviewsData, summaryData] = await Promise.all([
-          getAgentById(agentId),
-          getAgentPortfolio(agentId),
-          getAgentReviews(agentId),
-          getAgentRatingSummary(agentId),
-        ]);
+        const [agentData, portfolioData, reviewsData, summaryData] =
+          await Promise.all([
+            getAgentById(agentId),
+            getAgentPortfolio(agentId),
+            getAgentReviews(agentId),
+            getAgentRatingSummary(agentId),
+          ]);
         setAgent(agentData);
         setPublications(portfolioData);
         setReviews(reviewsData);
@@ -43,7 +61,9 @@ export default function AgentProfilePage() {
   }, [agentId]);
 
   if (loading) {
-    return <p className="text-sm text-[var(--color-text-body)] p-6">Chargement...</p>;
+    return (
+      <p className="text-sm text-[var(--color-text-body)] p-6">Chargement...</p>
+    );
   }
 
   if (!agent) {
@@ -55,7 +75,11 @@ export default function AgentProfilePage() {
       <div className="flex items-center gap-5 mb-6">
         <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-bg-alt)] shrink-0">
           {agent.photo_url ? (
-            <img src={agent.photo_url} alt={agent.name} className="w-full h-full object-cover" />
+            <img
+              src={agent.photo_url}
+              alt={agent.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-2xl font-semibold text-[var(--color-text-body)]/40">
               {agent.name?.[0]}
@@ -64,9 +88,13 @@ export default function AgentProfilePage() {
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[var(--color-text-dark)]">{agent.name}</h1>
+            <h1 className="text-xl font-semibold text-[var(--color-text-dark)]">
+              {agent.name}
+            </h1>
             {agent.verification_status === "verifie" && (
-              <span className="text-emerald-600 text-sm" title="Agent vérifié">✅</span>
+              <span className="text-emerald-600 text-sm" title="Agent vérifié">
+                ✅
+              </span>
             )}
           </div>
           <p className="text-sm text-[var(--color-text-body)]">
@@ -82,11 +110,14 @@ export default function AgentProfilePage() {
 
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[var(--color-bg-alt)] mb-6">
-        {([
-          { key: "infos", label: "Infos" },
-          { key: "portfolio", label: `Portfolio (${publications.length})` },
-          { key: "avis", label: `Avis (${reviews.length})` },
-        ] as const).map((tab) => (
+        {(
+          [
+            { key: "infos", label: "Infos" },
+            { key: "portfolio", label: `Portfolio (${publications.length})` },
+            { key: "avis", label: `Avis (${reviews.length})` },
+            { key: "disponibilites", label: "Disponibilités" },
+          ] as const
+        ).map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -102,8 +133,54 @@ export default function AgentProfilePage() {
       </div>
 
       {activeTab === "infos" && <InfosTab agent={agent} />}
-      {activeTab === "portfolio" && <PortfolioTab publications={publications} />}
+      {activeTab === "portfolio" && (
+        <PortfolioTab publications={publications} />
+      )}
       {activeTab === "avis" && <AvisTab reviews={reviews} />}
+      {activeTab === "disponibilites" && (
+        <AvailabilityCalendar
+          agentId={agentId}
+          onSelectDay={(date) => setSelectedDate(date)}
+          mode="client"
+        />
+      )}
+
+      {selectedDate && (
+        <DayAvailabilityModal
+          agentId={agentId}
+          date={selectedDate}
+          onClose={() => setSelectedDate(null)}
+          onSelectHour={(date, hour) => {
+            console.log("créneau choisi:", date, hour);
+            setSelectedDate(null);
+            setReservationSlot({ date, hour });
+          }}
+        />
+      )}
+
+      {reservationSlot && (
+        <ReservationForm
+          agentId={agentId}
+          date={reservationSlot.date}
+          hour={reservationSlot.hour}
+          onClose={() => setReservationSlot(null)}
+          onSuccess={() => {
+            setReservationSlot(null);
+            setToast({
+              message: "Réservation envoyée ! En attente de confirmation.",
+              type: "success",
+            });
+          }}
+        />
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
@@ -113,17 +190,28 @@ function InfosTab({ agent }: { agent: Agent }) {
     <div className="bg-[var(--color-card)] rounded-xl p-5 shadow-sm border border-[var(--color-bg-alt)] space-y-4">
       {agent.bio && (
         <div>
-          <h3 className="text-xs font-semibold text-[var(--color-text-body)] uppercase tracking-wide mb-1">À propos</h3>
+          <h3 className="text-xs font-semibold text-[var(--color-text-body)] uppercase tracking-wide mb-1">
+            À propos
+          </h3>
           <p className="text-sm text-[var(--color-text-dark)]">{agent.bio}</p>
         </div>
       )}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <InfoItem label="Zone d'intervention" value={agent.zone} />
-        <InfoItem label="Expérience" value={agent.experience_years ? `${agent.experience_years} ans` : undefined} />
+        <InfoItem
+          label="Expérience"
+          value={
+            agent.experience_years ? `${agent.experience_years} ans` : undefined
+          }
+        />
         <InfoItem
           label="Mode de service"
           value={
-            { se_deplace: "Se déplace", recoit: "Reçoit", les_deux: "Les deux" }[agent.service_mode ?? ""]
+            {
+              se_deplace: "Se déplace",
+              recoit: "Reçoit",
+              les_deux: "Les deux",
+            }[agent.service_mode ?? ""]
           }
         />
         <InfoItem label="Téléphone" value={agent.phone} />
@@ -144,15 +232,28 @@ function InfoItem({ label, value }: { label: string; value?: string | null }) {
 
 function PortfolioTab({ publications }: { publications: Publication[] }) {
   if (publications.length === 0) {
-    return <p className="text-sm text-[var(--color-text-body)]">Aucune publication pour le moment.</p>;
+    return (
+      <p className="text-sm text-[var(--color-text-body)]">
+        Aucune publication pour le moment.
+      </p>
+    );
   }
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {publications.map((pub) => (
-        <div key={pub.id} className="rounded-lg overflow-hidden bg-white border border-stone-200">
-          <img src={pub.photo_url} alt={pub.titre} className="w-full h-28 object-cover" />
+        <div
+          key={pub.id}
+          className="rounded-lg overflow-hidden bg-white border border-stone-200"
+        >
+          <img
+            src={pub.photo_url}
+            alt={pub.titre}
+            className="w-full h-28 object-cover"
+          />
           <div className="p-2">
-            <p className="text-xs font-medium text-[var(--color-text-dark)] truncate">{pub.titre}</p>
+            <p className="text-xs font-medium text-[var(--color-text-dark)] truncate">
+              {pub.titre}
+            </p>
           </div>
         </div>
       ))}
@@ -162,17 +263,33 @@ function PortfolioTab({ publications }: { publications: Publication[] }) {
 
 function AvisTab({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
-    return <p className="text-sm text-[var(--color-text-body)]">Aucun avis pour le moment.</p>;
+    return (
+      <p className="text-sm text-[var(--color-text-body)]">
+        Aucun avis pour le moment.
+      </p>
+    );
   }
   return (
     <div className="space-y-3">
       {reviews.map((review) => (
-        <div key={review.id} className="bg-white border border-stone-200 rounded-lg p-4">
+        <div
+          key={review.id}
+          className="bg-white border border-stone-200 rounded-lg p-4"
+        >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-amber-600 text-sm">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
-            <span className="text-xs text-[var(--color-text-body)]">{formatDate(review.created_at)}</span>
+            <span className="text-amber-600 text-sm">
+              {"★".repeat(review.rating)}
+              {"☆".repeat(5 - review.rating)}
+            </span>
+            <span className="text-xs text-[var(--color-text-body)]">
+              {formatDate(review.created_at)}
+            </span>
           </div>
-          {review.comment && <p className="text-sm text-[var(--color-text-dark)]">{review.comment}</p>}
+          {review.comment && (
+            <p className="text-sm text-[var(--color-text-dark)]">
+              {review.comment}
+            </p>
+          )}
         </div>
       ))}
     </div>

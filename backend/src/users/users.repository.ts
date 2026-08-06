@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdatedUserDto } from "./dto/update-user.dto";
+import { UpdatedUserDto, UpdateMyProfileDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UsersRepository {
@@ -31,6 +31,20 @@ export class UsersRepository {
       },
       data: part,
     });
+  }
+
+  async updateProfile(
+    id: number,
+    data: UpdateMyProfileDto & { photo_url?: string }
+  ) {
+    return this.prisma.users.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async findById(id: number) {
+    return this.prisma.users.findUnique({ where: { id } });
   }
 
   async delete(id: number) {

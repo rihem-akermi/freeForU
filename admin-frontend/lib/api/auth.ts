@@ -15,3 +15,8 @@ export async function logout() {
   await api.post("/auth/logout", {}, { withCredentials: true });
   window.location.href = "/login";
 }
+
+export async function getMe() {
+  const response = await api.get("/auth/me");
+  return response.data;
+}

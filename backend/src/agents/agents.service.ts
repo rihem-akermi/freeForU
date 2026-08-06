@@ -1,8 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { AgentsRepository } from "./agents.repository";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 import { UploadsService } from "src/uploads/uploads.service";
+import { Prisma } from "../../generated/prisma/client";
 
 @Injectable()
 export class AgentsService {
@@ -46,7 +47,19 @@ export class AgentsService {
   }
 
   async deleteAgent(id: number) {
-    return await this.agentsRepository.deleteAgent(id);
+    try {
+      return await this.agentsRepository.deleteAgent(id);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        ["P2003", "P2014"].includes(error.code)
+      ) {
+        throw new ConflictException(
+          "Impossible de supprimer cet agent : il possède des réservations existantes."
+        );
+      }
+      throw error;
+    }
   }
 
   async searchAgents(name: string) {

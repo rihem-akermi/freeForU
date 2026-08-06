@@ -7,15 +7,16 @@ export type User = {
   role: "CLIENT" | "ADMIN";
   ville: string;
   created_at: string;
+  photo_url?: string ;
 };
 
 export type Agent = {
   id: number;
   name: string;
-  categories:{
-    id:number ,
-    nom : string
-  }
+  categories: {
+    id: number;
+    nom: string;
+  };
   ville: string;
   email: string;
   phone: string;
@@ -35,29 +36,35 @@ export type Agent = {
 
 export type Reservation = {
   id: number;
-
   client_id: number;
   agent_id: number;
-
-  users: {
+  offer_id: number | null;
+  custom_request: string | null;
+  heure_reservation: string | null;
+  date_reservation: string;
+  status: "en_attente" | "confirmee" | "terminee" | "annulee";
+  agent_confirmed: boolean;
+  client_confirmed: boolean;
+  created_at: string;
+  users?: {
     id: number;
     name: string;
     phone: string | null;
     email: string;
     ville: string | null;
   };
-
-  agents: {
+  agents?: {
     id: number;
     name: string;
     phone: string | null;
     email: string | null;
     ville: string | null;
+    photo_url?: string | null;
   };
-
-  date_reservation: string;
-  status: "EN_ATTENTE" | "CONFIRMEE" | "ANNULEE";
-  created_at: string;
+  offers?: {
+    id: number;
+    title: string;
+  } | null;
 };
 
 export type Contact = {

@@ -7,6 +7,7 @@ import { AuthModule } from 'src/auth/auth.module';
 @Module({
   imports : [AuthModule],
   providers: [ReservationsService , reservationsRepository],
-  controllers: [ReservationsController]
+  controllers: [ReservationsController],
+  exports:[reservationsRepository]
 })
 export class ReservationsModule {}

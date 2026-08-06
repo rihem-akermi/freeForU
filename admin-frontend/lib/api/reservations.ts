@@ -1,38 +1,84 @@
 import { Reservation } from "../data";
 import api from "./interceptor";
-export type {Reservation}
+export type { Reservation };
 
+export type CreateMyReservationData = {
+  agentId: number;
+  dateReservation: string;
+  heureReservation: string;
+  offerId?: number;
+  customRequest?: string;
+};
 
+export type AgentDayReservation = {
+  id: number;
+  date_reservation: string;
+  heure_reservation: string | null;
+  status: string;
+  custom_request: string | null;
+  users: { id: number; name: string; phone: string | null; email: string };
+  offers: { id: number; title: string } | null;
+  agent_confirmed : boolean
+};
 export async function getReservations(): Promise<Reservation[]> {
-  const res = await api.get<Reservation[]>(`/reservations`)
-  const reservations = res.data
-  return reservations 
+  const res = await api.get<Reservation[]>(`/reservations`);
+  const reservations = res.data;
+  return reservations;
 }
 
-export async function addReservation(
-  reservation: {
-    clientId: number;
-    agentId: number;
-    dateReservation: string;
-  }
+export async function createMyReservation(
+  data: CreateMyReservationData,
 ): Promise<Reservation> {
+  const res = await api.post<Reservation>("/reservations/me", data);
+  return res.data;
+}
 
-  const response = await api.post<Reservation>(
-    "/reservations",
-    reservation
+export async function getMyReservations(): Promise<Reservation[]> {
+  const res = await api.get<Reservation[]>("/reservations/me");
+  return res.data;
+}
+
+// ✅ NOUVEAU — pour la modale agenda agent
+export async function getAgentDayReservations(
+  date: string,
+): Promise<AgentDayReservation[]> {
+  const res = await api.get<AgentDayReservation[]>(
+    `/reservations/agent/me/day?date=${date}`,
   );
+  return res.data;
+}
 
+export async function confirmMyReservationCompletion(
+  id: number,
+): Promise<Reservation> {
+  const res = await api.patch<Reservation>(
+    `/reservations/${id}/confirm-completion`,
+  );
+  return res.data;
+}
+
+export async function addReservation(reservation: {
+  clientId: number;
+  agentId: number;
+  dateReservation: string;
+  heureReservation: string;
+  offerId?: number;
+  customRequest?: string;
+}): Promise<Reservation> {
+  const response = await api.post<Reservation>("/reservations", reservation);
   return response.data;
 }
 
-export async function updateReservation(id: number, data: Partial<Reservation>): Promise<Reservation> {
-  const response = await api.patch<Reservation>(`/reservations/${id}`, data);
-  const updated = response.data
-  return updated;
+export async function updateReservation(
+  id: number,
+  data: Partial<Pick<Reservation, "status" | "date_reservation">>,
+): Promise<Reservation> {
+  const res = await api.patch<Reservation>(`/reservations/${id}`, data);
+  return res.data;
 }
 
 export async function deleteReservation(id: number): Promise<Reservation> {
-  const res = await api.delete<Reservation>(`/reservations/${id}`,);
-  const deletedReservation = res.data
-  return deletedReservation
+  const res = await api.delete<Reservation>(`/reservations/${id}`);
+  const deletedReservation = res.data;
+  return deletedReservation;
 }

@@ -6,6 +6,7 @@ import { getCategories } from "@/lib/api/categories";
 import { Offer, Category } from "@/lib/data";
 import { AgentSearchBar } from "@/components/AgentSearchBar";
 
+
 export default function HomePage() {
   const router = useRouter();
   const [offers, setOffers] = useState<Offer[]>([]);

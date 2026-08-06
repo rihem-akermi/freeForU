@@ -4,6 +4,7 @@ import { BlockedSlotsService } from "./blocked-slots.service";
 import { BlockedSlotsRepository } from "./blocked-slots.repository";
 
 @Module({
+  exports:[BlockedSlotsRepository],
   controllers: [BlockedSlotsController],
   providers: [BlockedSlotsService, BlockedSlotsRepository],
 })

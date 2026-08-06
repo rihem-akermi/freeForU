@@ -1,6 +1,7 @@
 "use client";
 
 import { Agent, addAgent, deleteAgent, updateAgent } from "@/lib/api/agents";
+import { Toast } from "@/components/Toast";
 
 import { getCategories } from "@/lib/api/categories";
 
@@ -32,6 +33,11 @@ export default function AgentsTable({
   const [showAddForm, setShowAddForm] = useState(false);
 
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const [editedForm, setEditedForm] = useState<Partial<NewAgentForm>>({});
 
@@ -112,9 +118,17 @@ export default function AgentsTable({
   }
 
   async function handleDelete(id: number) {
-    await deleteAgent(id);
+    try {
+      await deleteAgent(id);
 
-    setAgents((prev) => prev.filter((agent) => agent.id !== id));
+      setAgents((prev) => prev.filter((agent) => agent.id !== id));
+      setToast({ message: "Agent supprimé avec succès.", type: "success" });
+    } catch (err: any) {
+      console.error(err);
+      const message =
+        err?.response?.data?.message ?? "Erreur lors de la suppression.";
+      setToast({ message, type: "error" });
+    }
   }
 
   async function handleAddAgent() {
@@ -136,6 +150,14 @@ export default function AgentsTable({
 
   return (
     <div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <div className="mb-4 flex justify-end">
         <button
           onClick={() => setShowAddForm((prev) => !prev)}

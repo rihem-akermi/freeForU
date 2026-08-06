@@ -15,6 +15,7 @@ export class BlockedSlotsRepository {
   }
 
   async findByAgentAndDateRange(agentId: number, from: Date, to: Date) {
+    console.log("Date : ",from ," ", to ,' ⏱️')
     return this.prisma.agent_blocked_slots.findMany({
       where: { agent_id: agentId, date: { gte: from, lte: to } },
     });

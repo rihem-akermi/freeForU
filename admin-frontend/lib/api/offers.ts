@@ -19,6 +19,11 @@ export async function getMyOffers(): Promise<Offer[]> {
   return result.data;
 }
 
+export async function getAgentOffers(agentId: number): Promise<Offer[]> {
+  const result = await api.get<Offer[]>(`/offers/agent/${agentId}`);
+  return result.data;
+}
+
 export async function getPublicOffers(categoryId?: number): Promise<Offer[]> {
   const query = categoryId ? `?category_id=${categoryId}` : "";
   const result = await api.get<Offer[]>(`/offers${query}`);

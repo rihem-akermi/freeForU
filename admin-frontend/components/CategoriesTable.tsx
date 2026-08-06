@@ -7,27 +7,38 @@ import {
   updateCategory,
   addCategory,
 } from "@/lib/api/categories";
-
-
+import { Toast } from "@/components/Toast";
 
 export default function CategoriesTable({
-  initialCategories,}: {initialCategories: Category[];}) {
+  initialCategories,
+}: {
+  initialCategories: Category[];
+}) {
   const [categories, setCategories] = useState(initialCategories);
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editedName, setEditedName] = useState("");
 
   const [newCategory, setNewCategory] = useState("");
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   async function handleDelete(id: number) {
     try {
-      console.log("trying to delete category number : ",id)
       await deleteCategory(id);
       setCategories((prev) => prev.filter((category) => category.id !== id));
+      setToast({
+        message: "Catégorie supprimée avec succès.",
+        type: "success",
+      });
     } catch (err) {
       console.error(err);
-      alert(`Erreur lors de la suppression.
-        ⚠️ un agent a cette category (as foreign key)⚠️`);
+      const message =
+        (err as any)?.response?.data?.message ??
+        "Erreur lors de la suppression.";
+      setToast({ message, type: "error" });
     }
   }
 
@@ -70,6 +81,14 @@ export default function CategoriesTable({
 
   return (
     <div className="space-y-4">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <table className="w-full overflow-hidden rounded-lg border-2 border-stone-900 bg-white text-sm">
         <thead className="bg-stone-50 text-left text-stone-500">
           <tr>

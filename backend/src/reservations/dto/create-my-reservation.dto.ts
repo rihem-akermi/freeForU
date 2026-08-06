@@ -1,5 +1,4 @@
-// dto/create-my-reservation.dto.ts (route CLIENT — pas de clientId, vient du token)
-import { IsInt, IsDateString, IsOptional, IsString } from "class-validator";
+import { IsInt, IsDateString, IsOptional, IsString, Matches } from "class-validator";
 
 export class CreateMyReservationDto {
   @IsInt()
@@ -7,6 +6,10 @@ export class CreateMyReservationDto {
 
   @IsDateString()
   dateReservation!: string;
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Format attendu: HH:mm" })
+  heureReservation!: string;
 
   @IsOptional()
   @IsInt()

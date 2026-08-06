@@ -1,4 +1,3 @@
-// working-hours.repository.ts
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { WorkingHourDto } from "./dto/set-working-hours.dto";
@@ -7,35 +6,51 @@ import { WorkingHourDto } from "./dto/set-working-hours.dto";
 export class WorkingHoursRepository {
   constructor(private prisma: PrismaService) {}
 
-  async findByAgentId(agentId: number) {
+  // FIX 2 : récupère les horaires d'une semaine précise (week_start = dimanche)
+  async findByAgentAndWeek(agentId: number, weekStart: Date) {
     return this.prisma.agent_working_hours.findMany({
-      where: { agent_id: agentId },
+      where: { agent_id: agentId, week_start: weekStart },
       orderBy: { day_of_week: "asc" },
     });
   }
 
-  // upsert = crée si n'existe pas, met à jour sinon — utile ici grâce à la contrainte UNIQUE(agent_id, day_of_week)
-  async upsert(agentId: number, dto: WorkingHourDto) {
+  // Utilisé par availability.service pour calculer les couleurs du mois :
+  // récupère TOUS les horaires de l'agent (toutes semaines confondues)
+  async findByAgentId(agentId: number) {
+    return this.prisma.agent_working_hours.findMany({
+      where: { agent_id: agentId },
+      orderBy: [{ week_start: "asc" }, { day_of_week: "asc" }],
+    });
+  }
+
+  async upsert(agentId: number, weekStart: Date, dto: WorkingHourDto) {
     return this.prisma.agent_working_hours.upsert({
       where: {
-        agent_id_day_of_week: { agent_id: agentId, day_of_week: dto.day_of_week },
+        agent_id_week_start_day_of_week: {
+          agent_id: agentId,
+          week_start: weekStart,
+          day_of_week: dto.day_of_week,
+        },
       },
       update: {
-        start_time: new Date(`1970-01-01T${dto.start_time}:00`),
-        end_time: new Date(`1970-01-01T${dto.end_time}:00`),
+        is_working: dto.is_working,
+        start_time: dto.start_time ? new Date(`1970-01-01T${dto.start_time}:00`) : null,
+        end_time: dto.end_time ? new Date(`1970-01-01T${dto.end_time}:00`) : null,
       },
       create: {
         agent_id: agentId,
+        week_start: weekStart,
         day_of_week: dto.day_of_week,
-        start_time: new Date(`1970-01-01T${dto.start_time}:00`),
-        end_time: new Date(`1970-01-01T${dto.end_time}:00`),
+        is_working: dto.is_working,
+        start_time: dto.start_time ? new Date(`1970-01-01T${dto.start_time}:00`) : null,
+        end_time: dto.end_time ? new Date(`1970-01-01T${dto.end_time}:00`) : null,
       },
     });
   }
 
-  async deleteDay(agentId: number, dayOfWeek: number) {
+  async deleteDay(agentId: number, weekStart: Date, dayOfWeek: number) {
     return this.prisma.agent_working_hours.deleteMany({
-      where: { agent_id: agentId, day_of_week: dayOfWeek },
+      where: { agent_id: agentId, week_start: weekStart, day_of_week: dayOfWeek },
     });
   }
 }

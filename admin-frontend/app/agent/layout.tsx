@@ -5,8 +5,9 @@ const agentLinks = [
   { href: "/agent/infos", label: "Mes Infos" },
   { href: "/agent/offers", label: "Mes Offers" },
   { href: "/agent/publications", label: "Mes publications" },
-  { href: "/agent/reservations", label: "Clients et réservations" },
-  { href: "/agent/avis", label: "Les avis" },
+  //{ href: "/agent/reservations", label: "Clients et réservations" },
+  //{ href: "/agent/avis", label: "Les avis" },
+  { href: "/agent/disponibilites", label: "Mon Agenda" },
 ];
 
 export default function AgentLayout({

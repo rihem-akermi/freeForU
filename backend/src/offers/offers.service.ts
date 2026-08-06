@@ -15,12 +15,9 @@ export class OffersService {
     private uploadsService: UploadsService
   ) {}
 
-
-
-
   async getPublicOffers(categoryId?: number) {
-  return await this.offersRepository.findAllApprovedActive(categoryId);
-}
+    return await this.offersRepository.findAllApprovedActive(categoryId);
+  }
 
   async getMyOffers(agentId: number) {
     return await this.offersRepository.findByAgentId(agentId);
@@ -34,6 +31,10 @@ export class OffersService {
     // TODO: décider si une offre non approuvée/inactive doit être visible via id direct
     // parce que j'ai pas trouvé son utilité
     return offer;
+  }
+
+  async getAgentOffers(agentId: number) {
+    return await this.offersRepository.findApprovedActiveByAgentId(agentId);
   }
 
   async createOffer(
