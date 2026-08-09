@@ -46,12 +46,11 @@ export class PublicationsController {
     return this.publicationsService.createPublication(body, req.user.sub, file);
   }
 
-  // Route ADMIN (modération globale)
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("ADMIN")
   @Get("admin")
-  async getAllForModeration() {
-    return this.publicationsService.getAllForModeration();
+  async getPendingPublications() {
+    return this.publicationsService.getPendingPublications();
   }
 
   @UseGuards(AuthGuard, RolesGuard)

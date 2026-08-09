@@ -15,3 +15,13 @@ export async function getAgentRatingSummary(agentId: number): Promise<RatingSumm
   const result = await api.get<RatingSummary>(`/reviews/agent/${agentId}/summary`);
   return result.data;
 }
+
+export async function getAllReviews(): Promise<Review[]> {
+  const result = await api.get<Review[]>("/reviews");
+  return result.data;
+}
+
+export async function deleteReview(id: number): Promise<Review> {
+  const result = await api.delete<Review>(`/reviews/${id}`);
+  return result.data;
+}

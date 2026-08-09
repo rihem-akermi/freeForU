@@ -55,4 +55,12 @@ export class ReviewsService {
   async getAgentRatingSummary(agentId: number) {
     return await this.reviewsRepository.getAgentRatingSummary(agentId);
   }
+
+  async getAllReviews() {
+    return await this.reviewsRepository.findAll();
+  }
+
+  async deleteReview(id: number) {
+    return await this.reviewsRepository.delete(id);
+  }
 }

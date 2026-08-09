@@ -37,6 +37,10 @@ export class OffersService {
     return await this.offersRepository.findApprovedActiveByAgentId(agentId);
   }
 
+  async getPendingOffers() {
+    return await this.offersRepository.findPending();
+  }
+
   async createOffer(
     offer: CreateOfferDto,
     agentId: number,

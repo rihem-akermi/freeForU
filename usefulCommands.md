@@ -15,3 +15,6 @@
 
 6. deploy migrations in production :
    npx prisma migrate deploy
+
+7. it resumes the most recent conversation for that workspace with antigravity 
+   agy -c

@@ -6,6 +6,17 @@ import { PrismaService } from "src/prisma/prisma.service";
 export class ReviewsRepository {
   constructor(private prisma: PrismaService) {}
 
+  async findAll() {
+    return this.prisma.reviews.findMany({
+      include: { agents: { select: { id: true, name: true } } },
+      orderBy: { created_at: "desc" },
+    });
+  }
+
+  async delete(id: number) {
+    return this.prisma.reviews.delete({ where: { id } });
+  }
+
   async findReservationById(id: number) {
     return this.prisma.reservations.findUnique({ where: { id } });
   }

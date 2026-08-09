@@ -1,67 +1,99 @@
-// app/agent/reservations/page.tsx
-'use client'
-import { useState } from "react";
-
-type Reservation = {
-  id: number;
-  client_name: string;
-  client_phone: string;
-  date_reservation: string;
-  status: "en_attente" | "confirmee" | "annulee";
-  created_at: string;
-};
-
-// Mock — sera remplacé par un fetch GET /agent/reservations
-const mockReservations: Reservation[] = [
-  {
-    id: 1,
-    client_name: "Sami Trabelsi",
-    client_phone: "+216 22 345 678",
-    date_reservation: "2026-07-20",
-    status: "en_attente",
-    created_at: "2026-07-14",
-  },
-  {
-    id: 2,
-    client_name: "Nour Jendoubi",
-    client_phone: "+216 55 987 654",
-    date_reservation: "2026-07-18",
-    status: "confirmee",
-    created_at: "2026-07-10",
-  },
-  {
-    id: 3,
-    client_name: "Mehdi Karray",
-    client_phone: "+216 98 112 233",
-    date_reservation: "2026-07-05",
-    status: "annulee",
-    created_at: "2026-07-01",
-  },
-];
-
-const statusOptions = [
-  { value: "en_attente", label: "En attente" },
-  { value: "confirmee", label: "Confirmée" },
-  { value: "annulee", label: "Annulée" },
-] as const;
+"use client";
+import { useEffect, useState } from "react";
+import {
+  getMyReservationsAsAgent,
+  updateAgentReservationStatus,
+  confirmMyReservationCompletion,
+} from "@/lib/api/reservations";
+import { Toast } from "@/components/Toast";
+import type { Reservation } from "@/lib/data";
 
 export default function ReservationsPage() {
-  const [reservations, setReservations] = useState<Reservation[]>(mockReservations);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const handleStatusChange = (id: number, newStatus: Reservation["status"]) => {
-    // Mock — sera remplacé par PATCH /agent/reservations/:id/status
-    setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
-    );
-  };
+  useEffect(() => {
+    loadReservations();
+  }, []);
+
+  async function loadReservations() {
+    setLoading(true);
+    try {
+      setReservations(await getMyReservationsAsAgent());
+    } catch (err) {
+      console.error(err);
+      setToast({ message: "Erreur lors du chargement.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAgentStatus(
+    id: number,
+    status: "confirmee" | "annulee",
+  ) {
+    try {
+      const updated = await updateAgentReservationStatus(id, status);
+      setReservations((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...updated } : r)),
+      );
+      setToast({
+        message:
+          status === "confirmee"
+            ? "Réservation confirmée."
+            : "Réservation annulée.",
+        type: "success",
+      });
+    } catch (err: any) {
+      setToast({
+        message: err?.response?.data?.message ?? "Erreur.",
+        type: "error",
+      });
+    }
+  }
+
+  async function handleConfirmCompletion(id: number) {
+    try {
+      const updated = await confirmMyReservationCompletion(id); // ← nom correct
+      setReservations((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...updated } : r)),
+      );
+      setToast({
+        message:
+          updated.status === "terminee"
+            ? "Réservation marquée terminée ✅"
+            : "Confirmation enregistrée, en attente du client.",
+        type: "success",
+      });
+    } catch (err: any) {
+      setToast({
+        message: err?.response?.data?.message ?? "Erreur.",
+        type: "error",
+      });
+    }
+  }
 
   return (
     <div className="max-w-4xl">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-6">
         Clients et réservations
       </h1>
 
-      {reservations.length === 0 ? (
+      {loading ? (
+        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
+      ) : reservations.length === 0 ? (
         <p className="text-sm text-[var(--color-text-body)]">
           Vous n'avez pas encore reçu de demande de réservation.
         </p>
@@ -72,35 +104,81 @@ export default function ReservationsPage() {
               <tr className="bg-[var(--color-bg-alt)] text-left text-xs uppercase text-[var(--color-text-body)]">
                 <th className="px-4 py-3 font-medium">Client</th>
                 <th className="px-4 py-3 font-medium">Téléphone</th>
-                <th className="px-4 py-3 font-medium">Date souhaitée</th>
-                <th className="px-4 py-3 font-medium">Demandée le</th>
+                <th className="px-4 py-3 font-medium">Service</th>
+                <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Statut</th>
+                <th className="px-4 py-3 font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
-              {reservations.map((r) => (
-                <tr key={r.id} className="border-t border-stone-100">
-                  <td className="px-4 py-3 text-[var(--color-text-dark)]">{r.client_name}</td>
-                  <td className="px-4 py-3 text-[var(--color-text-body)]">{r.client_phone}</td>
-                  <td className="px-4 py-3 text-[var(--color-text-body)]">{r.date_reservation}</td>
-                  <td className="px-4 py-3 text-[var(--color-text-body)]">{r.created_at}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={r.status}
-                      onChange={(e) =>
-                        handleStatusChange(r.id, e.target.value as Reservation["status"])
-                      }
-                      className={`rounded-full px-3 py-1 text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${statusColor(r.status)}`}
+              {reservations.map((r) => {
+                const serviceLabel = r.offers?.title ?? r.custom_request ?? "—";
+                const hour = r.heure_reservation
+                  ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "";
+
+                return (
+                  <tr key={r.id} className="border-t border-stone-100">
+                    <td className="px-4 py-3 text-[var(--color-text-dark)]">
+                      {r.users?.name}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--color-text-body)]">
+                      {r.users?.phone}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-[var(--color-text-body)] max-w-[140px] truncate"
+                      title={serviceLabel}
                     >
-                      {statusOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
+                      {serviceLabel}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--color-text-body)]">
+                      {new Date(r.date_reservation).toLocaleDateString("fr-FR")}{" "}
+                      {hour}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor(r.status)}`}
+                      >
+                        {statusLabel(r.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.status === "en_attente" && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAgentStatus(r.id, "confirmee")}
+                            className="text-xs text-emerald-700 hover:underline cursor-pointer"
+                          >
+                            Confirmer
+                          </button>
+                          <button
+                            onClick={() => handleAgentStatus(r.id, "annulee")}
+                            className="text-xs text-red-600 hover:underline cursor-pointer"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      )}
+                      {r.status === "confirmee" && !r.agent_confirmed && (
+                        <button
+                          onClick={() => handleConfirmCompletion(r.id)}
+                          className="text-xs text-[var(--color-primary)] hover:underline cursor-pointer"
+                        >
+                          Marquer comme terminé
+                        </button>
+                      )}
+                      {r.status === "confirmee" && r.agent_confirmed && (
+                        <span className="text-xs text-[var(--color-text-body)]">
+                          En attente du client...
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -114,8 +192,23 @@ function statusColor(status: Reservation["status"]) {
     case "en_attente":
       return "bg-amber-100 text-amber-700";
     case "confirmee":
+      return "bg-blue-100 text-blue-700";
+    case "terminee":
       return "bg-emerald-100 text-emerald-700";
     case "annulee":
       return "bg-red-100 text-red-700";
+  }
+}
+
+function statusLabel(status: Reservation["status"]) {
+  switch (status) {
+    case "en_attente":
+      return "En attente";
+    case "confirmee":
+      return "Confirmée";
+    case "terminee":
+      return "Terminée ✅";
+    case "annulee":
+      return "Annulée";
   }
 }

@@ -36,11 +36,22 @@ export class PublicationsRepository {
     return this.prisma.publications.findUnique({ where: { id } });
   }
 
- async create(data: { titre: string; description: string; photo_url: string }, agentId: number) {
-  return this.prisma.publications.create({
-    data: { ...data, agent_id: agentId, status: "en_attente" },
-  });
-}
+  async findPending() {
+    return this.prisma.publications.findMany({
+      where: { status: "en_attente" },
+      include: { agents: { select: { id: true, name: true } } },
+      orderBy: { created_at: "asc" },
+    });
+  }
+
+  async create(
+    data: { titre: string; description: string; photo_url: string },
+    agentId: number
+  ) {
+    return this.prisma.publications.create({
+      data: { ...data, agent_id: agentId, status: "en_attente" },
+    });
+  }
 
   async update(dto: UpdatedPublicationDto, id: number) {
     return this.prisma.publications.update({ where: { id }, data: dto });

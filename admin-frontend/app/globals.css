@@ -1,21 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f5f3ff;          /* fond général très pâle */
-  --color-bg-alt: #eef2ff;      /* fond alterné entre sections */
-  --color-primary: #818cf8;     /* indigo pastel (boutons, accents) */
-  --color-primary-dark: #6366f1;/* indigo un peu plus foncé (hover) */
-  --color-text-dark: #312e81;   /* titres */
-  --color-text-body: #4b5563;   /* paragraphes */
-  --color-card: #e0e7ff;        /* fond des cartes */
-  --color-white: #ffffff;
+  /* Exact Specified Palette */
+  --color-primary: #0B162C;          /* Deep luxury navy */
+  --color-primary-secondary: #1C2942;/* Dark blue-grey contrast */
+  --color-accent: #9D8099;           /* Elegant dusty mauve accent */
+  --color-accent-dark: #291527;      /* Deep plum accent */
+  --color-background: #FFFFFF;       /* Pure white */
+  --color-background-soft: #EEECF2;  /* Soft lavender-tinged off-white */
+  --color-text: #000000;             /* Pure charcoal text */
+  --color-text-muted: #393D3A;       /* Subtle graphite body text */
+
+  /* Derived System Helpers */
+  --color-card-bg: #FFFFFF;
+  --color-border: rgba(28, 41, 66, 0.12);
+  --color-border-hover: rgba(157, 128, 153, 0.4);
+  --shadow-sm: 0 2px 8px rgba(11, 22, 44, 0.04);
+  --shadow-md: 0 8px 24px rgba(11, 22, 44, 0.08);
+  --shadow-lg: 0 16px 40px rgba(11, 22, 44, 0.12);
+  --shadow-hover: 0 20px 48px rgba(41, 21, 39, 0.16);
+
+  /* Typography System */
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
   scroll-behavior: smooth;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--color-bg);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
 }
 
+/* Serif Headings Helper */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Max Container Utility for Fluid Responsive Layouts */
+.vitrine-container {
+  width: 100%;
+  max-width: 1536px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .vitrine-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vitrine-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .vitrine-container {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+/* Base Pill Badge */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  background-color: rgba(157, 128, 153, 0.15);
+  color: var(--color-accent-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(157, 128, 153, 0.25);
+}
+
+/* Smooth keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+/* Accessibility: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

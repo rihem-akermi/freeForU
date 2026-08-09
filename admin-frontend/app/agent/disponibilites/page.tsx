@@ -25,14 +25,11 @@ const DAY_NAMES = [
   "Samedi",
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX 1 — dates Prisma sans 1970
-// "2026-08-04T00:00:00.000Z" ou "2026-08-04" → Date locale sans décalage UTC
-// ─────────────────────────────────────────────────────────────────────────────
+
 function parsePrismaDate(raw: string): Date {
   const datePart = raw.includes("T") ? raw.split("T")[0] : raw;
   const [y, m, d] = datePart.split("-").map(Number);
-  return new Date(y, m - 1, d); // constructeur local, pas UTC
+  return new Date(y, m - 1, d);
 }
 
 function formatSlotDate(raw: string): string {
@@ -52,11 +49,7 @@ function formatSlotTime(t: string | null): string | null {
   return match ? match[1] : t;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX 2 — Horaires par semaine
-// On récupère le dimanche de la semaine d'une date donnée (même logique que
-// le calendrier qui commence la semaine le dimanche)
-// ─────────────────────────────────────────────────────────────────────────────
+
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
   d.setDate(d.getDate() - d.getDay()); // recule au dimanche
@@ -77,7 +70,6 @@ function formatWeekRange(weekStart: Date): string {
   return `${weekStart.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} — ${end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 type DayRow = {
   day_of_week: number;
@@ -110,12 +102,8 @@ export default function AgentDisponibilitesPage() {
       .catch(console.error);
   }, []);
 
-  // ── FIX 3 — Calendrier : refresh via compteur de version ─────────────────
-  // On expose aussi year/month depuis AvailabilityCalendar pour savoir quelle
-  // semaine afficher dans le formulaire horaires
   const [calendarVersion, setCalendarVersion] = useState(0);
 
-  // FIX 3 : ref pour savoir si on est encore monté avant de refresh
   const mountedRef = useRef(true);
   useEffect(() => {
     return () => {
@@ -127,29 +115,23 @@ export default function AgentDisponibilitesPage() {
     if (mountedRef.current) setCalendarVersion((v) => v + 1);
   }, []);
 
-  // ── FIX 2 — Semaine sélectionnée (liée au clic sur un jour) ──────────────
   const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(() =>
     getWeekStart(new Date()),
   );
 
   const handleSelectDay = useCallback((date: string) => {
-    // Met à jour la semaine affichée dans le formulaire horaires
     const clicked = parsePrismaDate(date);
     setSelectedWeekStart(getWeekStart(clicked));
     setSelectedDate(date);
   }, []);
 
-  // ── Modale jour ───────────────────────────────────────────────────────────
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  // ── FIX 2 — Horaires par semaine ─────────────────────────────────────────
   const [rows, setRows] = useState<DayRow[]>(buildRows([]));
   const [loadingHours, setLoadingHours] = useState(true);
 
-  // Recharge les horaires quand la semaine change
   useEffect(() => {
     setLoadingHours(true);
-    // On passe week_start en query param — voir backend ci-dessous
     getMyWorkingHours(toDateString(selectedWeekStart))
       .then((wh) => setRows(buildRows(wh)))
       .catch(console.error)
@@ -162,7 +144,6 @@ export default function AgentDisponibilitesPage() {
     );
 
   const saveAllRows = async () => {
-    // Validation
     for (const row of rows) {
       if (row.is_working && (!row.start_time || !row.end_time)) {
         setSaveError(
@@ -204,7 +185,6 @@ export default function AgentDisponibilitesPage() {
     }
   };
 
-  // ── Blocages ponctuels ────────────────────────────────────────────────────
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -247,12 +227,10 @@ export default function AgentDisponibilitesPage() {
         Mon Agenda
       </h1>
 
-      {/* ── Bloc 1 : Calendrier ─────────────────────────────────────────────── */}
       <section>
         <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide mb-3">
           Vue du mois
         </h2>
-        {/* FIX 3 : key={calendarVersion} force un vrai remount après chaque modif */}
         <AvailabilityCalendar
           key={calendarVersion}
           agentId={agentId}
@@ -261,9 +239,7 @@ export default function AgentDisponibilitesPage() {
         />
       </section>
 
-      {/* ── Bloc 2 : Horaires par semaine ───────────────────────────────────── */}
       <section>
-        {/* FIX 2 : en-tête avec la semaine courante + navigation */}
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide">
             Horaires de la semaine
@@ -307,7 +283,6 @@ export default function AgentDisponibilitesPage() {
           ) : (
             <div className="divide-y divide-(--color-bg-alt)">
               {rows.map((row) => {
-                // Date réelle du jour de cette semaine (pour afficher "lun. 4 août")
                 const dayDate = new Date(selectedWeekStart);
                 dayDate.setDate(dayDate.getDate() + row.day_of_week);
                 const dayLabel = dayDate.toLocaleDateString("fr-FR", {
@@ -339,7 +314,6 @@ export default function AgentDisponibilitesPage() {
                           <span className="text-sm font-medium text-(--color-text-dark)">
                             {DAY_NAMES[row.day_of_week]}
                           </span>
-                          {/* FIX 1 : date réelle affichée sans 1970 */}
                           <span className="text-xs text-(--color-text-body)/60 capitalize">
                             {dayLabel}
                           </span>
@@ -389,7 +363,6 @@ export default function AgentDisponibilitesPage() {
           )}
         </div>
 
-        {/* Erreur / succès global */}
         {saveError && (
           <p className="text-xs text-red-600 px-4 pb-2">{saveError}</p>
         )}
@@ -413,7 +386,6 @@ export default function AgentDisponibilitesPage() {
         </div>
       </section>
 
-      {/* ── Bloc 3 : Blocages ponctuels ─────────────────────────────────────── */}
       <section className="pb-10">
         <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide mb-3">
           Mes blocages ponctuels
@@ -439,7 +411,6 @@ export default function AgentDisponibilitesPage() {
                   className="flex items-center justify-between p-4"
                 >
                   <div>
-                    {/* FIX 1 : formatSlotDate utilise parsePrismaDate */}
                     <p className="text-sm font-medium text-(--color-text-dark) capitalize">
                       {formatSlotDate(slot.date)}
                     </p>
@@ -464,8 +435,6 @@ export default function AgentDisponibilitesPage() {
         </div>
       </section>
 
-      {/* ── Modale détail jour ─────────────────────────────────────────────
-──── */}
       {selectedDate && (
         <AgentDayModal
           agentId={agentId}
@@ -473,7 +442,7 @@ export default function AgentDisponibilitesPage() {
           onClose={() => setSelectedDate(null)}
           onBlockAdded={() => {
             setSelectedDate(null);
-            setTimeout(() => refreshCalendar(), 100); // laisse React fermer la modale d'abord
+            setTimeout(() => refreshCalendar(), 100); 
             loadBlockedSlots();
           }}
         />

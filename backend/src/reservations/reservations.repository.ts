@@ -90,6 +90,17 @@ export class reservationsRepository {
     });
   }
 
+  async findByAgentId(agentId: number) {
+    return this.prisma.reservations.findMany({
+      where: { agent_id: agentId },
+      include: {
+        users: { select: { id: true, name: true, phone: true } },
+        offers: { select: { id: true, title: true } },
+      },
+      orderBy: { created_at: "desc" },
+    });
+  }
+
   async createByClient(dto: {
     clientId: number;
     agentId: number;
@@ -112,26 +123,26 @@ export class reservationsRepository {
     });
   }
   async create(dto: {
-  clientId: number;
-  agentId: number;
-  dateReservation: string;
-  heureReservation: string;
-  offerId?: number;
-  customRequest?: string;
-}) {
-  return this.prisma.reservations.create({
-    data: {
-      client_id: dto.clientId,
-      agent_id: dto.agentId,
-      date_reservation: new Date(dto.dateReservation),
-      heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
-      offer_id: dto.offerId,
-      custom_request: dto.customRequest,
-      status: "en_attente",
-    },
-    include: { users: true, agents: true, offers: true },
-  });
-}
+    clientId: number;
+    agentId: number;
+    dateReservation: string;
+    heureReservation: string;
+    offerId?: number;
+    customRequest?: string;
+  }) {
+    return this.prisma.reservations.create({
+      data: {
+        client_id: dto.clientId,
+        agent_id: dto.agentId,
+        date_reservation: new Date(dto.dateReservation),
+        heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
+        offer_id: dto.offerId,
+        custom_request: dto.customRequest,
+        status: "en_attente",
+      },
+      include: { users: true, agents: true, offers: true },
+    });
+  }
 
   async updateReservation(
     id: number,
@@ -174,6 +185,13 @@ export class reservationsRepository {
     return this.prisma.reservations.update({
       where: { id },
       data: { client_confirmed: true },
+    });
+  }
+
+  async setStatus(id: number, status: string) {
+    return this.prisma.reservations.update({
+      where: { id },
+      data: { status },
     });
   }
 

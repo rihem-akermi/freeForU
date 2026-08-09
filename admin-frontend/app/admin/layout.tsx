@@ -7,6 +7,8 @@ const adminLinks = [
   { href: "/admin/reservations", label: "Réservations" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/categories", label: "Categories" },
+    { href: "/admin/moderation", label: "Offers / Pubs / Reviews" },
+
 ];
 
 export default function AdminLayout({

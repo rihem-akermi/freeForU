@@ -1,12 +1,14 @@
 'use client'
 import { useEffect, useState } from "react";
-import { getMyReservations } from "@/lib/api/reservations";
+import { getMyReservations, confirmMyReservationCompletion } from "@/lib/api/reservations";
 import type { Reservation } from "@/lib/data";
 import { formatDate } from "@/lib/utils/formatDate";
+import { Toast } from "@/components/Toast";
 
 export default function MesReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     getMyReservations()
@@ -15,8 +17,25 @@ export default function MesReservationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  async function handleConfirmCompletion(id: number) {
+    try {
+      const updated = await confirmMyReservationCompletion(id);
+      setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, ...updated } : r)));
+      setToast({
+        message: updated.status === "terminee"
+          ? "Réservation marquée terminée ✅"
+          : "Confirmation enregistrée, en attente de l'agent.",
+        type: "success",
+      });
+    } catch (err: any) {
+      setToast({ message: err?.response?.data?.message ?? "Erreur.", type: "error" });
+    }
+  }
+
   return (
     <div className="max-w-3xl">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
       <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-1">Mes réservations</h1>
       <p className="text-sm text-[var(--color-text-body)] mb-6">Suivez l'état de vos demandes.</p>
 
@@ -29,7 +48,7 @@ export default function MesReservationsPage() {
       ) : (
         <div className="space-y-3">
           {reservations.map((r) => (
-            <ReservationCard key={r.id} reservation={r} />
+            <ReservationCard key={r.id} reservation={r} onConfirmCompletion={handleConfirmCompletion} />
           ))}
         </div>
       )}
@@ -37,7 +56,13 @@ export default function MesReservationsPage() {
   );
 }
 
-function ReservationCard({ reservation }: { reservation: Reservation }) {
+function ReservationCard({
+  reservation,
+  onConfirmCompletion,
+}: {
+  reservation: Reservation;
+  onConfirmCompletion: (id: number) => void;
+}) {
   const serviceLabel = reservation.offers?.title ?? reservation.custom_request ?? "Demande personnalisée";
   const formattedDate = new Date(reservation.date_reservation).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "2-digit", year: "numeric",
@@ -47,24 +72,44 @@ function ReservationCard({ reservation }: { reservation: Reservation }) {
     : null;
 
   return (
-    <div className="bg-white border border-stone-200 rounded-lg p-4 flex items-center gap-4">
-      <div className="w-11 h-11 rounded-full bg-[var(--color-bg-alt)] overflow-hidden shrink-0">
-        {reservation.agents?.photo_url && (
-          <img src={reservation.agents.photo_url} alt="" className="w-full h-full object-cover" />
-        )}
+    <div className="bg-white border border-stone-200 rounded-lg p-4">
+      <div className="flex items-center gap-4">
+        <div className="w-11 h-11 rounded-full bg-[var(--color-bg-alt)] overflow-hidden shrink-0">
+          {reservation.agents?.photo_url && (
+            <img src={reservation.agents.photo_url} alt="" className="w-full h-full object-cover" />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[var(--color-text-dark)] truncate">{serviceLabel}</p>
+          <p className="text-xs text-[var(--color-text-body)] mt-0.5">
+            avec {reservation.agents?.name ?? "Agent"} · {reservation.agents?.ville}
+          </p>
+          <p className="text-xs text-[var(--color-text-body)] mt-1">
+            📅 {formattedDate} {hour && `à ${hour}`}
+          </p>
+        </div>
+
+        <ReservationStatusBadge status={reservation.status} />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--color-text-dark)] truncate">{serviceLabel}</p>
-        <p className="text-xs text-[var(--color-text-body)] mt-0.5">
-          avec {reservation.agents?.name ?? "Agent"} · {reservation.agents?.ville}
-        </p>
-        <p className="text-xs text-[var(--color-text-body)] mt-1">
-          📅 {formattedDate} {hour && `à ${hour}`}
-        </p>
-      </div>
+      {reservation.status === "confirmee" && !reservation.client_confirmed && (
+        <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between">
+          <p className="text-xs text-[var(--color-text-body)]">Le service a-t-il bien été effectué ?</p>
+          <button
+            onClick={() => onConfirmCompletion(reservation.id)}
+            className="text-xs font-medium text-[var(--color-primary)] hover:underline cursor-pointer"
+          >
+            Confirmer la fin de la prestation
+          </button>
+        </div>
+      )}
 
-      <ReservationStatusBadge status={reservation.status} />
+      {reservation.status === "confirmee" && reservation.client_confirmed && (
+        <div className="mt-3 pt-3 border-t border-stone-100">
+          <p className="text-xs text-[var(--color-text-body)]">En attente de la confirmation de l'agent...</p>
+        </div>
+      )}
     </div>
   );
 }

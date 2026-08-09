@@ -24,6 +24,19 @@ export async function getAgentOffers(agentId: number): Promise<Offer[]> {
   return result.data;
 }
 
+export async function getPendingOffers(): Promise<Offer[]> {
+  const result = await api.get<Offer[]>("/offers/admin/pending");
+  return result.data;
+}
+
+export async function updateOfferStatus(
+  id: number,
+  status: "approuvee" | "rejetee",
+): Promise<Offer> {
+  const result = await api.patch<Offer>(`/offers/${id}/status`, { status });
+  return result.data;
+}
+
 export async function getPublicOffers(categoryId?: number): Promise<Offer[]> {
   const query = categoryId ? `?category_id=${categoryId}` : "";
   const result = await api.get<Offer[]>(`/offers${query}`);

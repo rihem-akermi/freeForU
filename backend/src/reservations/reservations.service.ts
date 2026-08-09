@@ -34,6 +34,9 @@ export class ReservationsService {
     const date = new Date(dateStr);
     return await this.reservationsRepository.findByAgentAndDate(agentId, date);
   }
+  async getMyReservationsAsAgent(agentId: number) {
+    return await this.reservationsRepository.findByAgentId(agentId);
+  }
 
   async createMyReservation(
     agentId: number,
@@ -82,6 +85,23 @@ export class ReservationsService {
   async deleteReservation(id: number) {
     const deletedReservation = await this.reservationsRepository.delete(id);
     return deletedReservation;
+  }
+  async updateAgentStatus(
+    id: number,
+    agentId: number,
+    status: "confirmee" | "annulee"
+  ) {
+    const reservation = await this.reservationsRepository.findById(id);
+    if (!reservation) {
+      throw new NotFoundException("Réservation introuvable");
+    }
+    if (reservation.agent_id !== agentId) {
+      throw new ForbiddenException("Cette réservation ne vous appartient pas");
+    }
+    if (reservation.status !== "en_attente") {
+      throw new ConflictException("Cette réservation a déjà été traitée");
+    }
+    return await this.reservationsRepository.setStatus(id, status);
   }
 
   async confirmCompletion(reservationId: number, userId: number, role: string) {

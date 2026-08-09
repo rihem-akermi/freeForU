@@ -54,3 +54,13 @@ export async function getAgentPortfolio(agentId: number): Promise<Publication[]>
   const result = await api.get<Publication[]>(`/publications/agent/${agentId}`);
   return result.data;
 }
+
+export async function getPendingPublications(): Promise<Publication[]> {
+  const result = await api.get<Publication[]>("/publications/admin");
+  return result.data;
+}
+
+export async function updatePublicationStatus(id: number, status: "approuvee" | "rejetee"): Promise<Publication> {
+  const result = await api.patch<Publication>(`/publications/${id}/status`, { status });
+  return result.data;
+}

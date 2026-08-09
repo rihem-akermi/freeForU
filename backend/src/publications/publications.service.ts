@@ -28,12 +28,18 @@ export class PublicationsService {
     return await this.publicationsRepository.findAll();
   }
 
+  async getPendingPublications() {
+    return await this.publicationsRepository.findPending();
+  }
   async createPublication(
     dto: CreatePublicationDto,
     agentId: number,
     file: Express.Multer.File
   ) {
-    const photoUrl = await this.uploadsService.uploadImage(file, "publications");
+    const photoUrl = await this.uploadsService.uploadImage(
+      file,
+      "publications"
+    );
     return await this.publicationsRepository.create(
       { ...dto, photo_url: photoUrl },
       agentId
@@ -41,23 +47,23 @@ export class PublicationsService {
   }
 
   async updateMyPublication(
-  dto: UpdatedPublicationDto,
-  id: number,
-  agentId: number,
-  file?: Express.Multer.File
-) {
-  await this.checkOwnership(id, agentId);
+    dto: UpdatedPublicationDto,
+    id: number,
+    agentId: number,
+    file?: Express.Multer.File
+  ) {
+    await this.checkOwnership(id, agentId);
 
-  let photoUrl: string | undefined;
-  if (file) {
-    photoUrl = await this.uploadsService.uploadImage(file, "publications");
+    let photoUrl: string | undefined;
+    if (file) {
+      photoUrl = await this.uploadsService.uploadImage(file, "publications");
+    }
+
+    return await this.publicationsRepository.update(
+      { ...dto, ...(photoUrl && { photo_url: photoUrl }) },
+      id
+    );
   }
-
-  return await this.publicationsRepository.update(
-    { ...dto, ...(photoUrl && { photo_url: photoUrl }) },
-    id
-  );
-}
 
   async deleteMyPublication(id: number, agentId: number) {
     await this.checkOwnership(id, agentId);

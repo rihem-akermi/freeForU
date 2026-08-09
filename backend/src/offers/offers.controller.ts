@@ -49,8 +49,13 @@ export class OffersController {
     return this.offersService.getAgentOffers(agentId);
   }
 
-  // Route dynamique publique, toujours en dernier
-  // un modal : j'ai trop aimé l'idée : comme un cookie
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  @Get("admin/pending")
+  async getPendingOffers() {
+    return this.offersService.getPendingOffers();
+  }
+  
   @Get(":id")
   async getOfferById(@Param("id", ParseIntPipe) id: number) {
     return this.offersService.getOfferById(id);

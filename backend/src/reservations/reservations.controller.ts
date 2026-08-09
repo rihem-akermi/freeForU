@@ -20,10 +20,18 @@ import { UseGuards } from "@nestjs/common";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
 import { CreateMyReservationDto } from "./dto/create-my-reservation.dto";
+import { UpdateAgentStatusDto } from "./dto/update-agent-status.dto";
 
 @Controller("reservations")
 export class ReservationsController {
   constructor(private reservationsService: ReservationsService) {}
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
+  @Get("agent/me")
+  async getMyReservationsAsAgent(@Req() req) {
+    return this.reservationsService.getMyReservationsAsAgent(req.user.sub);
+  }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("CLIENT")
@@ -38,6 +46,7 @@ export class ReservationsController {
   async getMyDayReservations(@Req() req, @Query("date") date: string) {
     return this.reservationsService.getAgentDayReservations(req.user.sub, date);
   }
+
   @Get()
   async getReservations() {
     console.log("getting infos ");
@@ -81,6 +90,21 @@ export class ReservationsController {
       id,
       req.user.sub,
       req.user.role
+    );
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
+  @Patch(":id/agent-status")
+  async updateAgentStatus(
+    @Req() req,
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: UpdateAgentStatusDto
+  ) {
+    return this.reservationsService.updateAgentStatus(
+      id,
+      req.user.sub,
+      body.status
     );
   }
 

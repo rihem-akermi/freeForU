@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Req,
+  Delete,
 } from "@nestjs/common";
 import { ReviewsService } from "./reviews.service";
 import { CreateReviewDto } from "./dto/create-review.dto";
@@ -18,6 +19,20 @@ import { Roles } from "src/auth/decorators/roles.decorator";
 @Controller("reviews")
 export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  @Get()
+  async getAllReviews() {
+    return this.reviewsService.getAllReviews();
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("ADMIN")
+  @Delete(":id")
+  async deleteReview(@Param("id", ParseIntPipe) id: number) {
+    return this.reviewsService.deleteReview(id);
+  }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("CLIENT")

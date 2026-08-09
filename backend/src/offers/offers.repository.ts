@@ -68,6 +68,14 @@ export class OffersRepository {
     });
   }
 
+  async findPending() {
+    return this.prisma.offers.findMany({
+      where: { status: "en_attente" },
+      include: { agents: { select: { id: true, name: true, ville: true } } },
+      orderBy: { created_at: "asc" },
+    });
+  }
+
   async createOffer(offer: CreateOfferDto, agentId: number) {
     return this.prisma.offers.create({
       data: {

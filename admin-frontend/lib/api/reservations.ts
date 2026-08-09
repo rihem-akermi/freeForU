@@ -38,7 +38,8 @@ export async function getMyReservations(): Promise<Reservation[]> {
   return res.data;
 }
 
-// ✅ NOUVEAU — pour la modale agenda agent
+
+
 export async function getAgentDayReservations(
   date: string,
 ): Promise<AgentDayReservation[]> {
@@ -81,4 +82,17 @@ export async function deleteReservation(id: number): Promise<Reservation> {
   const res = await api.delete<Reservation>(`/reservations/${id}`);
   const deletedReservation = res.data;
   return deletedReservation;
+}
+
+export async function getMyReservationsAsAgent(): Promise<Reservation[]> {
+  const res = await api.get<Reservation[]>("/reservations/agent/me");
+  return res.data;
+}
+
+export async function updateAgentReservationStatus(
+  id: number,
+  status: "confirmee" | "annulee"
+): Promise<Reservation> {
+  const res = await api.patch<Reservation>(`/reservations/${id}/agent-status`, { status });
+  return res.data;
 }
