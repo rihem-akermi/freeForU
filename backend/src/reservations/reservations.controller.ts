@@ -63,8 +63,9 @@ export class ReservationsController {
       agentId: body.agentId,
       dateReservation: body.dateReservation,
       heureReservation: body.heureReservation,
-      offerId: body.offerId,
+      heureFinReservation: body.heureFinReservation,
       customRequest: body.customRequest,
+      serviceId: body.serviceId,
     });
   }
 
@@ -76,9 +77,10 @@ export class ReservationsController {
       body.agentId,
       body.dateReservation,
       body.heureReservation,
+      body.heureFinReservation, // ← ajouté
       req.user.sub,
-      body.offerId,
-      body.customRequest
+      body.customRequest,
+      body.serviceId // ← ajouté
     );
   }
 

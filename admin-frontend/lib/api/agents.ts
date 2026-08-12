@@ -47,6 +47,26 @@ export type AgentSearchResult = {
   ville: string | null;
 };
 
+export type PublicAgentCard = {
+  id: number;
+  name: string;
+  ville: string | null;
+  photo_url: string | null;
+  bio: string | null;
+  category_id: number | null;
+  categories: { name: string } | null;
+  rating_average: number;
+  rating_count: number;
+};
+
+export async function getPublicAgents(
+  categoryId?: number,
+): Promise<PublicAgentCard[]> {
+  const query = categoryId ? `?category_id=${categoryId}` : "";
+  const result = await api.get<PublicAgentCard[]>(`/agents${query}`);
+  return result.data;
+}
+
 export async function getAgents(): Promise<Agent[]> {
   const res = await api.get<Agent[]>("/agents");
 

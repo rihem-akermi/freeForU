@@ -45,7 +45,6 @@ export class reservationsRepository {
         agents: {
           select: { id: true, name: true, ville: true, photo_url: true },
         },
-        offers: { select: { id: true, title: true } },
       },
       orderBy: { created_at: "desc" },
     });
@@ -71,22 +70,8 @@ export class reservationsRepository {
         users: {
           select: { id: true, name: true, phone: true, email: true },
         },
-        offers: {
-          select: { id: true, title: true },
-        },
       },
       orderBy: { heure_reservation: "asc" },
-    });
-  }
-
-  async findConflict(agentId: number, date: string, heure: string) {
-    return this.prisma.reservations.findFirst({
-      where: {
-        agent_id: agentId,
-        date_reservation: new Date(date),
-        heure_reservation: new Date(`1970-01-01T${heure}:00`),
-        status: { not: "annulee" },
-      },
     });
   }
 
@@ -95,19 +80,22 @@ export class reservationsRepository {
       where: { agent_id: agentId },
       include: {
         users: { select: { id: true, name: true, phone: true } },
-        offers: { select: { id: true, title: true } },
       },
       orderBy: { created_at: "desc" },
     });
   }
 
-  async createByClient(dto: {
+  async createByClient(
+    dto: {
     clientId: number;
     agentId: number;
     dateReservation: string;
     heureReservation: string;
-    offerId?: number;
-    customRequest?: string;
+    heureFinReservation: string;
+    customRequest: string;
+    serviceId: number;
+    serviceNom: string;
+    servicePrix: number;
   }) {
     return this.prisma.reservations.create({
       data: {
@@ -115,20 +103,29 @@ export class reservationsRepository {
         agent_id: dto.agentId,
         date_reservation: new Date(dto.dateReservation),
         heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
-        offer_id: dto.offerId,
+        heure_fin_reservation: new Date(
+          `1970-01-01T${dto.heureFinReservation}:00`
+        ),
         custom_request: dto.customRequest,
+        service_id: dto.serviceId,
+        service_nom: dto.serviceNom,
+        service_prix: dto.servicePrix,
         status: "en_attente",
       },
       include: { users: true, agents: true },
     });
   }
+
   async create(dto: {
     clientId: number;
     agentId: number;
     dateReservation: string;
     heureReservation: string;
-    offerId?: number;
-    customRequest?: string;
+    heureFinReservation?: string;
+    customRequest: string;
+    serviceId?: number;
+    serviceNom?: string;
+    servicePrix?: number;
   }) {
     return this.prisma.reservations.create({
       data: {
@@ -136,11 +133,18 @@ export class reservationsRepository {
         agent_id: dto.agentId,
         date_reservation: new Date(dto.dateReservation),
         heure_reservation: new Date(`1970-01-01T${dto.heureReservation}:00`),
-        offer_id: dto.offerId,
+        ...(dto.heureFinReservation && {
+          heure_fin_reservation: new Date(
+            `1970-01-01T${dto.heureFinReservation}:00`
+          ),
+        }),
         custom_request: dto.customRequest,
+        ...(dto.serviceId && { service_id: dto.serviceId }),
+        ...(dto.serviceNom && { service_nom: dto.serviceNom }),
+        ...(dto.servicePrix !== undefined && { service_prix: dto.servicePrix }),
         status: "en_attente",
       },
-      include: { users: true, agents: true, offers: true },
+      include: { users: true, agents: true },
     });
   }
 
@@ -202,23 +206,4 @@ export class reservationsRepository {
     });
   }
 
-  async createByAdmin(dto: {
-    clientId: number;
-    agentId: number;
-    dateReservation: string;
-    offerId?: number;
-    customRequest?: string;
-  }) {
-    return this.prisma.reservations.create({
-      data: {
-        client_id: dto.clientId,
-        agent_id: dto.agentId,
-        date_reservation: new Date(dto.dateReservation),
-        offer_id: dto.offerId,
-        custom_request: dto.customRequest,
-        status: "en_attente",
-      },
-      include: { users: true, agents: true },
-    });
-  }
 }

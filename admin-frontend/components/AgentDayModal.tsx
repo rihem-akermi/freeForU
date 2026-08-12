@@ -203,9 +203,6 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded }: AgentDay
                         </span>
                       </div>
 
-                      {r.offers && (
-                        <p className="text-xs text-[var(--color-text-body)]">🎯 {r.offers.title}</p>
-                      )}
                       {r.custom_request && (
                         <p className="text-xs text-[var(--color-text-body)] italic">💬 "{r.custom_request}"</p>
                       )}

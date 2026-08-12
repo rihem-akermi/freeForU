@@ -12,13 +12,13 @@ import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PublicationsModule } from './publications/publications.module';
-import { OffersModule } from './offers/offers.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { WorkingHoursModule } from './working-hours/working-hours.module';
 import { BlockedSlotsModule } from './blocked-slots/blocked-slots.module';
 import { AvailabilityModule } from './availability/availability.module';
+import { ServicesModule } from './services/services.module';
 
 
 
@@ -30,13 +30,13 @@ import { AvailabilityModule } from './availability/availability.module';
     ContactsModule,
     CategoriesModule,
     PublicationsModule,
-    OffersModule,
     PrismaModule,
     ReviewsModule,
     UploadsModule,
     WorkingHoursModule,
     BlockedSlotsModule,
-    AvailabilityModule
+    AvailabilityModule,
+    ServicesModule
   ],
   controllers: [],
   providers: [],

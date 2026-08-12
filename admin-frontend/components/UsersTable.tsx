@@ -3,6 +3,16 @@
 import { useState } from "react";
 import { User, addUser, deleteUser, updateUser } from "@/lib/api/users";
 import { Toast } from "@/components/Toast";
+import {
+  Button,
+  Input,
+  Badge,
+  IconAdd,
+  IconEdit,
+  IconDelete,
+  IconCheck,
+  IconClose,
+} from "@/components/ui/UIComponents";
 
 type NewUserForm = Omit<User, "id" | "created_at" | "role">;
 type UserEditableForm = Pick<User, "name" | "email" | "phone" | "ville">;
@@ -24,6 +34,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     message: string;
     type: "success" | "error";
   } | null>(null);
+
   const [newUser, setNewUser] = useState<NewUserForm>({
     name: "",
     email: "",
@@ -31,6 +42,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     password: "",
     ville: "",
   });
+
   const [editedForm, setEditedForm] = useState<Partial<UserEditableForm>>({});
 
   async function handleDelete(id: number) {
@@ -93,7 +105,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   }
 
   return (
-    <div>
+    <div className="w-full">
       {toast && (
         <Toast
           message={toast.message}
@@ -102,164 +114,185 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
         />
       )}
 
-      <div className="mb-4 flex justify-end">
-        <button
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-xl font-bold text-[#0B162C]">Gestion des Clients</h2>
+          <p className="text-xs text-[#393D3A]">Consultez, modifiez ou ajoutez des utilisateurs</p>
+        </div>
+        <Button
+          variant={showAddForm ? "neutral" : "primary"}
           onClick={() => setShowAddForm((prev) => !prev)}
-          className="cursor-pointer rounded-full bg-stone-900 px-4 py-2 text-white hover:scale-105"
         >
-          {showAddForm ? "✖️ Annuler" : "➕ Ajouter un utilisateur"}
-        </button>
+          {showAddForm ? <IconClose /> : <IconAdd />}
+          {showAddForm ? "Annuler" : "Ajouter un utilisateur"}
+        </Button>
       </div>
 
       {showAddForm && (
-        <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border-2 border-stone-900 bg-stone-50 p-4">
-          <input
-            placeholder="Nom"
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+          <Input
+            placeholder="Nom complet"
             value={newUser.name}
             onChange={(e) => handleNewUserChange("name", e.target.value)}
-            className="rounded border px-2 py-1"
           />
-          <input
+          <Input
             placeholder="Email"
+            type="email"
             value={newUser.email}
             onChange={(e) => handleNewUserChange("email", e.target.value)}
-            className="rounded border px-2 py-1"
           />
-          <input
+          <Input
             placeholder="Téléphone"
             value={newUser.phone}
             onChange={(e) => handleNewUserChange("phone", e.target.value)}
-            className="rounded border px-2 py-1"
           />
-          <input
+          <Input
             placeholder="Mot de passe"
             type="password"
             value={newUser.password}
             onChange={(e) => handleNewUserChange("password", e.target.value)}
-            className="rounded border px-2 py-1"
           />
-          <input
+          <Input
             placeholder="Ville"
             value={newUser.ville}
             onChange={(e) => handleNewUserChange("ville", e.target.value)}
-            className="rounded border px-2 py-1"
           />
-          <button
-            onClick={handleAddUser}
-            className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-white hover:scale-105"
-          >
-            ✅ Enregistrer
-          </button>
+          <div className="sm:col-span-2 md:col-span-1 flex items-end">
+            <Button variant="accent" onClick={handleAddUser} className="w-full">
+              <IconCheck /> Enregistrer
+            </Button>
+          </div>
         </div>
       )}
 
-      <table className="w-full overflow-hidden rounded-lg border border-stone-200 bg-white text-sm">
-        <thead className="bg-stone-50 text-left text-stone-500">
-          <tr>
-            <th className="px-4 py-3 font-normal">ID</th>
-            <th className="px-4 py-3 font-normal">Nom</th>
-            <th className="px-4 py-3 font-normal">Email</th>
-            <th className="px-4 py-3 font-normal">Téléphone</th>
-            <th className="px-4 py-3 font-normal">Ville</th>
-            <th className="px-4 py-3 font-normal">Rôle</th>
-            <th className="px-4 py-3 font-normal">Inscrit le</th>
-            <th className="px-4 py-3 font-normal">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => {
-            const isEditing = editingId === user.id;
+      <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
+        <table className="w-full text-left text-sm border-collapse">
+          <thead className="bg-[#EEECF2]/70 text-[#0B162C] font-bold text-xs uppercase tracking-wider border-b border-[var(--color-border)]">
+            <tr>
+              <th className="px-5 py-4">ID</th>
+              <th className="px-5 py-4">Nom</th>
+              <th className="px-5 py-4">Email</th>
+              <th className="px-5 py-4">Téléphone</th>
+              <th className="px-5 py-4">Ville</th>
+              <th className="px-5 py-4">Rôle</th>
+              <th className="px-5 py-4">Inscrit le</th>
+              <th className="px-5 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--color-border)] text-[#000000]">
+            {users.map((user) => {
+              const isEditing = editingId === user.id;
 
-            return (
-              <tr key={user.id} className="border-t border-stone-100">
-                <td className="px-4 py-3 text-stone-500">{user.id}</td>
-                <td className="px-4 py-3">
-                  {isEditing ? (
-                    <input
-                      value={editedForm.name ?? ""}
-                      onChange={(e) =>
-                        handleEditedUserChange("name", e.target.value)
+              return (
+                <tr
+                  key={user.id}
+                  className="hover:bg-[#EEECF2]/30 transition-colors duration-150"
+                >
+                  <td className="px-5 py-4 text-xs font-semibold text-[#393D3A]">
+                    #{user.id}
+                  </td>
+                  <td className="px-5 py-4 font-semibold">
+                    {isEditing ? (
+                      <input
+                        value={editedForm.name ?? ""}
+                        onChange={(e) =>
+                          handleEditedUserChange("name", e.target.value)
+                        }
+                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white"
+                      />
+                    ) : (
+                      user.name
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-[#393D3A]">
+                    {isEditing ? (
+                      <input
+                        value={editedForm.email ?? ""}
+                        onChange={(e) =>
+                          handleEditedUserChange("email", e.target.value)
+                        }
+                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white"
+                      />
+                    ) : (
+                      user.email
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-[#393D3A]">
+                    {isEditing ? (
+                      <input
+                        value={editedForm.phone ?? ""}
+                        onChange={(e) =>
+                          handleEditedUserChange("phone", e.target.value)
+                        }
+                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white"
+                      />
+                    ) : (
+                      user.phone
+                    )}
+                  </td>
+                  <td className="px-5 py-4 text-[#393D3A]">
+                    {isEditing ? (
+                      <input
+                        value={editedForm.ville ?? ""}
+                        onChange={(e) =>
+                          handleEditedUserChange("ville", e.target.value)
+                        }
+                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white"
+                      />
+                    ) : (
+                      user.ville
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    <Badge
+                      variant={
+                        user.role === "ADMIN"
+                          ? "info"
+                          : user.role === "AGENT"
+                          ? "warning"
+                          : "neutral"
                       }
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    user.name
-                  )}
-                </td>
-                <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <input
-                      value={editedForm.email ?? ""}
-                      onChange={(e) =>
-                        handleEditedUserChange("email", e.target.value)
-                      }
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    user.email
-                  )}
-                </td>
-                <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <input
-                      value={editedForm.phone ?? ""}
-                      onChange={(e) =>
-                        handleEditedUserChange("phone", e.target.value)
-                      }
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    user.phone
-                  )}
-                </td>
-                <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <input
-                      value={editedForm.ville ?? ""}
-                      onChange={(e) =>
-                        handleEditedUserChange("ville", e.target.value)
-                      }
-                      className="w-full rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    user.ville
-                  )}
-                </td>
-                <td className="px-4 py-3 text-stone-500">{user.role}</td>
-                <td className="px-4 py-3 text-stone-500">
-                  {formatDate(user.created_at)}
-                </td>
-                <td className="px-4 py-3 text-xl">
-                  {isEditing ? (
-                    <button
-                      onClick={() => handleSaveEdit(user.id)}
-                      className="cursor-pointer hover:scale-135"
                     >
-                      ✅
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="cursor-pointer hover:scale-135"
+                      {user.role}
+                    </Badge>
+                  </td>
+                  <td className="px-5 py-4 text-xs text-[#393D3A]">
+                    {formatDate(user.created_at)}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {isEditing ? (
+                      <Button
+                        size="sm"
+                        variant="accent"
+                        onClick={() => handleSaveEdit(user.id)}
                       >
-                        🗑️
-                      </button>
-                      <span> / </span>
-                      <button
-                        onClick={() => handleEditClick(user)}
-                        className="cursor-pointer hover:scale-135"
-                      >
-                        🖋️
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                        <IconCheck /> Valider
+                      </Button>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditClick(user)}
+                        >
+                          <IconEdit />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          <IconDelete />
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

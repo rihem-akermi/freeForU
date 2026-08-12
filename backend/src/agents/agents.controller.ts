@@ -40,7 +40,14 @@ export class AgentsController {
     return result;
   }
 
-   @Get(":id")
+  @Get()
+  async getPublicAgents(@Query("category_id") categoryId?: string) {
+    return this.agentsService.getPublicAgents(
+      categoryId ? Number(categoryId) : undefined
+    );
+  }
+
+  @Get(":id")
   async getAgentById(@Param("id", ParseIntPipe) id: number) {
     return this.agentsService.getAgentById(id);
   }

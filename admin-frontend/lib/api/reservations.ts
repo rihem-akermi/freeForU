@@ -6,8 +6,7 @@ export type CreateMyReservationData = {
   agentId: number;
   dateReservation: string;
   heureReservation: string;
-  offerId?: number;
-  customRequest?: string;
+  customRequest: string;
 };
 
 export type AgentDayReservation = {
@@ -17,7 +16,6 @@ export type AgentDayReservation = {
   status: string;
   custom_request: string | null;
   users: { id: number; name: string; phone: string | null; email: string };
-  offers: { id: number; title: string } | null;
   agent_confirmed : boolean
 };
 export async function getReservations(): Promise<Reservation[]> {
@@ -63,8 +61,7 @@ export async function addReservation(reservation: {
   agentId: number;
   dateReservation: string;
   heureReservation: string;
-  offerId?: number;
-  customRequest?: string;
+  customRequest: string;
 }): Promise<Reservation> {
   const response = await api.post<Reservation>("/reservations", reservation);
   return response.data;

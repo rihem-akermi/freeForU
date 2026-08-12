@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Exact Specified Palette */
+  /* Cohesive Palette System */
   --color-primary: #0B162C;          /* Deep luxury navy */
   --color-primary-secondary: #1C2942;/* Dark blue-grey contrast */
   --color-accent: #9D8099;           /* Elegant dusty mauve accent */
@@ -14,12 +14,12 @@
 
   /* Derived System Helpers */
   --color-card-bg: #FFFFFF;
-  --color-border: rgba(28, 41, 66, 0.12);
+  --color-border: rgba(28, 41, 66, 0.1);
   --color-border-hover: rgba(157, 128, 153, 0.4);
-  --shadow-sm: 0 2px 8px rgba(11, 22, 44, 0.04);
-  --shadow-md: 0 8px 24px rgba(11, 22, 44, 0.08);
-  --shadow-lg: 0 16px 40px rgba(11, 22, 44, 0.12);
-  --shadow-hover: 0 20px 48px rgba(41, 21, 39, 0.16);
+  --shadow-sm: 0 2px 10px rgba(11, 22, 44, 0.04);
+  --shadow-md: 0 8px 26px rgba(11, 22, 44, 0.08);
+  --shadow-lg: 0 16px 44px rgba(11, 22, 44, 0.12);
+  --shadow-hover: 0 22px 50px rgba(41, 21, 39, 0.16);
 
   /* Typography System */
   --font-serif: 'Libre Baskerville', Georgia, serif;
@@ -56,10 +56,10 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Max Container Utility for Fluid Responsive Layouts */
+/* Fluid Container for Wide Viewports (1846px+) */
 .vitrine-container {
   width: 100%;
-  max-width: 1536px;
+  max-width: 1700px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
@@ -82,8 +82,15 @@ body {
 
 @media (min-width: 1440px) {
   .vitrine-container {
-    padding-left: 4rem;
-    padding-right: 4rem;
+    padding-left: 4.5rem;
+    padding-right: 4.5rem;
+  }
+}
+
+@media (min-width: 1800px) {
+  .vitrine-container {
+    padding-left: 5rem;
+    padding-right: 5rem;
   }
 }
 
@@ -92,34 +99,29 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 1rem;
+  padding: 0.45rem 1.1rem;
   border-radius: 9999px;
   background-color: rgba(157, 128, 153, 0.15);
   color: var(--color-accent-dark);
   font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
   border: 1px solid rgba(157, 128, 153, 0.25);
 }
 
-/* Smooth keyframes */
+/* Keyframes */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
 }
 
 .animate-float {
   animation: float 5s ease-in-out infinite;
 }
 
-/* Accessibility: respect prefers-reduced-motion */
+/* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

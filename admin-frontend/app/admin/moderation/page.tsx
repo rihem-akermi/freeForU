@@ -1,17 +1,15 @@
 'use client'
 import { useEffect, useState } from "react";
-import { getPendingOffers, updateOfferStatus } from "@/lib/api/offers";
 import { getPendingPublications, updatePublicationStatus } from "@/lib/api/publications";
 import { getAllReviews, deleteReview } from "@/lib/api/reviews";
 import { Toast } from "@/components/Toast";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import type { Offer,Review,Publication} from "@/lib/data";
+import type { Review,Publication} from "@/lib/data";
 
-type Tab = "offers" | "publications" | "reviews";
+type Tab = "publications" | "reviews";
 
 export default function ModerationPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("offers");
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>("publications");
   const [publications, setPublications] = useState<Publication[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,12 +23,10 @@ export default function ModerationPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [offersData, pubsData, reviewsData] = await Promise.all([
-        getPendingOffers(),
+      const [pubsData, reviewsData] = await Promise.all([
         getPendingPublications(),
         getAllReviews(),
       ]);
-      setOffers(offersData);
       setPublications(pubsData);
       setReviews(reviewsData);
     } catch (err) {
@@ -41,16 +37,7 @@ export default function ModerationPage() {
     }
   }
 
-  async function handleOfferStatus(id: number, status: "approuvee" | "rejetee") {
-    try {
-      await updateOfferStatus(id, status);
-      setOffers((prev) => prev.filter((o) => o.id !== id));
-      setToast({ message: status === "approuvee" ? "Offre approuvée." : "Offre rejetée.", type: "success" });
-    } catch (err: any) {
-      setToast({ message: err?.response?.data?.message ?? "Erreur.", type: "error" });
-    }
-  }
-
+  
   async function handlePublicationStatus(id: number, status: "approuvee" | "rejetee") {
     try {
       await updatePublicationStatus(id, status);
@@ -90,7 +77,6 @@ export default function ModerationPage() {
       <h1 className="mb-6 text-2xl font-medium text-stone-900">Modération</h1>
 
       <div className="flex gap-1 border-b border-stone-200 mb-5">
-        <TabButton label={`Offres (${offers.length})`} active={activeTab === "offers"} onClick={() => setActiveTab("offers")} />
         <TabButton label={`Publications (${publications.length})`} active={activeTab === "publications"} onClick={() => setActiveTab("publications")} />
         <TabButton label={`Avis (${reviews.length})`} active={activeTab === "reviews"} onClick={() => setActiveTab("reviews")} />
       </div>
@@ -99,28 +85,7 @@ export default function ModerationPage() {
         <p className="text-sm text-stone-500">Chargement...</p>
       ) : (
         <>
-          {activeTab === "offers" && (
-            offers.length === 0 ? (
-              <p className="text-sm text-stone-500">Aucune offre en attente.</p>
-            ) : (
-              <div className="space-y-3">
-                {offers.map((offer) => (
-                  <div key={offer.id} className="flex items-center justify-between bg-white border border-stone-200 rounded-lg p-4">
-                    <div>
-                      <p className="text-sm font-medium text-stone-900">{offer.title}</p>
-                      <p className="text-xs text-stone-500">{offer.agents?.name} · {offer.agents?.ville}</p>
-                      <p className="text-sm text-stone-600 mt-1">{offer.description}</p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => handleOfferStatus(offer.id, "approuvee")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs text-white hover:scale-105 cursor-pointer">✅ Approuver</button>
-                      <button onClick={() => handleOfferStatus(offer.id, "rejetee")} className="rounded-full bg-red-600 px-3 py-1.5 text-xs text-white hover:scale-105 cursor-pointer">❌ Rejeter</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          )}
-
+          
           {activeTab === "publications" && (
             publications.length === 0 ? (
               <p className="text-sm text-stone-500">Aucune publication en attente.</p>

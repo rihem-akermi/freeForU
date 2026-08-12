@@ -15,7 +15,7 @@ export type Agent = {
   name: string;
   categories: {
     id: number;
-    nom: string;
+    name: string;
   };
   ville: string;
   email: string;
@@ -38,8 +38,7 @@ export type Reservation = {
   id: number;
   client_id: number;
   agent_id: number;
-  offer_id: number | null;
-  custom_request: string | null;
+  custom_request: string ;
   heure_reservation: string | null;
   date_reservation: string;
   status: "en_attente" | "confirmee" | "terminee" | "annulee";
@@ -61,10 +60,6 @@ export type Reservation = {
     ville: string | null;
     photo_url?: string | null;
   };
-  offers?: {
-    id: number;
-    title: string;
-  } | null;
 };
 
 export type Contact = {
@@ -91,23 +86,6 @@ export type Publication = {
   created_at: string;
 };
 
-export type Offer = {
-  id: number;
-  title: string;
-  description: string;
-  cover_image: string | null;
-  min_price: string | null;
-  max_price: string | null;
-  status: "en_attente" | "approuvee" | "rejetee";
-  active: boolean;
-  created_at: string;
-  agents?: {
-    id: number;
-    name: string;
-    ville: string | null;
-    photo_url: string | null;
-  };
-};
 
 export type Review = {
   id: number;
@@ -117,3 +95,14 @@ export type Review = {
   comment: string | null;
   created_at: string;
 };
+
+export interface Service {
+  id: number;
+  agent_id: number;
+  nom: string;
+  description?: string;
+  type_prix: "fixe" | "a_partir_de";
+  prix: number;
+  duree_estimee?: number;
+  created_at?: string;
+}

@@ -32,10 +32,10 @@ model agents {
   agent_blocked_slots  agent_blocked_slots[]
   agent_working_hours  agent_working_hours[]
   categories           categories?           @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  offers               offers[]
   publications         publications[]
   reservations         reservations[]
   reviews              reviews[]
+  services             services[]
 }
 
 model categories {
@@ -50,26 +50,6 @@ model contacts {
   email      String    @db.VarChar(255)
   message    String
   created_at DateTime? @default(now()) @db.Timestamp(6)
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model offers {
-  id           Int            @id @default(autoincrement())
-  agent_id     Int
-  title        String         @db.VarChar(150)
-  description  String
-  cover_image  String?        @db.VarChar(255)
-  min_price    Decimal?       @db.Decimal(10, 2)
-  max_price    Decimal?       @db.Decimal(10, 2)
-  status       String         @default("en_attente") @db.VarChar(20)
-  active       Boolean        @default(true)
-  created_at   DateTime       @default(now()) @db.Timestamp(6)
-  updated_at   DateTime       @default(now()) @db.Timestamp(6)
-  agents       agents         @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  reservations reservations[]
-
-  @@index([active, status], map: "idx_offers_active_status")
-  @@index([agent_id], map: "idx_offers_agent_id")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -88,22 +68,25 @@ model publications {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model reservations {
-  id                Int       @id @default(autoincrement())
-  client_id         Int
-  agent_id          Int
-  date_reservation  DateTime  @db.Date
-  status            String    @default("en_attente") @db.VarChar(20)
-  created_at        DateTime? @default(now()) @db.Timestamp(6)
-  agent_confirmed   Boolean   @default(false)
-  client_confirmed  Boolean   @default(false)
-  heure_reservation DateTime? @db.Time(6)
-  offer_id          Int?
-  custom_request    String?
-  agents            agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users             users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  offers            offers?   @relation(fields: [offer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  reviews           reviews?
-  @@unique([agent_id, date_reservation, heure_reservation])
+  id                    Int       @id @default(autoincrement())
+  client_id             Int
+  agent_id              Int
+  date_reservation      DateTime  @db.Date
+  status                String    @default("en_attente") @db.VarChar(20)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  agent_confirmed       Boolean   @default(false)
+  client_confirmed      Boolean   @default(false)
+  heure_reservation     DateTime? @db.Time(6)
+  custom_request        String?
+  heure_fin_reservation DateTime? @db.Time(6)
+  archived              Boolean   @default(false)
+  service_id            Int?
+  service_nom           String?   @db.VarChar(150)
+  service_prix          Float?
+  agents                agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  services              services? @relation(fields: [service_id], references: [id], onUpdate: NoAction)
+  reviews               reviews?
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -137,14 +120,14 @@ model users {
 }
 
 model agent_working_hours {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   agent_id    Int
   day_of_week Int
-  week_start  DateTime  @db.Date  
-  is_working  Boolean  @default(true)
-  start_time  DateTime? @db.Time
-  end_time    DateTime? @db.Time
-  agents      agents   @relation(fields: [agent_id], references: [id], onDelete: Cascade)
+  start_time  DateTime? @db.Time(6)
+  end_time    DateTime? @db.Time(6)
+  is_working  Boolean   @default(true)
+  week_start  DateTime  @db.Date
+  agents      agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([agent_id, week_start, day_of_week])
 }
@@ -157,4 +140,17 @@ model agent_blocked_slots {
   end_time   DateTime? @db.Time(6)
   reason     String?   @db.VarChar(255)
   agents     agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model services {
+  id            Int            @id @default(autoincrement())
+  agent_id      Int
+  nom           String         @db.VarChar(150)
+  description   String?
+  type_prix     String         @default("fixe") @db.VarChar(20)
+  prix          Float
+  duree_estimee Int?
+  created_at    DateTime?      @default(now()) @db.Timestamp(6)
+  reservations  reservations[]
+  agents        agents         @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

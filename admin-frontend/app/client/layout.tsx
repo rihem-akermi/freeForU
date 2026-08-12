@@ -8,9 +8,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   ];
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[var(--color-background-soft)]/40">
       <Sidebar title="Espace Client" links={links} />
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-4 sm:p-6 md:p-8 lg:p-10 max-w-[1760px] w-full mx-auto">
+        {children}
+      </main>
     </div>
   );
 }

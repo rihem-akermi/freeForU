@@ -1,6 +1,7 @@
 import { getAgents } from "@/lib/api/agents";
 import { getCategories } from "@/lib/api/categories";
 import { getContacts } from "@/lib/api/contacts";
+import { getPendingPublications } from "@/lib/api/publications";
 import { getReservations } from "@/lib/api/reservations";
 import { getUsers } from "@/lib/api/users";
 
@@ -10,6 +11,7 @@ export default async function PageAdmin() {
   const reservations = await getReservations();
   const contacts = await getContacts();
   const categories = await getCategories();
+  const pendingPublications = await getPendingPublications();
 
   const cards = [
     { label: "Clients", value: users.length },
@@ -17,6 +19,7 @@ export default async function PageAdmin() {
     { label: "Réservations", value: reservations.length },
     { label: "Contacts", value: contacts.length },
     { label: "Categories", value: categories.length },
+    { label: "Publications En Attentes ", value: pendingPublications.length },
   ];
 
   return (

@@ -63,7 +63,7 @@ function ReservationCard({
   reservation: Reservation;
   onConfirmCompletion: (id: number) => void;
 }) {
-  const serviceLabel = reservation.offers?.title ?? reservation.custom_request ?? "Demande personnalisée";
+  const serviceLabel = reservation.custom_request ?? "Demande personnalisée";
   const formattedDate = new Date(reservation.date_reservation).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "2-digit", year: "numeric",
   });

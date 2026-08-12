@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getAgentOffers } from "@/lib/api/offers";
 import { createMyReservation } from "@/lib/api/reservations";
-import { Offer } from "@/lib/data";
 
 type ReservationFormProps = {
   agentId: number;
@@ -19,21 +17,12 @@ export function ReservationForm({
   onClose,
   onSuccess,
 }: ReservationFormProps) {
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [selectedOfferId, setSelectedOfferId] = useState<string>("");
   const [customRequest, setCustomRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    getAgentOffers(agentId).then(setOffers).catch(console.error);
-  }, [agentId]);
-
-  const isCustom = selectedOfferId === "autre";
-
   const handleSubmit = async () => {
-    if (!selectedOfferId) return;
-    if (isCustom && !customRequest.trim()) return;
+    if (!customRequest.trim()) return;
 
     setSubmitting(true);
     setError("");
@@ -42,8 +31,7 @@ export function ReservationForm({
         agentId,
         dateReservation: date,
         heureReservation: hour,
-        offerId: isCustom ? undefined : Number(selectedOfferId),
-        customRequest: isCustom ? customRequest : undefined,
+        customRequest: customRequest,
       });
       onSuccess();
     } catch (err: any) {
@@ -93,49 +81,17 @@ export function ReservationForm({
           <label className=" font-medium text-[var(--color-text-body)]">
             Quel service ?
           </label>
-          <select
-            value={selectedOfferId}
-            onChange={(e) => setSelectedOfferId(e.target.value)}
-            className="
-    w-full
-    h-12
-    px-4
-    rounded-xl
-    bg-white
-    border
-    border-stone-200
-    text-sm
-    text-[var(--color-text-dark)]
-    shadow-sm
-    outline-none
-    cursor-pointer
-    transition
-    focus:border-[var(--color-primary)]
-    focus:ring-4
-    focus:ring-[var(--color-primary)]/10
-  "
-          >
-            <option value="">-- Choisissez --</option>
-            {offers.map((offer) => (
-              <option key={offer.id} value={offer.id}>
-                {offer.title}{" "}
-                {offer.min_price ? `(${Number(offer.min_price)} DT+)` : ""}
-              </option>
-            ))}
-            <option value="autre">Autre — demande personnalisée</option>
-          </select>
         </div>
-        {isCustom && (
-          <div className="flex flex-col gap-1.5 mb-4">
-            <label className=" font-medium text-[var(--color-text-body)]">
-              Décrivez votre besoin
-            </label>
-            <textarea
-              value={customRequest}
-              onChange={(e) => setCustomRequest(e.target.value)}
-              rows={3}
-              placeholder="Décrivez le service que vous recherchez..."
-              className="
+        <div className="flex flex-col gap-1.5 mb-4">
+          <label className=" font-medium text-[var(--color-text-body)]">
+            Décrivez votre besoin
+          </label>
+          <textarea
+            value={customRequest}
+            onChange={(e) => setCustomRequest(e.target.value)}
+            rows={3}
+            placeholder="Décrivez le service que vous recherchez..."
+            className="
     w-full
     p-4
     rounded-xl
@@ -153,9 +109,8 @@ export function ReservationForm({
     focus:ring-4
     focus:ring-[var(--color-primary)]/10
   "
-            />
-          </div>
-        )}
+          />
+        </div>
         <div className="flex justify-end gap-3 mt-2">
           <button
             onClick={onClose}
@@ -173,7 +128,7 @@ transition
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || !selectedOfferId}
+            disabled={submitting}
             className="
 px-5 py-2.5
 rounded-lg

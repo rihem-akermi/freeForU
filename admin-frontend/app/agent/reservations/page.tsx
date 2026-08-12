@@ -112,7 +112,7 @@ export default function ReservationsPage() {
             </thead>
             <tbody>
               {reservations.map((r) => {
-                const serviceLabel = r.offers?.title ?? r.custom_request ?? "—";
+                const serviceLabel = r.custom_request ?? "⚠️ No Request";
                 const hour = r.heure_reservation
                   ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
                       hour: "2-digit",

@@ -14,8 +14,10 @@ import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { DayAvailabilityModal } from "@/components/DayAvailabilityModal";
 import { ReservationForm } from "@/components/ReservationForm";
 import { Toast } from "@/components/Toast";
+import AgentServicesTab from "@/components/AgentServicesTab";
+import { Service } from "@/lib/data";
 
-type Tab = "infos" | "portfolio" | "avis" | "disponibilites";
+type Tab = "infos" | "services" | "portfolio" | "avis" | "disponibilites";
 
 export default function AgentProfilePage() {
   const params = useParams();
@@ -36,6 +38,7 @@ export default function AgentProfilePage() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
     async function loadAll() {
@@ -98,7 +101,7 @@ export default function AgentProfilePage() {
             )}
           </div>
           <p className="text-sm text-[var(--color-text-body)]">
-            {agent.categories.nom} · {agent.ville}
+            {agent.categories.name} · {agent.ville}
           </p>
           {summary && (
             <p className="text-sm text-amber-600 mt-1">
@@ -113,6 +116,7 @@ export default function AgentProfilePage() {
         {(
           [
             { key: "infos", label: "Infos" },
+            { key: "services", label: "Services" },
             { key: "portfolio", label: `Portfolio (${publications.length})` },
             { key: "avis", label: `Avis (${reviews.length})` },
             { key: "disponibilites", label: "Disponibilités" },
@@ -133,16 +137,36 @@ export default function AgentProfilePage() {
       </div>
 
       {activeTab === "infos" && <InfosTab agent={agent} />}
+
       {activeTab === "portfolio" && (
         <PortfolioTab publications={publications} />
       )}
+
       {activeTab === "avis" && <AvisTab reviews={reviews} />}
-      {activeTab === "disponibilites" && (
-        <AvailabilityCalendar
+
+      {activeTab === "services" && (
+        <AgentServicesTab
           agentId={agentId}
-          onSelectDay={(date) => setSelectedDate(date)}
-          mode="client"
+          onReserve={(service) => {
+            setSelectedService(service);
+            setActiveTab("disponibilites");
+          }}
         />
+      )}
+
+      {activeTab === "disponibilites" && (
+        <>
+          {selectedService && (
+            <div className="mb-3 px-4 py-2 rounded-lg bg-[var(--color-bg-alt)] text-sm text-[var(--color-text-dark)]">
+              Réservation pour : <strong>{selectedService.nom}</strong>
+            </div>
+          )}
+          <AvailabilityCalendar
+            agentId={agentId}
+            onSelectDay={(date) => setSelectedDate(date)}
+            mode="client"
+          />
+        </>
       )}
 
       {selectedDate && (
@@ -163,9 +187,13 @@ export default function AgentProfilePage() {
           agentId={agentId}
           date={reservationSlot.date}
           hour={reservationSlot.hour}
-          onClose={() => setReservationSlot(null)}
+          onClose={() => {
+            setReservationSlot(null);
+            setSelectedService(null);
+          }}
           onSuccess={() => {
             setReservationSlot(null);
+            setSelectedService(null); 
             setToast({
               message: "Réservation envoyée ! En attente de confirmation.",
               type: "success",
