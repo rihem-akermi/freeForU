@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getAgents } from "@/lib/api/agents";
 import { getCategories } from "@/lib/api/categories";
 import { getContacts } from "@/lib/api/contacts";
@@ -5,22 +8,43 @@ import { getPendingPublications } from "@/lib/api/publications";
 import { getReservations } from "@/lib/api/reservations";
 import { getUsers } from "@/lib/api/users";
 
-export default async function PageAdmin() {
-  const users = await getUsers();
-  const agents = await getAgents();
-  const reservations = await getReservations();
-  const contacts = await getContacts();
-  const categories = await getCategories();
-  const pendingPublications = await getPendingPublications();
+export default function PageAdmin() {
+  const [loading, setLoading] = useState(true);
+  const [cards, setCards] = useState<{ label: string; value: number }[]>([]);
 
-  const cards = [
-    { label: "Clients", value: users.length },
-    { label: "Agents", value: agents.length },
-    { label: "Réservations", value: reservations.length },
-    { label: "Contacts", value: contacts.length },
-    { label: "Categories", value: categories.length },
-    { label: "Publications En Attentes ", value: pendingPublications.length },
-  ];
+  useEffect(() => {
+    async function loadAll() {
+      try {
+        const [users, agents, reservations, contacts, categories, pendingPublications] =
+          await Promise.all([
+            getUsers(),
+            getAgents(),
+            getReservations(),
+            getContacts(),
+            getCategories(),
+            getPendingPublications(),
+          ]);
+
+        setCards([
+          { label: "Clients", value: users.length },
+          { label: "Agents", value: agents.length },
+          { label: "Réservations", value: reservations.length },
+          { label: "Contacts", value: contacts.length },
+          { label: "Categories", value: categories.length },
+          { label: "Publications En Attentes ", value: pendingPublications.length },
+        ]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAll();
+  }, []);
+
+  if (loading) {
+    return <p className="text-sm text-stone-500">Chargement...</p>;
+  }
 
   return (
     <div>

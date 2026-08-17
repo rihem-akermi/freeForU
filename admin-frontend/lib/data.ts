@@ -7,7 +7,7 @@ export type User = {
   role: "CLIENT" | "ADMIN";
   ville: string;
   created_at: string;
-  photo_url?: string ;
+  photo_url?: string;
 };
 
 export type Agent = {
@@ -38,12 +38,23 @@ export type Reservation = {
   id: number;
   client_id: number;
   agent_id: number;
-  custom_request: string ;
+  custom_request: string;
   heure_reservation: string | null;
+  heure_fin_reservation: string | null;
   date_reservation: string;
-  status: "en_attente" | "confirmee" | "terminee" | "annulee";
+  status:
+    | "en_attente"
+    | "confirmee"
+    | "terminee"
+    | "rejetee"
+    | "annulee"
+    | "expiree";
   agent_confirmed: boolean;
   client_confirmed: boolean;
+  archived: boolean;
+  service_id: number | null;
+  service_nom: string | null;
+  service_prix: number | null;
   created_at: string;
   users?: {
     id: number;
@@ -60,6 +71,7 @@ export type Reservation = {
     ville: string | null;
     photo_url?: string | null;
   };
+  reviews?: { id: number; rating: number } | null;
 };
 
 export type Contact = {
@@ -86,14 +98,15 @@ export type Publication = {
   created_at: string;
 };
 
-
 export type Review = {
   id: number;
   agent_id: number;
+  reservation_id: number;
   client_id: number;
   rating: number;
   comment: string | null;
   created_at: string;
+  users?: { name: string };
 };
 
 export interface Service {

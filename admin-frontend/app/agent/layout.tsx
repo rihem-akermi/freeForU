@@ -5,6 +5,8 @@ const agentLinks = [
   { href: "/agent/infos", label: "Mes Infos" },
   { href: "/agent/publications", label: "Mes publications" },
   { href: "/agent/reservations", label: "Clients et réservations" },
+  {href : "/agent/services", label:"Mes Services"},
+
   { href: "/agent/disponibilites", label: "Mon Agenda" },
 ];
 

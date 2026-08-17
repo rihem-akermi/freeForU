@@ -24,6 +24,10 @@ export class PublicationsService {
     return await this.publicationsRepository.findAllByAgentId(agentId);
   }
 
+  async getMyPendingPublications(agentId: number) {
+    return await this.publicationsRepository.findPendingPubsByAgentId(agentId);
+  }
+
   async getAllForModeration() {
     return await this.publicationsRepository.findAll();
   }

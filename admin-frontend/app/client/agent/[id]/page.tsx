@@ -15,6 +15,7 @@ import { DayAvailabilityModal } from "@/components/DayAvailabilityModal";
 import { ReservationForm } from "@/components/ReservationForm";
 import { Toast } from "@/components/Toast";
 import AgentServicesTab from "@/components/AgentServicesTab";
+import AgentWorkingHoursStatus from "@/components/AgentWorkingHoursStatus ";
 import { Service } from "@/lib/data";
 
 type Tab = "infos" | "services" | "portfolio" | "avis" | "disponibilites";
@@ -30,15 +31,18 @@ export default function AgentProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("infos");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [reservationSlot, setReservationSlot] = useState<{
-    date: string;
-    hour: string;
-  } | null>(null);
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
+  const [calendarVersion, setCalendarVersion] = useState(0);
+  const [reservationSlot, setReservationSlot] = useState<{
+    date: string;
+    startTime: string | null;
+    endTime: string | null;
+  } | null>(null);
 
   useEffect(() => {
     async function loadAll() {
@@ -110,7 +114,6 @@ export default function AgentProfilePage() {
           )}
         </div>
       </div>
-
       {/* Onglets */}
       <div className="flex gap-1 border-b border-[var(--color-bg-alt)] mb-6">
         {(
@@ -135,15 +138,11 @@ export default function AgentProfilePage() {
           </button>
         ))}
       </div>
-
-      {activeTab === "infos" && <InfosTab agent={agent} />}
-
+      {activeTab === "infos" && <InfosTab agent={agent} agentId={agentId} />}{" "}
       {activeTab === "portfolio" && (
         <PortfolioTab publications={publications} />
       )}
-
       {activeTab === "avis" && <AvisTab reviews={reviews} />}
-
       {activeTab === "services" && (
         <AgentServicesTab
           agentId={agentId}
@@ -153,7 +152,6 @@ export default function AgentProfilePage() {
           }}
         />
       )}
-
       {activeTab === "disponibilites" && (
         <>
           {selectedService && (
@@ -168,32 +166,32 @@ export default function AgentProfilePage() {
           />
         </>
       )}
-
       {selectedDate && (
         <DayAvailabilityModal
           agentId={agentId}
           date={selectedDate}
           onClose={() => setSelectedDate(null)}
-          onSelectHour={(date, hour) => {
-            console.log("créneau choisi:", date, hour);
+          onProceed={(date, startTime, endTime) => {
             setSelectedDate(null);
-            setReservationSlot({ date, hour });
+            setReservationSlot({ date, startTime, endTime });
           }}
         />
       )}
-
       {reservationSlot && (
         <ReservationForm
           agentId={agentId}
           date={reservationSlot.date}
-          hour={reservationSlot.hour}
+          workingStart={reservationSlot.startTime}
+          workingEnd={reservationSlot.endTime}
+          service={selectedService ?? undefined}
           onClose={() => {
             setReservationSlot(null);
             setSelectedService(null);
           }}
           onSuccess={() => {
             setReservationSlot(null);
-            setSelectedService(null); 
+            setSelectedService(null);
+            setCalendarVersion((v) => v + 1);
             setToast({
               message: "Réservation envoyée ! En attente de confirmation.",
               type: "success",
@@ -201,7 +199,6 @@ export default function AgentProfilePage() {
           }}
         />
       )}
-
       {toast && (
         <Toast
           message={toast.message}
@@ -213,9 +210,11 @@ export default function AgentProfilePage() {
   );
 }
 
-function InfosTab({ agent }: { agent: Agent }) {
+function InfosTab({ agent, agentId }: { agent: Agent; agentId: number }) {
   return (
     <div className="bg-[var(--color-card)] rounded-xl p-5 shadow-sm border border-[var(--color-bg-alt)] space-y-4">
+      <AgentWorkingHoursStatus agentId={agentId} />
+
       {agent.bio && (
         <div>
           <h3 className="text-xs font-semibold text-[var(--color-text-body)] uppercase tracking-wide mb-1">
@@ -305,12 +304,12 @@ function AvisTab({ reviews }: { reviews: Review[] }) {
           className="bg-white border border-stone-200 rounded-lg p-4"
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-amber-600 text-sm">
-              {"★".repeat(review.rating)}
-              {"☆".repeat(5 - review.rating)}
+            <span className="text-sm font-medium text-[var(--color-text-dark)]">
+              {review.users?.name ?? "Client"}
             </span>
-            <span className="text-xs text-[var(--color-text-body)]">
-              {formatDate(review.created_at)}
+            <span className="text-amber-600 text-sm">
+              {"⭐".repeat(review.rating)}
+              {"".repeat(5 - review.rating)}
             </span>
           </div>
           {review.comment && (

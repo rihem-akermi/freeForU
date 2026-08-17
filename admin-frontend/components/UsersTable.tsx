@@ -116,8 +116,12 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
 
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h2 className="font-serif text-xl font-bold text-[#0B162C]">Gestion des Clients</h2>
-          <p className="text-xs text-[#393D3A]">Consultez, modifiez ou ajoutez des utilisateurs</p>
+          <h2 className="font-serif text-xl font-bold text-[#0B162C]">
+            Gestion des Clients
+          </h2>
+          <p className="text-xs text-[#393D3A]">
+            Consultez, modifiez ou ajoutez des utilisateurs
+          </p>
         </div>
         <Button
           variant={showAddForm ? "neutral" : "primary"}
@@ -244,15 +248,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <Badge
-                      variant={
-                        user.role === "ADMIN"
-                          ? "info"
-                          : user.role === "AGENT"
-                          ? "warning"
-                          : "neutral"
-                      }
-                    >
+                    <Badge variant={user.role === "ADMIN" ? "info" : "neutral"}>
                       {user.role}
                     </Badge>
                   </td>

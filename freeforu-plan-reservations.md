@@ -62,7 +62,7 @@ Avant toute chose, il faut décider comment un agent propose ses services. Conce
 
 - [ ] **S** : `npm install @nestjs/schedule` si pas déjà fait
 - [ ] **C** (`app.module.ts` ou module racine) : importer `ScheduleModule.forRoot()`
-- [ ] **S** (`reservations.service.ts`) : méthode `@Cron(CronExpression.EVERY_HOUR) handleExpiredReservations()` — trouve les `en_attente` dont la date/heure est passée, les passe à `expiree`
+- [ ] **S** (`reservations.service.ts`) : méthode `@Cron(CronExpression.EVERY_HOUR) handleExpiredReservations()` — trouve les `en_    attente` dont la date/heure est passée, les passe à `expiree`
 - [ ] **R** : nouvelle méthode `findExpiredPending()` (statut `en_attente` + date/heure < maintenant)
 
 ---

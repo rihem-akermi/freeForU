@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Plateforme Artisans - Admin",
-  description: "Dashboard admin",
+  title: "🏃‍♀️‍➡️ FreeForU",
+  description: "Page vitrine",
 };
 
 export default function RootLayout({

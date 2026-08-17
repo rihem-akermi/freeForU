@@ -24,6 +24,13 @@ export class PublicationsRepository {
     });
   }
 
+
+  async findPendingPubsByAgentId (agentId: number) {
+    return this.prisma.publications.findMany({
+      where: { agent_id: agentId ,status:"en_attente"},
+      orderBy: { created_at: "desc" },
+    });
+  }
   // Vue admin — modération, tous statuts, tous agents
   async findAll() {
     return this.prisma.publications.findMany({

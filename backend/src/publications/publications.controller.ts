@@ -36,6 +36,14 @@ export class PublicationsController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
+  @Get("status/me")
+  async getMyPendingPublications(@Req() req) {
+    return this.publicationsService.getMyPendingPublications(req.user.sub);
+  }
+
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
   @Post()
   @UseInterceptors(FileInterceptor("photo")) //champs photo du formulaire
   async createPublication(

@@ -13,10 +13,6 @@ export class ReviewsRepository {
     });
   }
 
-  async delete(id: number) {
-    return this.prisma.reviews.delete({ where: { id } });
-  }
-
   async findReservationById(id: number) {
     return this.prisma.reservations.findUnique({ where: { id } });
   }
@@ -30,6 +26,9 @@ export class ReviewsRepository {
   async findByAgentId(agentId: number) {
     return this.prisma.reviews.findMany({
       where: { agent_id: agentId },
+      include: {
+      users: { select: { name: true } }
+    },
       orderBy: { created_at: "desc" },
     });
   }
@@ -54,5 +53,9 @@ export class ReviewsRepository {
       average: result._avg.rating ?? 0,
       count: result._count.rating,
     };
+  }
+
+  async delete(id: number) {
+    return this.prisma.reviews.delete({ where: { id } });
   }
 }

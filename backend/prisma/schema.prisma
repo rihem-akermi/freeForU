@@ -83,6 +83,7 @@ model reservations {
   service_id            Int?
   service_nom           String?   @db.VarChar(150)
   service_prix          Float?
+  updated_at            DateTime? @updatedAt @db.Timestamp(6)
   agents                agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                 users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   services              services? @relation(fields: [service_id], references: [id], onUpdate: NoAction)
@@ -126,20 +127,20 @@ model agent_working_hours {
   start_time  DateTime? @db.Time(6)
   end_time    DateTime? @db.Time(6)
   is_working  Boolean   @default(true)
-  week_start  DateTime  @db.Date
   agents      agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([agent_id, week_start, day_of_week])
+  @@unique([agent_id, day_of_week])
 }
 
 model agent_blocked_slots {
-  id         Int       @id @default(autoincrement())
-  agent_id   Int
-  date       DateTime  @db.Date
-  start_time DateTime? @db.Time(6)
-  end_time   DateTime? @db.Time(6)
-  reason     String?   @db.VarChar(255)
-  agents     agents    @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id       Int      @id @default(autoincrement())
+  agent_id Int
+  date     DateTime @db.Date
+  reason   String?  @db.VarChar(255)
+  type     String   @default("off") @db.VarChar(10)
+  agents   agents   @relation(fields: [agent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([agent_id, date])
 }
 
 model services {

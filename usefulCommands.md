@@ -28,3 +28,7 @@
 10. commit in a certain branch 
    git add .
    git commit -m "Redesign UI foundation"
+
+
+11. launch Antigravity in powerShell
+   & "$env:LOCALAPPDATA\agy\bin\agy.exe"   

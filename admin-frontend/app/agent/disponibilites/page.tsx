@@ -3,28 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { getMe } from "@/lib/api/auth";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { AgentDayModal } from "@/components/AgentDayModal";
-import {
-  getMyWorkingHours,
-  setWorkingHour,
-  toTimeInput,
-  WorkingHour,
-} from "@/lib/api/working-hours";
-import {
-  getMyBlockedSlots,
-  deleteBlockedSlot,
-  BlockedSlot,
-} from "@/lib/api/blocked-slots";
-
-const DAY_NAMES = [
-  "Dimanche",
-  "Lundi",
-  "Mardi",
-  "Mercredi",
-  "Jeudi",
-  "Vendredi",
-  "Samedi",
-];
-
+import { getMyBlockedSlots, deleteBlockedSlot, BlockedSlot } from "@/lib/api/blocked-slots";
 
 function parsePrismaDate(raw: string): Date {
   const datePart = raw.includes("T") ? raw.split("T")[0] : raw;
@@ -34,156 +13,26 @@ function parsePrismaDate(raw: string): Date {
 
 function formatSlotDate(raw: string): string {
   return parsePrismaDate(raw).toLocaleDateString("fr-FR", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-  });
-}
-
-function formatSlotTime(t: string | null): string | null {
-  if (!t) return null;
-  // "HH:MM:SS" → "HH:MM"
-  if (/^\d{2}:\d{2}/.test(t)) return t.slice(0, 5);
-  // ISO "1970-01-01T14:00:00.000Z" → "14:00"
-  const match = t.match(/T(\d{2}:\d{2})/);
-  return match ? match[1] : t;
-}
-
-
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay()); // recule au dimanche
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function toDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function formatWeekRange(weekStart: Date): string {
-  const end = new Date(weekStart);
-  end.setDate(end.getDate() + 6);
-  return `${weekStart.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} — ${end.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
-}
-
-
-type DayRow = {
-  day_of_week: number;
-  is_working: boolean;
-  start_time: string;
-  end_time: string;
-};
-
-function buildRows(workingHours: WorkingHour[]): DayRow[] {
-  return [0, 1, 2, 3, 4, 5, 6].map((dow) => {
-    const wh = workingHours.find((w) => w.day_of_week === dow);
-    return {
-      day_of_week: dow,
-      is_working: wh?.is_working ?? false,
-      start_time: toTimeInput(wh?.start_time ?? null),
-      end_time: toTimeInput(wh?.end_time ?? null),
-    };
+    weekday: "short", day: "numeric", month: "long",
   });
 }
 
 export default function AgentDisponibilitesPage() {
   const [agentId, setAgentId] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    getMe()
-      .then((me) => setAgentId(me.id))
-      .catch(console.error);
+    getMe().then((me) => setAgentId(me.id)).catch(console.error);
   }, []);
 
   const [calendarVersion, setCalendarVersion] = useState(0);
-
   const mountedRef = useRef(true);
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const refreshCalendar = useCallback(() => {
     if (mountedRef.current) setCalendarVersion((v) => v + 1);
   }, []);
 
-  const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(() =>
-    getWeekStart(new Date()),
-  );
-
-  const handleSelectDay = useCallback((date: string) => {
-    const clicked = parsePrismaDate(date);
-    setSelectedWeekStart(getWeekStart(clicked));
-    setSelectedDate(date);
-  }, []);
-
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-
-  const [rows, setRows] = useState<DayRow[]>(buildRows([]));
-  const [loadingHours, setLoadingHours] = useState(true);
-
-  useEffect(() => {
-    setLoadingHours(true);
-    getMyWorkingHours(toDateString(selectedWeekStart))
-      .then((wh) => setRows(buildRows(wh)))
-      .catch(console.error)
-      .finally(() => setLoadingHours(false));
-  }, [selectedWeekStart]);
-
-  const updateRow = (dow: number, patch: Partial<DayRow>) =>
-    setRows((prev) =>
-      prev.map((r) => (r.day_of_week === dow ? { ...r, ...patch } : r)),
-    );
-
-  const saveAllRows = async () => {
-    for (const row of rows) {
-      if (row.is_working && (!row.start_time || !row.end_time)) {
-        setSaveError(
-          `${DAY_NAMES[row.day_of_week]} : renseignez l'heure de début et de fin.`,
-        );
-        return;
-      }
-      if (row.is_working && row.start_time >= row.end_time) {
-        setSaveError(
-          `${DAY_NAMES[row.day_of_week]} : l'heure de fin doit être après l'heure de début.`,
-        );
-        return;
-      }
-    }
-    setSaving(true);
-    setSaveError("");
-    setSaveSuccess(false);
-    try {
-      await Promise.all(
-        rows.map((row) =>
-          setWorkingHour({
-            week_start: toDateString(selectedWeekStart),
-            day_of_week: row.day_of_week,
-            is_working: row.is_working,
-            start_time: row.is_working ? row.start_time : undefined,
-            end_time: row.is_working ? row.end_time : undefined,
-          }),
-        ),
-      );
-      setSaveSuccess(true);
-      refreshCalendar();
-      setTimeout(() => setSaveSuccess(false), 2500);
-    } catch (err: any) {
-      setSaveError(
-        err?.response?.data?.message ?? "Erreur lors de la sauvegarde.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
@@ -191,23 +40,17 @@ export default function AgentDisponibilitesPage() {
 
   const loadBlockedSlots = useCallback(() => {
     setLoadingSlots(true);
-    getMyBlockedSlots()
-      .then(setBlockedSlots)
-      .catch(console.error)
-      .finally(() => setLoadingSlots(false));
+    getMyBlockedSlots().then(setBlockedSlots).catch(console.error).finally(() => setLoadingSlots(false));
   }, []);
 
-  useEffect(() => {
-    loadBlockedSlots();
-  }, [loadBlockedSlots]);
+  useEffect(() => { loadBlockedSlots(); }, [loadBlockedSlots]);
 
   const handleDeleteSlot = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteBlockedSlot(id);
       setBlockedSlots((prev) => prev.filter((s) => s.id !== id));
-      setTimeout(() => refreshCalendar(), 100); // laisse React appliquer l'UI avant re-fetch
-      loadBlockedSlots();
+      setTimeout(() => refreshCalendar(), 100);
     } catch (err) {
       console.error(err);
     } finally {
@@ -216,208 +59,50 @@ export default function AgentDisponibilitesPage() {
   };
 
   if (!agentId) {
-    return (
-      <p className="text-sm text-(--color-text-body) p-6">Chargement...</p>
-    );
+    return <p className="text-sm text-[#393D3A] p-6">Chargement...</p>;
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h1 className="text-xl font-semibold text-(--color-text-dark)">
-        Mon Agenda
-      </h1>
+      <h1 className="text-xl font-semibold text-[#0B162C]">Mon Agenda</h1>
 
       <section>
-        <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide mb-3">
+        <h2 className="text-sm font-semibold text-[#393D3A] uppercase tracking-wide mb-3">
           Vue du mois
         </h2>
+        <p className="text-xs text-[#393D3A] mb-3">
+          💡 Pour changer vos horaires hebdomadaires fixes, direction "Mes infos". Ici, cliquez sur un jour pour voir les demandes ou marquer une exception.
+        </p>
         <AvailabilityCalendar
           key={calendarVersion}
           agentId={agentId}
-          onSelectDay={handleSelectDay}
+          onSelectDay={(date) => setSelectedDate(date)}
           mode="agent"
         />
       </section>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide">
-            Horaires de la semaine
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const prev = new Date(selectedWeekStart);
-                prev.setDate(prev.getDate() - 7);
-                setSelectedWeekStart(prev);
-              }}
-              className="p-1 rounded hover:bg-(--color-bg-alt) transition cursor-pointer text-sm"
-            >
-              ←
-            </button>
-            <span className="text-xs text-(--color-text-body) min-w-40 text-center">
-              {formatWeekRange(selectedWeekStart)}
-            </span>
-            <button
-              onClick={() => {
-                const next = new Date(selectedWeekStart);
-                next.setDate(next.getDate() + 7);
-                setSelectedWeekStart(next);
-              }}
-              className="p-1 rounded hover:bg-(--color-bg-alt) transition cursor-pointer text-sm"
-            >
-              →
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-(--color-text-body) mb-3">
-          💡 Cliquer sur un jour du calendrier met automatiquement à jour la
-          semaine ici.
-        </p>
-
-        <div className="bg-(--color-card) rounded-xl border border-(--color-bg-alt) shadow-sm overflow-hidden">
-          {loadingHours ? (
-            <p className="text-sm text-(--color-text-body) p-5">
-              Chargement...
-            </p>
-          ) : (
-            <div className="divide-y divide-(--color-bg-alt)">
-              {rows.map((row) => {
-                const dayDate = new Date(selectedWeekStart);
-                dayDate.setDate(dayDate.getDate() + row.day_of_week);
-                const dayLabel = dayDate.toLocaleDateString("fr-FR", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                });
-
-                return (
-                  <div
-                    key={row.day_of_week}
-                    className="p-4 flex flex-col gap-2"
-                  >
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() =>
-                            updateRow(row.day_of_week, {
-                              is_working: !row.is_working,
-                            })
-                          }
-                          className={`relative w-10 h-5 rounded-full transition cursor-pointer ${row.is_working ? "bg-emerald-500" : "bg-stone-300"}`}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${row.is_working ? "translate-x-5" : "translate-x-0"}`}
-                          />
-                        </button>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-(--color-text-dark)">
-                            {DAY_NAMES[row.day_of_week]}
-                          </span>
-                          <span className="text-xs text-(--color-text-body)/60 capitalize">
-                            {dayLabel}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {row.is_working && (
-                          <>
-                            <input
-                              type="time"
-                              value={row.start_time}
-                              onChange={(e) =>
-                                updateRow(row.day_of_week, {
-                                  start_time: e.target.value,
-                                })
-                              }
-                              className="input py-1 px-2 text-xs w-28"
-                            />
-                            <span className="text-xs text-(--color-text-body)">
-                              →
-                            </span>
-                            <input
-                              type="time"
-                              value={row.end_time}
-                              onChange={(e) =>
-                                updateRow(row.day_of_week, {
-                                  end_time: e.target.value,
-                                })
-                              }
-                              className="input py-1 px-2 text-xs w-28"
-                            />
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {!row.is_working && (
-                      <p className="text-xs text-(--color-text-body)/60">
-                        Journée non travaillée — apparaîtra en rouge sur le
-                        calendrier
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {saveError && (
-          <p className="text-xs text-red-600 px-4 pb-2">{saveError}</p>
-        )}
-
-        <div className="p-4 border-t border-(--color-bg-alt) flex justify-end">
-          <button
-            onClick={saveAllRows}
-            disabled={saving}
-            className={`text-sm px-4 py-2 rounded-md font-medium transition cursor-pointer disabled:opacity-50 ${
-              saveSuccess
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-(--color-primary) text-white hover:bg-(--color-primary-dark)"
-            }`}
-          >
-            {saving
-              ? "Sauvegarde..."
-              : saveSuccess
-                ? "✓ Sauvegardé"
-                : "Sauvegarder la semaine"}
-          </button>
-        </div>
-      </section>
-
       <section className="pb-10">
-        <h2 className="text-sm font-semibold text-(--color-text-body) uppercase tracking-wide mb-3">
-          Mes blocages ponctuels
+        <h2 className="text-sm font-semibold text-[#393D3A] uppercase tracking-wide mb-3">
+          Mes exceptions ponctuelles
         </h2>
-        <p className="text-xs text-(--color-text-body) mb-3">
-          Pour bloquer un jour ou un créneau précis, cliquez sur un jour du
-          calendrier ci-dessus.
+        <p className="text-xs text-[#393D3A] mb-3">
+          Pour marquer un jour "repos" ou "journée pleine", cliquez sur ce jour dans le calendrier ci-dessus.
         </p>
-        <div className="bg-(--color-card) rounded-xl border border-(--color-bg-alt) shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
           {loadingSlots ? (
-            <p className="text-sm text-(--color-text-body) p-5">
-              Chargement...
-            </p>
+            <p className="text-sm text-[#393D3A] p-5">Chargement...</p>
           ) : blockedSlots.length === 0 ? (
-            <p className="text-sm text-(--color-text-body) p-5">
-              Aucun blocage ponctuel pour le moment.
-            </p>
+            <p className="text-sm text-[#393D3A] p-5">Aucune exception pour le moment.</p>
           ) : (
-            <div className="divide-y divide-(--color-bg-alt)">
+            <div className="divide-y divide-[var(--color-border)]">
               {blockedSlots.map((slot) => (
-                <div
-                  key={slot.id}
-                  className="flex items-center justify-between p-4"
-                >
+                <div key={slot.id} className="flex items-center justify-between p-4">
                   <div>
-                    <p className="text-sm font-medium text-(--color-text-dark) capitalize">
+                    <p className="text-sm font-medium text-[#0B162C] capitalize">
                       {formatSlotDate(slot.date)}
                     </p>
-                    <p className="text-xs text-(--color-text-body) mt-0.5">
-                      {slot.start_time
-                        ? `${formatSlotTime(slot.start_time)} → ${formatSlotTime(slot.end_time)}`
-                        : "Journée entière"}
+                    <p className="text-xs text-[#393D3A] mt-0.5">
+                      {slot.type === "off" ? "🔴 Jour de repos" : "🔵 Journée pleine"}
                       {slot.reason && ` · ${slot.reason}`}
                     </p>
                   </div>
@@ -442,8 +127,11 @@ export default function AgentDisponibilitesPage() {
           onClose={() => setSelectedDate(null)}
           onBlockAdded={() => {
             setSelectedDate(null);
-            setTimeout(() => refreshCalendar(), 100); 
+            setTimeout(() => refreshCalendar(), 100);
             loadBlockedSlots();
+          }}
+          onReservationChanged={() => {
+            setTimeout(() => refreshCalendar(), 100);
           }}
         />
       )}

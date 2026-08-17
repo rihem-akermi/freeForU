@@ -6,10 +6,11 @@ import {
   deleteReservation,
   updateReservation,
 } from "@/lib/api/reservations";
+import { getServicesByAgent } from "@/lib/api/services";
 import { searchClients, ClientSearchResult } from "@/lib/api/users";
 import { searchAgents, AgentSearchResult } from "@/lib/api/agents";
 import { Toast } from "@/components/Toast";
-import { Reservation } from "@/lib/data";
+import { Reservation, Service } from "@/lib/data";
 import {
   Button,
   Input,
@@ -27,7 +28,9 @@ const STATUS_OPTIONS = [
   "en_attente",
   "confirmee",
   "terminee",
+  "rejetee",
   "annulee",
+  "expiree",
 ] as const;
 
 const STATUS_BADGE_MAP: Record<
@@ -37,21 +40,45 @@ const STATUS_BADGE_MAP: Record<
   en_attente: "warning",
   confirmee: "success",
   terminee: "neutral",
+  rejetee: "danger",
   annulee: "danger",
+  expiree: "neutral",
 };
 
 const STATUS_LABEL: Record<string, string> = {
   en_attente: "En attente",
   confirmee: "Confirmée",
   terminee: "Terminée",
+  rejetee: "Rejetée",
   annulee: "Annulée",
+  expiree: "Expirée",
+};
+
+const ROW_STYLE: Record<string, string> = {
+  en_attente: "bg-amber-50 hover:bg-amber-100/70",
+  confirmee: "bg-violet-50 hover:bg-violet-100/70",
+  terminee: "bg-sky-50 hover:bg-sky-100/70",
+  rejetee: "bg-red-50 hover:bg-red-100/70",
+  annulee: "bg-red-50 hover:bg-red-100/70",
+  expiree: "bg-stone-100 hover:bg-stone-200/70",
+};
+
+const STATUS_TEXT: Record<string, string> = {
+  en_attente: "En attente",
+  confirmee: "Confirmée",
+  terminee: "Terminée",
+  rejetee: "Rejetée",
+  annulee: "Annulée",
+  expiree: "Expirée",
 };
 
 type NewReservationForm = {
   clientId: number;
   agentId: number;
+  serviceId: number;
   dateReservation: string;
   heureReservation: string;
+  heureFinReservation: string;
   customRequest: string;
   clientName: string;
   agentName: string;
@@ -60,8 +87,10 @@ type NewReservationForm = {
 const emptyNewReservation: NewReservationForm = {
   clientId: 0,
   agentId: 0,
+  serviceId: 0,
   dateReservation: "",
   heureReservation: "",
+  heureFinReservation: "",
   customRequest: "",
   clientName: "",
   agentName: "",
@@ -96,6 +125,8 @@ export default function ReservationsPage({
   const [selectedAgent, setSelectedAgent] = useState<AgentSearchResult | null>(
     null,
   );
+  const [agentServices, setAgentServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
   const [reservations, setReservations] = useState(initialReservations);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -106,6 +137,27 @@ export default function ReservationsPage({
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [requestMode, setRequestMode] = useState<"service" | "custom">(
+    "service",
+  );
+
+  const [showArchived, setShowArchived] = useState(false);
+  const visibleReservations = reservations.filter((r) =>
+    showArchived ? true : !r.archived,
+  );
+
+  // Dès qu'un agent est choisi, on charge ses services disponibles
+  useEffect(() => {
+    if (!selectedAgent) {
+      setAgentServices([]);
+      return;
+    }
+    setLoadingServices(true);
+    getServicesByAgent(selectedAgent.id)
+      .then(setAgentServices)
+      .catch(console.error)
+      .finally(() => setLoadingServices(false));
+  }, [selectedAgent]);
 
   async function handleClientSearch(value: string) {
     handleAddChange("clientName", value);
@@ -134,6 +186,10 @@ export default function ReservationsPage({
   }
 
   function handleAddChange(field: keyof NewReservationForm, value: string) {
+    if (field === "serviceId") {
+      setNewReservation((prev) => ({ ...prev, serviceId: Number(value) }));
+      return;
+    }
     setNewReservation((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -175,17 +231,36 @@ export default function ReservationsPage({
       });
       return;
     }
-    if (!newReservation.dateReservation || !newReservation.heureReservation) {
+    if (requestMode === "service" && !newReservation.serviceId) {
       setToast({
-        message: "Veuillez renseigner une date et une heure.",
+        message: "Veuillez choisir un service pour cet agent.",
         type: "error",
       });
       return;
     }
-
-    if (newReservation.customRequest.trim().length < 2) {
+    if (
+      requestMode === "custom" &&
+      newReservation.customRequest.trim().length < 5
+    ) {
       setToast({
-        message: "Veuillez décrire la demande personnalisée.",
+        message: "Décrivez la demande personnalisée (5 caractères minimum).",
+        type: "error",
+      });
+      return;
+    }
+    if (!newReservation.dateReservation || !newReservation.heureReservation) {
+      setToast({
+        message: "Veuillez renseigner une date et une heure de début.",
+        type: "error",
+      });
+      return;
+    }
+    if (
+      newReservation.heureFinReservation &&
+      newReservation.heureFinReservation <= newReservation.heureReservation
+    ) {
+      setToast({
+        message: "L'heure de fin doit être après l'heure de début.",
         type: "error",
       });
       return;
@@ -197,13 +272,19 @@ export default function ReservationsPage({
         agentId: selectedAgent.id,
         dateReservation: newReservation.dateReservation,
         heureReservation: newReservation.heureReservation,
-        customRequest: newReservation.customRequest,
+        heureFinReservation: newReservation.heureFinReservation || undefined,
+        serviceId:
+          requestMode === "service" ? newReservation.serviceId : undefined,
+        customRequest:
+          requestMode === "custom" ? newReservation.customRequest : undefined,
       });
       setReservations((prev) => [created, ...prev]);
       setShowAddForm(false);
       setNewReservation(emptyNewReservation);
       setSelectedClient(null);
       setSelectedAgent(null);
+      setAgentServices([]);
+      setRequestMode("service");
       setToast({ message: "Réservation créée avec succès.", type: "success" });
     } catch (error: any) {
       setToast({
@@ -233,19 +314,29 @@ export default function ReservationsPage({
             Consultez, modifiez ou créez des réservations
           </p>
         </div>
-        <Button
-          variant={showAddForm ? "neutral" : "primary"}
-          onClick={() => setShowAddForm((prev) => !prev)}
-        >
-          {showAddForm ? <IconClose /> : <IconAdd />}
-          {showAddForm ? "Annuler" : "Ajouter une réservation"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-xs text-[#393D3A] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="cursor-pointer"
+            />
+            Afficher les archivées
+          </label>
+          <Button
+            variant={showAddForm ? "neutral" : "primary"}
+            onClick={() => setShowAddForm((prev) => !prev)}
+          >
+            {showAddForm ? <IconClose /> : <IconAdd />}
+            {showAddForm ? "Annuler" : "Ajouter une réservation"}
+          </Button>
+        </div>
       </div>
 
       {showAddForm && (
         <div className="mb-6 rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Client search */}
             <div className="relative">
               <Input
                 label="Client"
@@ -281,7 +372,6 @@ export default function ReservationsPage({
               )}
             </div>
 
-            {/* Agent search */}
             <div className="relative">
               <Input
                 label="Agent"
@@ -300,6 +390,7 @@ export default function ReservationsPage({
                           ...prev,
                           agentId: agent.id,
                           agentName: agent.name,
+                          serviceId: 0, // reset le service quand on change d'agent
                         }));
                         setAgents([]);
                       }}
@@ -317,32 +408,80 @@ export default function ReservationsPage({
               )}
             </div>
 
+            {/* Sélection du service — visible seulement une fois l'agent choisi */}
+
             <Input
-              label="Date"
-              type="date"
-              value={newReservation.dateReservation}
-              onChange={(e) =>
-                handleAddChange("dateReservation", e.target.value)
-              }
-            />
-            <Input
-              label="Heure"
+              label="Heure de début"
               type="time"
               value={newReservation.heureReservation}
               onChange={(e) =>
                 handleAddChange("heureReservation", e.target.value)
               }
             />
+            <Input
+              label="Heure de fin"
+              type="time"
+              value={newReservation.heureFinReservation}
+              onChange={(e) =>
+                handleAddChange("heureFinReservation", e.target.value)
+              }
+            />
           </div>
 
-          <Textarea
-            label="Demande personnalisée"
-            placeholder="Décrire la demande personnalisée..."
-            value={newReservation.customRequest}
-            onChange={(e) => handleAddChange("customRequest", e.target.value)}
-            className="rounded border px-2 py-1 col-span-2"
-            rows={2}
+          <Input
+            label="Date"
+            type="date"
+            value={newReservation.dateReservation}
+            onChange={(e) => handleAddChange("dateReservation", e.target.value)}
           />
+
+          <div className="flex gap-2 col-span-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={requestMode === "service" ? "primary" : "outline"}
+              onClick={() => setRequestMode("service")}
+            >
+              Service précis
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={requestMode === "custom" ? "primary" : "outline"}
+              onClick={() => setRequestMode("custom")}
+            >
+              Demande personnalisée
+            </Button>
+          </div>
+
+          {requestMode === "service" && selectedAgent && (
+            <Select
+              label="Service"
+              value={String(newReservation.serviceId)}
+              onChange={(e) => handleAddChange("serviceId", e.target.value)}
+            >
+              <option value="0">
+                {loadingServices ? "Chargement..." : "-- Choisir un service --"}
+              </option>
+              {agentServices.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nom} ({s.type_prix === "a_partir_de" ? "à partir de " : ""}
+                  {s.prix} DT)
+                </option>
+              ))}
+            </Select>
+          )}
+
+          {requestMode === "custom" && (
+            <Textarea
+              label="Demande personnalisée"
+              placeholder="Décrire la demande du client..."
+              value={newReservation.customRequest}
+              onChange={(e) => handleAddChange("customRequest", e.target.value)}
+              className="col-span-2"
+              rows={2}
+            />
+          )}
 
           <div className="flex justify-end">
             <Button variant="accent" onClick={handleAddReservation}>
@@ -366,20 +505,28 @@ export default function ReservationsPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)] text-[#000000]">
-            {reservations.map((r) => {
+            {visibleReservations.map((r) => {
               const isEditing = editingId === r.id;
-              const serviceLabel = r.custom_request ?? "⚠️ No Request";
               const hour = r.heure_reservation
                 ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
                     hour: "2-digit",
                     minute: "2-digit",
                   })
                 : "—";
+              const hourFin = r.heure_fin_reservation
+                ? new Date(r.heure_fin_reservation).toLocaleTimeString(
+                    "fr-FR",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  )
+                : null;
 
               return (
                 <tr
                   key={r.id}
-                  className="hover:bg-[#EEECF2]/30 transition-colors duration-150"
+                  className={`transition-colors duration-150 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
                 >
                   <td className="px-5 py-4">
                     <div className="font-semibold text-[#0B162C]">
@@ -397,11 +544,29 @@ export default function ReservationsPage({
                       {r.agents?.phone}
                     </div>
                   </td>
-                  <td
-                    className="px-5 py-4 text-[#393D3A] max-w-[160px] truncate"
-                    title={serviceLabel}
-                  >
-                    {serviceLabel}
+                  <td className="px-5 py-4 text-[#393D3A] max-w-[180px]">
+                    {r.service_nom ? (
+                      <>
+                        <div
+                          className="font-medium text-[#0B162C] truncate"
+                          title={r.service_nom}
+                        >
+                          {r.service_nom}
+                        </div>
+                        {r.custom_request && (
+                          <div
+                            className="text-xs truncate"
+                            title={r.custom_request}
+                          >
+                            {r.custom_request}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="truncate" title={r.custom_request ?? ""}>
+                        {r.custom_request ?? "⚠️ No Request"}
+                      </div>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-[#393D3A]">
                     {isEditing ? (
@@ -419,7 +584,10 @@ export default function ReservationsPage({
                       formatDate(r.date_reservation)
                     )}
                   </td>
-                  <td className="px-5 py-4 text-[#393D3A]">{hour}</td>
+                  <td className="px-5 py-4 text-[#393D3A]">
+                    {hour}
+                    {hourFin && ` → ${hourFin}`}
+                  </td>
                   <td className="px-5 py-4">
                     {isEditing ? (
                       <select
@@ -436,9 +604,14 @@ export default function ReservationsPage({
                         ))}
                       </select>
                     ) : (
-                      <Badge variant={STATUS_BADGE_MAP[r.status] ?? "neutral"}>
-                        {STATUS_LABEL[r.status] ?? r.status}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-[#0B162C]">
+                          {STATUS_TEXT[r.status] ?? r.status}
+                        </span>
+                        {r.archived && (
+                          <Badge variant="neutral">Archivée</Badge>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-5 py-4 text-right">
