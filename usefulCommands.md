@@ -32,3 +32,6 @@
 
 11. launch Antigravity in powerShell
    & "$env:LOCALAPPDATA\agy\bin\agy.exe"   
+
+12. oush in a newly created local branch 
+   git push -u origin nameOfTheBranch
