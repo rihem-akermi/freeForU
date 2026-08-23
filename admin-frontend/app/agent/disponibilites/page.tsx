@@ -4,6 +4,7 @@ import { getMe } from "@/lib/api/auth";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { AgentDayModal } from "@/components/AgentDayModal";
 import { getMyBlockedSlots, deleteBlockedSlot, BlockedSlot } from "@/lib/api/blocked-slots";
+import { Button, Card, PageHeader } from "@/components/ui/UIComponents";
 
 function parsePrismaDate(raw: string): Date {
   const datePart = raw.includes("T") ? raw.split("T")[0] : raw;
@@ -15,6 +16,56 @@ function formatSlotDate(raw: string): string {
   return parsePrismaDate(raw).toLocaleDateString("fr-FR", {
     weekday: "short", day: "numeric", month: "long",
   });
+}
+
+const CALENDAR_ACCENT = "#46607D"; // soft navy
+const EXCEPTIONS_ACCENT = "#C4956A"; // warm terracotta
+
+function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
+    </svg>
+  );
+}
+function IcoCalendar({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+}
+function IcoList({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  accent,
+  children,
+}: {
+  icon: (p: { className?: string }) => React.JSX.Element;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: `${accent}18`, color: accent }}
+      >
+        <Icon />
+      </span>
+      <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">
+        {children}
+      </h2>
+    </div>
+  );
 }
 
 export default function AgentDisponibilitesPage() {
@@ -59,66 +110,88 @@ export default function AgentDisponibilitesPage() {
   };
 
   if (!agentId) {
-    return <p className="text-sm text-[#393D3A] p-6">Chargement...</p>;
+    return <p className="p-6 text-sm text-muted-foreground">Chargement...</p>;
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <h1 className="text-xl font-semibold text-[#0B162C]">Mon Agenda</h1>
+    <div className="w-full">
+      <PageHeader
+        title="Mon Agenda"
+        subtitle="Consultez vos disponibilités et gérez vos exceptions ponctuelles."
+        badge="Espace agent"
+      />
 
-      <section>
-        <h2 className="text-sm font-semibold text-[#393D3A] uppercase tracking-wide mb-3">
-          Vue du mois
-        </h2>
-        <p className="text-xs text-[#393D3A] mb-3">
-          💡 Pour changer vos horaires hebdomadaires fixes, direction "Mes infos". Ici, cliquez sur un jour pour voir les demandes ou marquer une exception.
-        </p>
-        <AvailabilityCalendar
-          key={calendarVersion}
-          agentId={agentId}
-          onSelectDay={(date) => setSelectedDate(date)}
-          mode="agent"
-        />
-      </section>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_1fr]">
+        {/* ── Calendrier ────────────────────────────────────────── */}
+        <Card className="!p-6 sm:!p-7" style={{ borderLeft: `4px solid ${CALENDAR_ACCENT}` }}>
+          <SectionHeading icon={IcoCalendar} accent={CALENDAR_ACCENT}>
+            Vue du mois
+          </SectionHeading>
+          <p className="mb-4 flex items-start gap-1.5 text-xs text-muted-foreground">
+            <IcoInfo className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            Pour changer vos horaires hebdomadaires fixes, direction "Mes infos".
+            Ici, cliquez sur un jour pour voir les demandes ou marquer une exception.
+          </p>
+          <AvailabilityCalendar
+            key={calendarVersion}
+            agentId={agentId}
+            onSelectDay={(date) => setSelectedDate(date)}
+            mode="agent"
+          />
+        </Card>
 
-      <section className="pb-10">
-        <h2 className="text-sm font-semibold text-[#393D3A] uppercase tracking-wide mb-3">
-          Mes exceptions ponctuelles
-        </h2>
-        <p className="text-xs text-[#393D3A] mb-3">
-          Pour marquer un jour "repos" ou "journée pleine", cliquez sur ce jour dans le calendrier ci-dessus.
-        </p>
-        <div className="bg-white rounded-xl border border-[var(--color-border)] shadow-sm overflow-hidden">
-          {loadingSlots ? (
-            <p className="text-sm text-[#393D3A] p-5">Chargement...</p>
-          ) : blockedSlots.length === 0 ? (
-            <p className="text-sm text-[#393D3A] p-5">Aucune exception pour le moment.</p>
-          ) : (
-            <div className="divide-y divide-[var(--color-border)]">
-              {blockedSlots.map((slot) => (
-                <div key={slot.id} className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-medium text-[#0B162C] capitalize">
-                      {formatSlotDate(slot.date)}
-                    </p>
-                    <p className="text-xs text-[#393D3A] mt-0.5">
-                      {slot.type === "off" ? "🔴 Jour de repos" : "🔵 Journée pleine"}
-                      {slot.reason && ` · ${slot.reason}`}
-                    </p>
+        {/* ── Exceptions ponctuelles ───────────────────────────── */}
+        <Card className="!p-6 sm:!p-7" style={{ borderLeft: `4px solid ${EXCEPTIONS_ACCENT}` }}>
+          <SectionHeading icon={IcoList} accent={EXCEPTIONS_ACCENT}>
+            Mes exceptions ponctuelles
+          </SectionHeading>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Pour marquer un jour "repos" ou "journée pleine", cliquez sur ce jour
+            dans le calendrier.
+          </p>
+
+          <div className="overflow-hidden rounded-xl border border-border">
+            {loadingSlots ? (
+              <p className="p-5 text-sm text-muted-foreground">Chargement...</p>
+            ) : blockedSlots.length === 0 ? (
+              <p className="p-5 text-sm text-muted-foreground">Aucune exception pour le moment.</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {blockedSlots.map((slot) => (
+                  <div key={slot.id} className="flex items-center justify-between gap-3 p-4">
+                    <div>
+                      <p className="text-sm font-semibold capitalize text-foreground">
+                        {formatSlotDate(slot.date)}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{
+                            background:
+                              slot.type === "off"
+                                ? "var(--color-danger)"
+                                : "var(--color-info)",
+                          }}
+                        />
+                        {slot.type === "off" ? "Jour de repos" : "Journée pleine"}
+                        {slot.reason && ` · ${slot.reason}`}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteSlot(slot.id)}
+                      disabled={deletingId === slot.id}
+                    >
+                      {deletingId === slot.id ? "..." : "Supprimer"}
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteSlot(slot.id)}
-                    disabled={deletingId === slot.id}
-                    className="text-xs px-3 py-1.5 rounded-md text-red-600 hover:bg-red-50 border border-red-200 transition cursor-pointer disabled:opacity-50"
-                  >
-                    {deletingId === slot.id ? "..." : "Supprimer"}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
       {selectedDate && (
         <AgentDayModal

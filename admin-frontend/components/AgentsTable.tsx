@@ -91,9 +91,7 @@ export default function AgentsTable({
   async function handleSaveEdit(id: number) {
     const updated = await updateAgent(id, editedForm);
     setAgents((prev) =>
-      prev.map((agent) =>
-        agent.id === id ? { ...agent, ...updated } : agent,
-      ),
+      prev.map((agent) => (agent.id === id ? { ...agent, ...updated } : agent)),
     );
     setEditingId(null);
     setEditedForm({});
@@ -136,22 +134,23 @@ export default function AgentsTable({
         />
       )}
 
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h2 className="font-serif text-xl font-bold text-[#0B162C]">Gestion des Agents</h2>
-          <p className="text-xs text-[#393D3A]">Consultez, modifiez ou ajoutez des agents</p>
-        </div>
-        <Button
-          variant={showAddForm ? "neutral" : "primary"}
-          onClick={() => setShowAddForm((prev) => !prev)}
-        >
-          {showAddForm ? <IconClose /> : <IconAdd />}
-          {showAddForm ? "Annuler" : "Ajouter un agent"}
-        </Button>
-      </div>
+      <PageHeader
+        title="Gestion des agents"
+        subtitle="Consultez, modifiez ou ajoutez des agents à la plateforme."
+        badge="Administration"
+        actionSlot={
+          <Button
+            variant={showAddForm ? "neutral" : "primary"}
+            onClick={() => setShowAddForm((prev) => !prev)}
+          >
+            {showAddForm ? <IconClose /> : <IconAdd />}
+            {showAddForm ? "Annuler" : "Ajouter un agent"}
+          </Button>
+        }
+      />
 
       {showAddForm && (
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+        <div className="mb-6 grid grid-cols-1 gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm sm:grid-cols-2 md:grid-cols-3">
           <Input
             placeholder="Nom complet"
             value={newAgent.name}
@@ -192,7 +191,7 @@ export default function AgentsTable({
               </option>
             ))}
           </Select>
-          <div className="sm:col-span-2 md:col-span-3 flex justify-end">
+          <div className="flex justify-end sm:col-span-2 md:col-span-3">
             <Button variant="accent" onClick={handleAddAgent}>
               <IconCheck /> Enregistrer
             </Button>
@@ -200,149 +199,154 @@ export default function AgentsTable({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-[#EEECF2]/70 text-[#0B162C] font-bold text-xs uppercase tracking-wider border-b border-[var(--color-border)]">
-            <tr>
-              <th className="px-5 py-4">ID</th>
-              <th className="px-5 py-4">Nom</th>
-              <th className="px-5 py-4">Catégorie</th>
-              <th className="px-5 py-4">Ville</th>
-              <th className="px-5 py-4">Email</th>
-              <th className="px-5 py-4">Téléphone</th>
-              <th className="px-5 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-border)] text-[#000000]">
-            {agents.map((agent) => {
-              const isEditing = editingId === agent.id;
-
-              return (
-                <tr
-                  key={agent.id}
-                  className="hover:bg-[#EEECF2]/30 transition-colors duration-150"
-                >
-                  <td className="px-5 py-4 text-xs font-semibold text-[#393D3A]">
-                    #{agent.id}
-                  </td>
-                  <td className="px-5 py-4 font-semibold">
-                    {isEditing ? (
-                      <input
-                        value={editedForm.name ?? ""}
-                        onChange={(e) =>
-                          handleEditedAgentChange("name", e.target.value)
-                        }
-                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none"
-                      />
-                    ) : (
-                      agent.name
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {isEditing ? (
-                      <select
-                        value={editedForm.category_id ?? 0}
-                        onChange={(e) =>
-                          handleEditedAgentChange(
-                            "category_id",
-                            Number(e.target.value),
-                          )
-                        }
-                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none cursor-pointer"
-                      >
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Badge variant="info">
-                        {categories.find((c) => c.id === agent.categories.id)?.name ?? "—"}
-                      </Badge>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {isEditing ? (
-                      <input
-                        value={editedForm.ville ?? ""}
-                        onChange={(e) =>
-                          handleEditedAgentChange("ville", e.target.value)
-                        }
-                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none"
-                      />
-                    ) : (
-                      agent.ville
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {isEditing ? (
-                      <input
-                        value={editedForm.email ?? ""}
-                        onChange={(e) =>
-                          handleEditedAgentChange("email", e.target.value)
-                        }
-                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none"
-                      />
-                    ) : (
-                      agent.email
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {isEditing ? (
-                      <input
-                        value={editedForm.phone ?? ""}
-                        onChange={(e) =>
-                          handleEditedAgentChange("phone", e.target.value)
-                        }
-                        className="w-full px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none"
-                      />
-                    ) : (
-                      agent.phone
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {isEditing ? (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="accent"
-                          onClick={() => handleSaveEdit(agent.id)}
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="border-b-2 border-accent/25 bg-accent/[0.07] text-xs font-bold uppercase tracking-wider text-primary">
+              <tr>
+                <th className="px-5 py-4">ID</th>
+                <th className="px-5 py-4">Nom</th>
+                <th className="px-5 py-4">Catégorie</th>
+                <th className="px-5 py-4">Ville</th>
+                <th className="px-5 py-4">Email</th>
+                <th className="px-5 py-4">Téléphone</th>
+                <th className="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-foreground">
+              {agents.map((agent) => {
+                const isEditing = editingId === agent.id;
+                const categoryName = agent.categories?.name ?? null;
+                return (
+                  <tr
+                    key={agent.id}
+                    className="transition-colors duration-150 hover:bg-accent/[0.05]"
+                  >
+                    <td className="px-5 py-4 text-xs font-semibold text-accent-dark">
+                      #{agent.id}
+                    </td>
+                    <td className="px-5 py-4 font-semibold">
+                      {isEditing ? (
+                        <input
+                          value={editedForm.name ?? ""}
+                          onChange={(e) =>
+                            handleEditedAgentChange("name", e.target.value)
+                          }
+                          className="w-full rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        agent.name
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <select
+                          value={editedForm.category_id ?? 0}
+                          onChange={(e) =>
+                            handleEditedAgentChange(
+                              "category_id",
+                              Number(e.target.value),
+                            )
+                          }
+                          className="w-full cursor-pointer rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
                         >
-                          <IconCheck /> Valider
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="neutral"
-                          onClick={() => { setEditingId(null); setEditedForm({}); }}
-                        >
-                          <IconClose />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditClick(agent)}
-                        >
-                          <IconEdit />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleDelete(agent.id)}
-                        >
-                          <IconDelete />
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Badge variant={categoryName ? "info" : "neutral"}>
+                          {categoryName ?? "Non catégorisé"}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <input
+                          value={editedForm.ville ?? ""}
+                          onChange={(e) =>
+                            handleEditedAgentChange("ville", e.target.value)
+                          }
+                          className="w-full rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        agent.ville
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <input
+                          value={editedForm.email ?? ""}
+                          onChange={(e) =>
+                            handleEditedAgentChange("email", e.target.value)
+                          }
+                          className="w-full rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        agent.email
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <input
+                          value={editedForm.phone ?? ""}
+                          onChange={(e) =>
+                            handleEditedAgentChange("phone", e.target.value)
+                          }
+                          className="w-full rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        agent.phone
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {isEditing ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            onClick={() => handleSaveEdit(agent.id)}
+                          >
+                            <IconCheck /> Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="neutral"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditedForm({});
+                            }}
+                          >
+                            <IconClose />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditClick(agent)}
+                          >
+                            <IconEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(agent.id)}
+                          >
+                            <IconDelete />
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

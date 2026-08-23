@@ -6,6 +6,15 @@ import { getCategories } from "@/lib/api/categories";
 import { Category } from "@/lib/data";
 import { AgentPreviewModal } from "@/components/AgentPreviewModal";
 import { AgentSearchBar } from "@/components/AgentSearchBar";
+import { Card, PageHeader } from "@/components/ui/UIComponents";
+
+function IcoStar({ className = "w-3.5 h-3.5", filled = true }: { className?: string; filled?: boolean }) {
+  return (
+    <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? 0 : 1.5} viewBox="0 0 24 24">
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.7z" />
+    </svg>
+  );
+}
 
 export default function ClientHomePage() {
   const router = useRouter();
@@ -28,17 +37,16 @@ export default function ClientHomePage() {
   }, [activeCategory]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-1">
-        Trouvez le bon professionnel
-      </h1>
-      <p className="text-sm text-[var(--color-text-body)] mb-4">
-        Parcourez les profils disponibles près de chez vous.
-      </p>
+    <div className="w-full">
+      <PageHeader
+        title="Trouvez le bon professionnel"
+        subtitle="Parcourez les profils disponibles près de chez vous."
+        badge="Espace client"
+      />
 
       <AgentSearchBar />
 
-      <div className="flex gap-2 flex-wrap my-6">
+      <div className="my-6 flex flex-wrap gap-2">
         <CategoryPill label="Toutes" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
         {categories.map((c) => (
           <CategoryPill
@@ -51,11 +59,11 @@ export default function ClientHomePage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : agents.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-body)]">Aucun professionnel pour cette catégorie.</p>
+        <p className="text-sm text-muted-foreground">Aucun professionnel pour cette catégorie.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {agents.map((agent) => (
             <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />
           ))}
@@ -77,10 +85,10 @@ function CategoryPill({ label, active, onClick }: { label: string; active: boole
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition cursor-pointer ${
+      className={`cursor-pointer rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
         active
-          ? "bg-[var(--color-primary)] text-white"
-          : "bg-[var(--color-bg-alt)] text-[var(--color-text-body)] hover:bg-[var(--color-primary)]/10"
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground hover:bg-accent/15"
       }`}
     >
       {label}
@@ -90,32 +98,33 @@ function CategoryPill({ label, active, onClick }: { label: string; active: boole
 
 function AgentCard({ agent, onClick }: { agent: PublicAgentCard; onClick: () => void }) {
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="bg-[var(--color-card)] rounded-xl overflow-hidden border border-[var(--color-bg-alt)] shadow-sm hover:shadow-md transition cursor-pointer p-4"
+      className="cursor-pointer !p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
     >
       <div className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-[var(--color-bg-alt)] overflow-hidden shrink-0">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-muted">
           {agent.photo_url && (
-            <img src={agent.photo_url} alt={agent.name} className="w-full h-full object-cover" />
+            <img src={agent.photo_url} alt={agent.name} className="h-full w-full object-cover" />
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[var(--color-text-dark)] truncate">{agent.name}</p>
-          <p className="text-xs text-[var(--color-text-body)] truncate">
+          <p className="truncate text-sm font-semibold text-foreground">{agent.name}</p>
+          <p className="truncate text-xs text-muted-foreground">
             {agent.categories?.name} · {agent.ville}
           </p>
         </div>
       </div>
 
-      <p className="text-xs text-amber-600 mt-2">
-        ★ {agent.rating_average.toFixed(1)} ({agent.rating_count} avis)
+      <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-[var(--color-warning)]">
+        <IcoStar className="h-3 w-3" />
+        {agent.rating_average.toFixed(1)}
+        <span className="font-normal text-muted-foreground">({agent.rating_count} avis)</span>
       </p>
 
       {agent.bio && (
-        <p className="text-xs text-[var(--color-text-body)] mt-2 line-clamp-2">{agent.bio}</p>
+        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{agent.bio}</p>
       )}
-    </div>
+    </Card>
   );
 }
-

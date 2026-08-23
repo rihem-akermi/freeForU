@@ -8,6 +8,16 @@ import {
   addCategory,
 } from "@/lib/api/categories";
 import { Toast } from "@/components/Toast";
+import {
+  Button,
+  Input,
+  PageHeader,
+  IconAdd,
+  IconEdit,
+  IconDelete,
+  IconCheck,
+  IconClose,
+} from "@/components/ui/UIComponents";
 
 export default function CategoriesTable({
   initialCategories,
@@ -80,7 +90,7 @@ export default function CategoriesTable({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full">
       {toast && (
         <Toast
           message={toast.message}
@@ -89,90 +99,102 @@ export default function CategoriesTable({
         />
       )}
 
-      <table className="w-full overflow-hidden rounded-lg border-2 border-stone-900 bg-white text-sm">
-        <thead className="bg-stone-50 text-left text-stone-500">
-          <tr>
-            <th className="px-4 py-3 font-normal">Id Category</th>
-            <th className="px-4 py-3 font-normal">Name</th>
-            <th className="px-4 py-3 font-normal">Action</th>
-          </tr>
-        </thead>
+      <PageHeader
+        title="Gestion des catégories"
+        subtitle="Consultez, modifiez ou ajoutez des catégories de services."
+        badge="Administration"
+      />
 
-        <tbody>
-          {categories.map((category) => (
-            <tr key={category.id} className="border-t border-stone-100">
-              <td className="px-4 py-3 text-stone-500">{category.id}</td>
+      <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <Input
+            label="Nouvelle catégorie"
+            placeholder="Ex : Plomberie"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+          />
+        </div>
+        <Button variant="accent" onClick={handleAdd}>
+          <IconAdd /> Ajouter
+        </Button>
+      </div>
 
-              <td className="px-4 py-3">
-                {editingId === category.id ? (
-                  <input
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="rounded border px-2 py-1"
-                  />
-                ) : (
-                  category.name
-                )}
-              </td>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="border-b-2 border-accent/25 bg-accent/[0.07] text-xs font-bold uppercase tracking-wider text-primary">
+              <tr>
+                <th className="px-5 py-4">ID</th>
+                <th className="px-5 py-4">Nom</th>
+                <th className="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-foreground">
+              {categories.map((category) => {
+                const isEditing = editingId === category.id;
 
-              <td className="px-4 py-3 text-xl">
-                {editingId === category.id ? (
-                  <>
-                    <button
-                      onClick={() => handleSave(category.id)}
-                      className="cursor-pointer hover:scale-125"
-                    >
-                      💾
-                    </button>
-
-                    <span> / </span>
-
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="cursor-pointer hover:scale-125"
-                    >
-                      ❌
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleDelete(category.id)}
-                      className="cursor-pointer hover:scale-125"
-                    >
-                      🗑️
-                    </button>
-
-                    <span> / </span>
-
-                    <button
-                      onClick={() => handleEditClick(category)}
-                      className="cursor-pointer hover:scale-125"
-                    >
-                      🖋️
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="flex gap-2">
-        <input
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          placeholder="New category..."
-          className="rounded border px-3 py-2"
-        />
-
-        <button
-          onClick={handleAdd}
-          className="rounded bg-stone-900 px-4 py-2 text-white hover:bg-stone-700"
-        >
-          Add
-        </button>
+                return (
+                  <tr
+                    key={category.id}
+                    className="transition-colors duration-150 hover:bg-accent/[0.05]"
+                  >
+                    <td className="px-5 py-4 text-xs font-semibold text-accent-dark">
+                      #{category.id}
+                    </td>
+                    <td className="px-5 py-4 font-semibold">
+                      {isEditing ? (
+                        <input
+                          value={editedName}
+                          onChange={(e) => setEditedName(e.target.value)}
+                          className="w-full rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        category.name
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {isEditing ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            onClick={() => handleSave(category.id)}
+                          >
+                            <IconCheck /> Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="neutral"
+                            onClick={() => setEditingId(null)}
+                          >
+                            <IconClose />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditClick(category)}
+                          >
+                            <IconEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(category.id)}
+                          >
+                            <IconDelete />
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

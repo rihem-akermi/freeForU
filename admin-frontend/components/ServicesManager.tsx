@@ -22,12 +22,18 @@ import {
   IconDelete,
 } from "@/components/ui/UIComponents";
 
-import { Service } from "@/lib/data"; 
+import { Service } from "@/lib/data";
+
+const FORM_ACCENT = "#7D6E8C"; // soft violet, matching "Profil professionnel" on the Infos page
+const SERVICE_ACCENT = "#46607D"; // soft navy
 
 export default function ServicesManager() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,7 +66,13 @@ export default function ServicesManager() {
   }, []);
 
   const resetForm = () => {
-    setForm({ nom: "", description: "", typePrix: "fixe", prix: "", dureeEstimee: "" });
+    setForm({
+      nom: "",
+      description: "",
+      typePrix: "fixe",
+      prix: "",
+      dureeEstimee: "",
+    });
     setEditingId(null);
   };
 
@@ -87,7 +99,8 @@ export default function ServicesManager() {
       loadServices();
     } catch (err: any) {
       setToast({
-        message: err?.response?.data?.message || "Erreur lors de l'enregistrement",
+        message:
+          err?.response?.data?.message || "Erreur lors de l'enregistrement",
         type: "error",
       });
     } finally {
@@ -114,69 +127,89 @@ export default function ServicesManager() {
       loadServices();
     } catch (err: any) {
       setToast({
-        message: err?.response?.data?.message || "Erreur lors de la suppression",
+        message:
+          err?.response?.data?.message || "Erreur lors de la suppression",
         type: "error",
       });
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
-      <Card>
-        <h3 className="font-serif text-lg font-bold text-[#0B162C] mb-4">
+      <Card
+        className="!p-6 sm:!p-8"
+        style={{ borderLeft: `4px solid ${FORM_ACCENT}` }}
+      >
+        <h3 className="mb-5 font-serif text-lg font-bold text-foreground">
           {editingId ? "Modifier le service" : "Ajouter un service"}
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Nom du service"
-            value={form.nom}
-            onChange={(e) => setForm({ ...form, nom: e.target.value })}
-          />
-          <Select
-            label="Type de prix"
-            value={form.typePrix}
-            onChange={(e) =>
-              setForm({ ...form, typePrix: e.target.value as "fixe" | "a_partir_de" })
-            }
-          >
-            <option value="fixe">Prix fixe</option>
-            <option value="a_partir_de">À partir de</option>
-          </Select>
-          <Input
-            label="Prix (DT)"
-            type="number"
-            value={form.prix}
-            onChange={(e) => setForm({ ...form, prix: e.target.value })}
-          />
-          <Input
-            label="Durée estimée (minutes)"
-            helperText="Optionnel — surtout pour les services de plus d'1h"
-            type="number"
-            value={form.dureeEstimee}
-            onChange={(e) => setForm({ ...form, dureeEstimee: e.target.value })}
-          />
+        <div
+          className="rounded-xl border bg-background/60 p-5 sm:p-6"
+          style={{ borderColor: `${FORM_ACCENT}30` }}
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Nom du service"
+              value={form.nom}
+              onChange={(e) => setForm({ ...form, nom: e.target.value })}
+            />
+            <Select
+              label="Type de prix"
+              value={form.typePrix}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  typePrix: e.target.value as "fixe" | "a_partir_de",
+                })
+              }
+            >
+              <option value="fixe">Prix fixe</option>
+              <option value="a_partir_de">À partir de</option>
+            </Select>
+            <Input
+              label="Prix (DT)"
+              type="number"
+              value={form.prix}
+              onChange={(e) => setForm({ ...form, prix: e.target.value })}
+            />
+            <Input
+              label="Durée estimée (minutes)"
+              helperText="Optionnel — surtout pour les services de plus d'1h"
+              type="number"
+              value={form.dureeEstimee}
+              onChange={(e) =>
+                setForm({ ...form, dureeEstimee: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="mt-4">
+            <Textarea
+              label="Description courte"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+            />
+          </div>
         </div>
 
-        <div className="mt-4">
-          <Textarea
-            label="Description courte"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-        </div>
-
-        <div className="flex items-center gap-3 mt-5">
+        <div className="mt-5 flex items-center gap-3">
           <Button
             variant="primary"
             isLoading={submitting}
             onClick={handleSubmit}
           >
-            <IconAdd className="w-4 h-4" />
+            <IconAdd className="h-4 w-4" />
             {editingId ? "Mettre à jour" : "Ajouter"}
           </Button>
           {editingId && (
@@ -188,26 +221,44 @@ export default function ServicesManager() {
       </Card>
 
       {loading ? (
-        <p className="text-sm text-[#393D3A]">Chargement...</p>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      ) : services.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Vous n'avez pas encore ajouté de service.
+        </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {services.map((s) => (
-            <Card key={s.id} className="flex flex-col gap-2">
-              <div className="flex items-start justify-between">
-                <h4 className="font-serif font-bold text-[#0B162C]">{s.nom}</h4>
+            <Card
+              key={s.id}
+              className="group flex flex-col gap-3 !p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+              style={{ borderLeft: `4px solid ${SERVICE_ACCENT}` }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h4 className="font-serif font-bold text-foreground">
+                  {s.nom}
+                </h4>
                 <Badge variant="info">
-                  {s.type_prix === "a_partir_de" ? `À partir de ${s.prix} DT` : `${s.prix} DT`}
+                  {s.type_prix === "a_partir_de"
+                    ? `À partir de ${s.prix} DT`
+                    : `${s.prix} DT`}
                 </Badge>
               </div>
               {s.description && (
-                <p className="text-sm text-[#393D3A]">{s.description}</p>
+                <p className="text-sm text-muted-foreground">{s.description}</p>
               )}
               {s.duree_estimee && (
-                <p className="text-xs text-[#393D3A]/70">≈ {s.duree_estimee} min</p>
+                <p className="text-xs text-muted-foreground/70">
+                  ≈ {s.duree_estimee} min
+                </p>
               )}
-              <div className="flex items-center gap-2 mt-2">
-                <Button variant="outline" size="sm" onClick={() => handleEdit(s)}>
-                  <IconEdit className="w-3.5 h-3.5" />
+              <div className="mt-2 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(s)}
+                >
+                  <IconEdit className="h-3.5 w-3.5" />
                   Éditer
                 </Button>
                 <Button
@@ -215,10 +266,17 @@ export default function ServicesManager() {
                   size="sm"
                   onClick={() => setConfirmDeleteId(s.id)}
                 >
-                  <IconDelete className="w-3.5 h-3.5" />
+                  <IconDelete className="h-3.5 w-3.5" />
                   Supprimer
                 </Button>
               </div>
+
+              <div
+                className="absolute inset-x-0 bottom-0 h-[3px] origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100"
+                style={{
+                  background: `linear-gradient(90deg, ${SERVICE_ACCENT}, transparent)`,
+                }}
+              />
             </Card>
           ))}
         </div>

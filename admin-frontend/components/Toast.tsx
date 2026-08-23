@@ -14,22 +14,24 @@ export function Toast({ message, type, onClose }: ToastProps) {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const styleClasses =
-    type === "success"
-      ? "bg-emerald-950/90 text-emerald-100 border-emerald-800/50 shadow-emerald-950/20"
-      : "bg-rose-950/90 text-rose-100 border-rose-800/50 shadow-rose-950/20";
+  const isSuccess = type === "success";
+  const accentVar = isSuccess ? "var(--color-success)" : "var(--color-danger)";
 
   return (
     <div
-      className={`fixed top-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-3.5 shadow-2xl backdrop-blur-md transition-all duration-300 ${styleClasses}`}
+      className="fixed top-6 right-6 z-50 flex items-center gap-3 rounded-2xl border bg-primary px-5 py-3.5 text-primary-foreground shadow-2xl backdrop-blur-md transition-all duration-300"
+      style={{ borderColor: `color-mix(in srgb, ${accentVar} 45%, transparent)` }}
     >
-      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-xs font-bold">
-        {type === "success" ? "✓" : "✕"}
+      <span
+        className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+        style={{ backgroundColor: accentVar, color: "#ffffff" }}
+      >
+        {isSuccess ? "✓" : "✕"}
       </span>
       <p className="text-sm font-semibold tracking-wide">{message}</p>
       <button
         onClick={onClose}
-        className="ml-3 text-white/60 hover:text-white transition p-1 cursor-pointer"
+        className="ml-3 cursor-pointer p-1 text-primary-foreground/60 transition hover:text-primary-foreground"
         aria-label="Close notification"
       >
         ✕

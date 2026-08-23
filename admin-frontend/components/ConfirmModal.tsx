@@ -18,10 +18,10 @@ export function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B162C]/60 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-[var(--color-border)]">
-        <h3 className="font-serif text-lg font-bold text-[#0B162C] mb-2">{title}</h3>
-        <p className="text-sm text-[#393D3A] mb-6 leading-relaxed">{message}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <h3 className="mb-2 font-serif text-lg font-bold text-foreground">{title}</h3>
+        <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{message}</p>
         <div className="flex items-center justify-end gap-3">
           <Button variant="neutral" size="md" onClick={onCancel}>
             Annuler

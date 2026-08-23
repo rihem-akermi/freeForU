@@ -7,14 +7,30 @@ import {
 } from "@/lib/api/reservations";
 import { Toast } from "@/components/Toast";
 import type { Reservation } from "@/lib/data";
+import { Button, Badge, PageHeader } from "@/components/ui/UIComponents";
 
+/* Row tints pulled from the app's actual semantic tokens, same mapping
+   used on the admin ReservationsTable, instead of arbitrary Tailwind
+   defaults (amber/violet/sky/stone). */
 const ROW_STYLE: Record<string, string> = {
-  en_attente: "bg-amber-50 hover:bg-amber-100/70",
-  confirmee: "bg-violet-50 hover:bg-violet-100/70",
-  terminee: "bg-sky-50 hover:bg-sky-100/70",
-  rejetee: "bg-red-50 hover:bg-red-100/70",
-  annulee: "bg-red-50 hover:bg-red-100/70",
-  expiree: "bg-stone-100 hover:bg-stone-200/70",
+  en_attente: "bg-[var(--color-warning-soft)] hover:brightness-[.97]",
+  confirmee: "bg-accent/[0.08] hover:bg-accent/[0.13]",
+  terminee: "bg-[var(--color-info-soft)] hover:brightness-[.97]",
+  rejetee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  annulee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  expiree: "bg-muted hover:bg-muted/70",
+};
+
+const STATUS_BADGE_MAP: Record <
+  string,
+  "warning" | "success" | "neutral" | "danger"
+> = {
+  en_attente: "warning",
+  confirmee: "info" as any, // overridden below via explicit mapping
+  terminee: "success",
+  rejetee: "danger",
+  annulee: "danger",
+  expiree: "neutral",
 };
 
 const STATUS_TEXT: Record<string, string> = {
@@ -25,6 +41,24 @@ const STATUS_TEXT: Record<string, string> = {
   annulee: "Annulée",
   expiree: "Expirée",
 };
+
+function statusBadgeVariant(status: string): "warning" | "success" | "danger" | "info" | "neutral" {
+  switch (status) {
+    case "en_attente":
+      return "warning";
+    case "confirmee":
+      return "info";
+    case "terminee":
+      return "success";
+    case "rejetee":
+    case "annulee":
+      return "danger";
+    case "expiree":
+    default:
+      return "neutral";
+  }
+}
+
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +89,7 @@ export default function ReservationsPage() {
 
   async function handleAgentStatus(
     id: number,
-    status: "confirmee" | "rejetee", // ← "annulee" remplacé par "rejetee"
+    status: "confirmee" | "rejetee",
   ) {
     try {
       const updated = await updateAgentReservationStatus(id, status);
@@ -66,7 +100,7 @@ export default function ReservationsPage() {
         message:
           status === "confirmee"
             ? "Réservation confirmée."
-            : "Réservation rejetée.", // ← texte corrigé
+            : "Réservation rejetée.",
         type: "success",
       });
     } catch (err: any) {
@@ -86,7 +120,7 @@ export default function ReservationsPage() {
       setToast({
         message:
           updated.status === "terminee"
-            ? "Réservation marquée terminée ✅"
+            ? "Réservation marquée terminée."
             : "Confirmation enregistrée, en attente du client.",
         type: "success",
       });
@@ -99,7 +133,7 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full">
       {toast && (
         <Toast
           message={toast.message}
@@ -108,194 +142,148 @@ export default function ReservationsPage() {
         />
       )}
 
-      <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-6">
-        Clients et réservations
-      </h1>
+      <PageHeader
+        title="Clients et réservations"
+        subtitle="Suivez et répondez aux demandes de réservation de vos clients."
+        badge="Espace agent"
+        actionSlot={
+          <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="cursor-pointer accent-accent"
+            />
+            Afficher les archivées
+          </label>
+        }
+      />
 
       {loading ? (
-        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : reservations.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-body)]">
+        <p className="text-sm text-muted-foreground">
           Vous n'avez pas encore reçu de demande de réservation.
         </p>
       ) : (
-        <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-2xl font-semibold text-[var(--color-text-dark)]">
-              Clients et réservations
-            </h1>
-            <label className="flex items-center gap-2 text-xs text-[var(--color-text-body)] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(e) => setShowArchived(e.target.checked)}
-                className="cursor-pointer"
-              />
-              Afficher les archivées
-            </label>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-[var(--color-bg-alt)] text-left text-xs uppercase text-[var(--color-text-body)]">
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
-                <th className="px-4 py-3 font-medium">Service</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 font-medium">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleReservations.map((r) => {
-                const hour = r.heure_reservation
-                  ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "";
-                const hourFin = r.heure_fin_reservation
-                  ? new Date(r.heure_fin_reservation).toLocaleTimeString(
-                      "fr-FR",
-                      {
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead className="border-b-2 border-accent/25 bg-accent/[0.07] text-xs font-bold uppercase tracking-wider text-primary">
+                <tr>
+                  <th className="px-5 py-4">Client</th>
+                  <th className="px-5 py-4">Téléphone</th>
+                  <th className="px-5 py-4">Service</th>
+                  <th className="px-5 py-4">Date</th>
+                  <th className="px-5 py-4">Statut</th>
+                  <th className="px-5 py-4">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border text-foreground">
+                {visibleReservations.map((r) => {
+                  const hour = r.heure_reservation
+                    ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
                         hour: "2-digit",
                         minute: "2-digit",
-                      },
-                    )
-                  : "";
+                      })
+                    : "";
+                  const hourFin = r.heure_fin_reservation
+                    ? new Date(r.heure_fin_reservation).toLocaleTimeString(
+                        "fr-FR",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )
+                    : "";
 
-                return (
-                  <tr
-                    key={r.id}
-                    className={`border-t border-stone-100 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
-                  >
-                    {" "}
-                    <td className="px-4 py-3 text-[var(--color-text-dark)]">
-                      {r.users?.name}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-body)]">
-                      {r.users?.phone}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-body)] max-w-[160px]">
-                      {r.service_nom ? (
-                        <>
-                          <div
-                            className="font-medium text-[var(--color-text-dark)] truncate"
-                            title={r.service_nom}
-                          >
-                            {r.service_nom}
-                          </div>
-                          {r.custom_request && (
+                  return (
+                    <tr
+                      key={r.id}
+                      className={`transition-colors duration-150 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
+                    >
+                      <td className="px-5 py-4 font-semibold text-foreground">
+                        {r.users?.name}
+                      </td>
+                      <td className="px-5 py-4 text-muted-foreground">
+                        {r.users?.phone}
+                      </td>
+                      <td className="max-w-[160px] px-5 py-4 text-muted-foreground">
+                        {r.service_nom ? (
+                          <>
                             <div
-                              className="text-xs truncate"
-                              title={r.custom_request}
+                              className="truncate font-medium text-foreground"
+                              title={r.service_nom}
                             >
-                              {r.custom_request}
+                              {r.service_nom}
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        <div
-                          className="truncate"
-                          title={r.custom_request ?? ""}
-                        >
-                          {r.custom_request ?? "⚠️ No Request"}
+                            {r.custom_request && (
+                              <div className="truncate text-xs" title={r.custom_request}>
+                                {r.custom_request}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="truncate" title={r.custom_request ?? ""}>
+                            {r.custom_request ?? "Aucune demande"}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-muted-foreground">
+                        {new Date(r.date_reservation).toLocaleDateString("fr-FR")}{" "}
+                        {hour}
+                        {hourFin && ` → ${hourFin}`}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={statusBadgeVariant(r.status)}>
+                            {STATUS_TEXT[r.status] ?? r.status}
+                          </Badge>
+                          {r.archived && <Badge variant="neutral">Archivée</Badge>}
                         </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-body)]">
-                      {new Date(r.date_reservation).toLocaleDateString("fr-FR")}{" "}
-                      {hour}
-                      {hourFin && ` → ${hourFin}`}
-                    </td>
-                    // app/agent/reservations/page.tsx — dans la cellule statut
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${statusColor(r.status)}`}
-                      >
-                        {statusLabel(r.status)}
-                      </span>
-                      {r.archived && (
-                        <span className="ml-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium bg-stone-200 text-stone-600">
-                          Archivée
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {r.status === "en_attente" && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleAgentStatus(r.id, "confirmee")}
-                            className="text-xs text-emerald-700 hover:underline cursor-pointer"
+                      </td>
+                      <td className="px-5 py-4">
+                        {r.status === "en_attente" && (
+                          <div className="flex gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="accent"
+                              onClick={() => handleAgentStatus(r.id, "confirmee")}
+                            >
+                              Confirmer
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAgentStatus(r.id, "rejetee")}
+                            >
+                              Rejeter
+                            </Button>
+                          </div>
+                        )}
+                        {r.status === "confirmee" && !r.agent_confirmed && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => handleConfirmCompletion(r.id)}
                           >
-                            Confirmer
-                          </button>
-                          <button
-                            onClick={() => handleAgentStatus(r.id, "rejetee")}
-                            className="text-xs text-red-600 hover:underline cursor-pointer"
-                          >
-                            Rejeter
-                          </button>
-                        </div>
-                      )}
-                      {r.status === "confirmee" && !r.agent_confirmed && (
-                        <button
-                          onClick={() => handleConfirmCompletion(r.id)}
-                          className="text-xs text-[var(--color-primary)] hover:underline cursor-pointer"
-                        >
-                          Marquer comme terminé
-                        </button>
-                      )}
-                      {r.status === "confirmee" && r.agent_confirmed && (
-                        <span className="text-xs text-[var(--color-text-body)]">
-                          En attente du client...
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                            Marquer comme terminé
+                          </Button>
+                        )}
+                        {r.status === "confirmee" && r.agent_confirmed && (
+                          <span className="text-xs text-muted-foreground">
+                            En attente du client...
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
   );
-}
-
-function statusColor(status: Reservation["status"]) {
-  switch (status) {
-    case "en_attente":
-      return "bg-amber-100 text-amber-700";
-    case "confirmee":
-      return "bg-blue-100 text-blue-700";
-    case "terminee":
-      return "bg-emerald-100 text-emerald-700";
-    case "rejetee": // ← ajouté
-      return "bg-red-100 text-red-700";
-    case "annulee":
-      return "bg-red-100 text-red-700";
-    case "expiree": // ← ajouté
-      return "bg-stone-200 text-stone-600";
-    default:
-      return "bg-stone-100 text-stone-600";
-  }
-}
-
-function statusLabel(status: Reservation["status"]) {
-  switch (status) {
-    case "en_attente":
-      return "En attente";
-    case "confirmee":
-      return "Confirmée";
-    case "terminee":
-      return "Terminée ✅";
-    case "rejetee": // ← ajouté
-      return "Rejetée";
-    case "annulee":
-      return "Annulée";
-    case "expiree": // ← ajouté
-      return "Expirée";
-    default:
-      return status;
-  }
 }

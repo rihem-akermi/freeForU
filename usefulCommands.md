@@ -33,5 +33,11 @@
 11. launch Antigravity in powerShell
    & "$env:LOCALAPPDATA\agy\bin\agy.exe"   
 
-12. oush in a newly created local branch 
+12. push in a newly created local branch 
    git push -u origin nameOfTheBranch
+
+13. This shows your last 10 commits.
+   git log --oneline --decorate -10
+
+14. This shows your local branches and their tracking information.
+   git branch - vv

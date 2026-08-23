@@ -106,7 +106,8 @@ export type Review = {
   rating: number;
   comment: string | null;
   created_at: string;
-  users?: { name: string };
+  users?: { name: string } | null;        
+  agents?: { id: number; name: string } | null; 
 };
 
 export interface Service {

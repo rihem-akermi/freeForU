@@ -17,6 +17,7 @@ import {
   Select,
   Textarea,
   Badge,
+  PageHeader,
   IconAdd,
   IconEdit,
   IconDelete,
@@ -54,13 +55,17 @@ const STATUS_LABEL: Record<string, string> = {
   expiree: "Expirée",
 };
 
+/* Row tints now pull from the app's actual semantic tokens instead of
+   arbitrary Tailwind defaults (amber/violet/sky/stone), so the meaning
+   (pending/confirmed/done/rejected/expired) stays functional while the
+   colors stay within the established palette. */
 const ROW_STYLE: Record<string, string> = {
-  en_attente: "bg-amber-50 hover:bg-amber-100/70",
-  confirmee: "bg-violet-50 hover:bg-violet-100/70",
-  terminee: "bg-sky-50 hover:bg-sky-100/70",
-  rejetee: "bg-red-50 hover:bg-red-100/70",
-  annulee: "bg-red-50 hover:bg-red-100/70",
-  expiree: "bg-stone-100 hover:bg-stone-200/70",
+  en_attente: "bg-[var(--color-warning-soft)] hover:brightness-[.97]",
+  confirmee: "bg-accent/[0.08] hover:bg-accent/[0.13]",
+  terminee: "bg-[var(--color-info-soft)] hover:brightness-[.97]",
+  rejetee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  annulee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  expiree: "bg-muted hover:bg-muted/70",
 };
 
 const STATUS_TEXT: Record<string, string> = {
@@ -96,7 +101,7 @@ const emptyNewReservation: NewReservationForm = {
   agentName: "",
 };
 
-type EditableReservation = Partial<
+type EditableReservation = Partial <
   Pick<Reservation, "status" | "date_reservation">
 >;
 
@@ -305,38 +310,35 @@ export default function ReservationsPage({
         />
       )}
 
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h2 className="font-serif text-xl font-bold text-[#0B162C]">
-            Gestion des Réservations
-          </h2>
-          <p className="text-xs text-[#393D3A]">
-            Consultez, modifiez ou créez des réservations
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-[#393D3A] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-              className="cursor-pointer"
-            />
-            Afficher les archivées
-          </label>
-          <Button
-            variant={showAddForm ? "neutral" : "primary"}
-            onClick={() => setShowAddForm((prev) => !prev)}
-          >
-            {showAddForm ? <IconClose /> : <IconAdd />}
-            {showAddForm ? "Annuler" : "Ajouter une réservation"}
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Gestion des réservations"
+        subtitle="Consultez, modifiez ou créez des réservations."
+        badge="Administration"
+        actionSlot={
+          <div className="flex items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="cursor-pointer accent-accent"
+              />
+              Afficher les archivées
+            </label>
+            <Button
+              variant={showAddForm ? "neutral" : "primary"}
+              onClick={() => setShowAddForm((prev) => !prev)}
+            >
+              {showAddForm ? <IconClose /> : <IconAdd />}
+              {showAddForm ? "Annuler" : "Ajouter une réservation"}
+            </Button>
+          </div>
+        }
+      />
 
       {showAddForm && (
-        <div className="mb-6 rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="mb-6 space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="relative">
               <Input
                 label="Client"
@@ -345,7 +347,7 @@ export default function ReservationsPage({
                 onChange={(e) => handleClientSearch(e.target.value)}
               />
               {clients.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-white border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden">
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
                   {clients.map((client) => (
                     <button
                       key={client.id}
@@ -358,12 +360,12 @@ export default function ReservationsPage({
                         }));
                         setClients([]);
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-[#EEECF2]/60 transition text-sm"
+                      className="w-full px-4 py-2.5 text-left text-sm transition hover:bg-accent/[0.08]"
                     >
-                      <div className="font-semibold text-[#0B162C]">
+                      <div className="font-semibold text-foreground">
                         {client.name}
                       </div>
-                      <div className="text-xs text-[#393D3A]">
+                      <div className="text-xs text-muted-foreground">
                         {client.phone} · {client.ville}
                       </div>
                     </button>
@@ -380,7 +382,7 @@ export default function ReservationsPage({
                 onChange={(e) => handleAgentSearch(e.target.value)}
               />
               {agents.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-white border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden">
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
                   {agents.map((agent) => (
                     <button
                       key={agent.id}
@@ -394,12 +396,12 @@ export default function ReservationsPage({
                         }));
                         setAgents([]);
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-[#EEECF2]/60 transition text-sm"
+                      className="w-full px-4 py-2.5 text-left text-sm transition hover:bg-accent/[0.08]"
                     >
-                      <div className="font-semibold text-[#0B162C]">
+                      <div className="font-semibold text-foreground">
                         {agent.name}
                       </div>
-                      <div className="text-xs text-[#393D3A]">
+                      <div className="text-xs text-muted-foreground">
                         {agent.phone} · {agent.ville}
                       </div>
                     </button>
@@ -435,7 +437,7 @@ export default function ReservationsPage({
             onChange={(e) => handleAddChange("dateReservation", e.target.value)}
           />
 
-          <div className="flex gap-2 col-span-2">
+          <div className="col-span-2 flex gap-2">
             <Button
               type="button"
               size="sm"
@@ -491,174 +493,176 @@ export default function ReservationsPage({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
-        <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-[#EEECF2]/70 text-[#0B162C] font-bold text-xs uppercase tracking-wider border-b border-[var(--color-border)]">
-            <tr>
-              <th className="px-5 py-4">Client</th>
-              <th className="px-5 py-4">Agent</th>
-              <th className="px-5 py-4">Service</th>
-              <th className="px-5 py-4">Date</th>
-              <th className="px-5 py-4">Heure</th>
-              <th className="px-5 py-4">Statut</th>
-              <th className="px-5 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--color-border)] text-[#000000]">
-            {visibleReservations.map((r) => {
-              const isEditing = editingId === r.id;
-              const hour = r.heure_reservation
-                ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "—";
-              const hourFin = r.heure_fin_reservation
-                ? new Date(r.heure_fin_reservation).toLocaleTimeString(
-                    "fr-FR",
-                    {
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="border-b-2 border-accent/25 bg-accent/[0.07] text-xs font-bold uppercase tracking-wider text-primary">
+              <tr>
+                <th className="px-5 py-4">Client</th>
+                <th className="px-5 py-4">Agent</th>
+                <th className="px-5 py-4">Service</th>
+                <th className="px-5 py-4">Date</th>
+                <th className="px-5 py-4">Heure</th>
+                <th className="px-5 py-4">Statut</th>
+                <th className="px-5 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border text-foreground">
+              {visibleReservations.map((r) => {
+                const isEditing = editingId === r.id;
+                const hour = r.heure_reservation
+                  ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
                       hour: "2-digit",
                       minute: "2-digit",
-                    },
-                  )
-                : null;
+                    })
+                  : "—";
+                const hourFin = r.heure_fin_reservation
+                  ? new Date(r.heure_fin_reservation).toLocaleTimeString(
+                      "fr-FR",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )
+                  : null;
 
-              return (
-                <tr
-                  key={r.id}
-                  className={`transition-colors duration-150 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
-                >
-                  <td className="px-5 py-4">
-                    <div className="font-semibold text-[#0B162C]">
-                      {r.users?.name}
-                    </div>
-                    <div className="text-xs text-[#393D3A]">
-                      {r.users?.phone}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="font-semibold text-[#0B162C]">
-                      {r.agents?.name}
-                    </div>
-                    <div className="text-xs text-[#393D3A]">
-                      {r.agents?.phone}
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A] max-w-[180px]">
-                    {r.service_nom ? (
-                      <>
-                        <div
-                          className="font-medium text-[#0B162C] truncate"
-                          title={r.service_nom}
-                        >
-                          {r.service_nom}
-                        </div>
-                        {r.custom_request && (
+                return (
+                  <tr
+                    key={r.id}
+                    className={`transition-colors duration-150 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
+                  >
+                    <td className="px-5 py-4">
+                      <div className="font-semibold text-foreground">
+                        {r.users?.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.users?.phone}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="font-semibold text-foreground">
+                        {r.agents?.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.agents?.phone}
+                      </div>
+                    </td>
+                    <td className="max-w-[180px] px-5 py-4 text-muted-foreground">
+                      {r.service_nom ? (
+                        <>
                           <div
-                            className="text-xs truncate"
-                            title={r.custom_request}
+                            className="truncate font-medium text-foreground"
+                            title={r.service_nom}
                           >
-                            {r.custom_request}
+                            {r.service_nom}
                           </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="truncate" title={r.custom_request ?? ""}>
-                        {r.custom_request ?? "⚠️ No Request"}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {isEditing ? (
-                      <input
-                        type="date"
-                        value={toDateInputValue(
-                          editedForm.date_reservation ?? "",
-                        )}
-                        onChange={(e) =>
-                          handleEditChange("date_reservation", e.target.value)
-                        }
-                        className="px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none"
-                      />
-                    ) : (
-                      formatDate(r.date_reservation)
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-[#393D3A]">
-                    {hour}
-                    {hourFin && ` → ${hourFin}`}
-                  </td>
-                  <td className="px-5 py-4">
-                    {isEditing ? (
-                      <select
-                        value={editedForm.status ?? "en_attente"}
-                        onChange={(e) =>
-                          handleEditChange("status", e.target.value)
-                        }
-                        className="px-2 py-1 text-xs border border-[var(--color-border)] rounded-lg bg-[#EEECF2]/60 focus:bg-white outline-none cursor-pointer"
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {STATUS_LABEL[status]}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-[#0B162C]">
-                          {STATUS_TEXT[r.status] ?? r.status}
-                        </span>
-                        {r.archived && (
-                          <Badge variant="neutral">Archivée</Badge>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    {isEditing ? (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="accent"
-                          onClick={() => handleSaveEdit(r.id)}
+                          {r.custom_request && (
+                            <div
+                              className="truncate text-xs"
+                              title={r.custom_request}
+                            >
+                              {r.custom_request}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="truncate" title={r.custom_request ?? ""}>
+                          {r.custom_request ?? "Aucune demande"}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          value={toDateInputValue(
+                            editedForm.date_reservation ?? "",
+                          )}
+                          onChange={(e) =>
+                            handleEditChange("date_reservation", e.target.value)
+                          }
+                          className="rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        formatDate(r.date_reservation)
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {hour}
+                      {hourFin && ` → ${hourFin}`}
+                    </td>
+                    <td className="px-5 py-4">
+                      {isEditing ? (
+                        <select
+                          value={editedForm.status ?? "en_attente"}
+                          onChange={(e) =>
+                            handleEditChange("status", e.target.value)
+                          }
+                          className="cursor-pointer rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
                         >
-                          <IconCheck /> Valider
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="neutral"
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditedForm({});
-                          }}
-                        >
-                          <IconClose />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditClick(r)}
-                        >
-                          <IconEdit />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleDelete(r.id)}
-                        >
-                          <IconDelete />
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {STATUS_LABEL[status]}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={STATUS_BADGE_MAP[r.status] ?? "neutral"}>
+                            {STATUS_TEXT[r.status] ?? r.status}
+                          </Badge>
+                          {r.archived && (
+                            <Badge variant="neutral">Archivée</Badge>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {isEditing ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            onClick={() => handleSaveEdit(r.id)}
+                          >
+                            <IconCheck /> Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="neutral"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditedForm({});
+                            }}
+                          >
+                            <IconClose />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditClick(r)}
+                          >
+                            <IconEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(r.id)}
+                          >
+                            <IconDelete />
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

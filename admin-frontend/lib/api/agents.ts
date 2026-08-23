@@ -68,8 +68,7 @@ export async function getPublicAgents(
 }
 
 export async function getAgents(): Promise<Agent[]> {
-  const res = await api.get<Agent[]>("/agents");
-
+  const res = await api.get<Agent[]>("/agents/all"); 
   return res.data;
 }
 

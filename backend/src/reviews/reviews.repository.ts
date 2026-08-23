@@ -8,7 +8,10 @@ export class ReviewsRepository {
 
   async findAll() {
     return this.prisma.reviews.findMany({
-      include: { agents: { select: { id: true, name: true } } },
+      include: {
+        agents: { select: { id: true, name: true } },
+        users: { select: { id: true, name: true } },
+      },
       orderBy: { created_at: "desc" },
     });
   }
@@ -27,8 +30,8 @@ export class ReviewsRepository {
     return this.prisma.reviews.findMany({
       where: { agent_id: agentId },
       include: {
-      users: { select: { name: true } }
-    },
+        users: { select: { name: true } },
+      },
       orderBy: { created_at: "desc" },
     });
   }

@@ -29,10 +29,16 @@ api.interceptors.response.use(
           {},
           { withCredentials: true },
         );
-        console.log(
-          "✅ Nouveau access token obtenu (cookie mis à jour), on rejoue la requête",
-        );
-        return api(originalRequest); // le nouveau cookie est déjà posé par le backend, pas besoin de le remanipuler ici
+        console.log("✅ Nouveau access token obtenu, on rejoue la requête");
+
+        // Forcer la recréation propre de la requête
+        return api({
+          method: originalRequest.method,
+          url: originalRequest.url,
+          data: originalRequest.data,
+          params: originalRequest.params,
+          withCredentials: true,
+        });
       } catch (refreshError) {
         console.log("❌ Refresh échoué, redirection login");
         if (typeof window !== "undefined") {

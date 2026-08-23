@@ -7,6 +7,7 @@ import { getContacts } from "@/lib/api/contacts";
 import { getPendingPublications } from "@/lib/api/publications";
 import { getReservations } from "@/lib/api/reservations";
 import { getUsers } from "@/lib/api/users";
+import { PageHeader, Badge } from "@/components/ui/UIComponents";
 
 /* ── icons ─────────────────────────────────────────────────────── */
 function IcoUsers({ className = "w-5 h-5" }: { className?: string }) {
@@ -113,37 +114,45 @@ function IcoClock({ className = "w-5 h-5" }: { className?: string }) {
 }
 
 /* ── stat metadata (visual only, no logic) ──────────────────────── */
+/* Accent hues are decorative per-category tints, deliberately kept out of
+   green/blue territory since those are reserved for semantic success/info
+   states elsewhere in the app. Drawn from the approved palette additions
+   (navy variants, burgundy, soft violet) instead. */
 interface StatConfig {
   Icon: (p: { className?: string }) => React.JSX.Element;
-  accent: string; // left-border / icon tint colour
+  accent: string;
   description: string;
 }
 
 const STAT_CONFIG: Record<string, StatConfig> = {
   Réservations: {
     Icon: IcoCalendar,
-    accent: "#9D8099",
+    accent: "#9D8099", // mauve — reserved for the hero stat
     description: "Réservations totales enregistrées",
   },
   "Publications En Attentes": {
     Icon: IcoClock,
-    accent: "#C4956A",
+    accent: "#C4956A", // warm terracotta
     description: "En attente de validation",
   },
   Clients: {
     Icon: IcoUsers,
-    accent: "#6A8FA8",
+    accent: "#46607D", // soft navy variation
     description: "Clients inscrits",
   },
   Agents: {
     Icon: IcoBriefcase,
-    accent: "#7BA68A",
+    accent: "#7D6E8C", // soft violet
     description: "Prestataires actifs",
   },
-  Contacts: { Icon: IcoMail, accent: "#9D8099", description: "Messages reçus" },
+  Contacts: {
+    Icon: IcoMail,
+    accent: "#7A3B47", // burgundy
+    description: "Messages reçus",
+  },
   Categories: {
     Icon: IcoTag,
-    accent: "#A87B7B",
+    accent: "#9C5F63", // burgundy / dusty rose
     description: "Catégories publiées",
   },
 };
@@ -156,12 +165,12 @@ const FALLBACK_CONFIG: StatConfig = {
 /* ── skeleton ───────────────────────────────────────────────────── */
 function Skeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
-      <div className="h-10 w-56 rounded-xl bg-[#EEECF2]" />
-      <div className="h-44 w-full rounded-2xl bg-[#EEECF2]" />
-      <div className="grid grid-cols-2 gap-5 lg:grid-cols-3">
+    <div className="app-stack gap-10 animate-pulse">
+      <div className="h-10 w-56 rounded-xl bg-muted" />
+      <div className="h-44 w-full rounded-3xl bg-muted" />
+      <div className="grid grid-cols-2 gap-5 lg:grid-cols-3 xl:grid-cols-5">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-40 rounded-2xl bg-[#EEECF2]" />
+          <div key={i} className="h-40 rounded-2xl bg-muted" />
         ))}
       </div>
     </div>
@@ -223,7 +232,6 @@ export default function PageAdmin() {
   /* pull "Réservations" out as the hero stat */
   const hero = cards.find((c) => c.label.trim() === "Réservations");
   const rest = cards.filter((c) => c.label.trim() !== "Réservations");
-  /* pending pubs get a warm-amber treatment */
   const isPending = (label: string) =>
     label.trim() === "Publications En Attentes";
 
@@ -237,140 +245,144 @@ export default function PageAdmin() {
         .stat-rise { animation: rise .5s cubic-bezier(.22,1,.36,1) backwards; }
       `}</style>
 
-      {/* ── page header ─────────────────────────────────────────── */}
-      <header className="mb-10 flex items-end justify-between gap-6">
-        <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[.18em] text-[#9D8099]">
-            Tableau de bord
-          </p>
-          <h1 className="font-serif text-3xl font-bold leading-tight text-[#0B162C] sm:text-4xl">
-            Vue d'ensemble
-          </h1>
-        </div>
+      <div className="app-stack w-full max-w-none gap-10">
+        <PageHeader
+          title="Vue d'ensemble"
+          subtitle="Suivez l'activité de la plateforme en un coup d'œil."
+          badge="Tableau de bord"
+          actionSlot={
+            ts ? (
+              <div className="hidden shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground shadow-sm sm:flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-success)]" />
+                {ts}
+              </div>
+            ) : undefined
+          }
+        />
 
-        {ts && (
-          <div className="hidden shrink-0 items-center gap-2 rounded-full border border-[#EEECF2] bg-white px-4 py-2 text-xs font-semibold text-[#9D8099] shadow-sm sm:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            {ts}
-          </div>
-        )}
-      </header>
-
-      {/* ── hero stat ───────────────────────────────────────────── */}
-      {hero &&
-        (() => {
-          const cfg = STAT_CONFIG[hero.label.trim()] ?? FALLBACK_CONFIG;
-          return (
-            <div
-              className="stat-rise mb-6 relative overflow-hidden rounded-3xl bg-[#0B162C] px-10 py-10 sm:px-14 sm:py-12"
-              style={{ animationDelay: "0ms" }}
-            >
-              {/* decorative grid lines */}
+        {/* ── hero stat ───────────────────────────────────────────── */}
+        {hero &&
+          (() => {
+            const cfg = STAT_CONFIG[hero.label.trim()] ?? FALLBACK_CONFIG;
+            return (
               <div
-                className="pointer-events-none absolute inset-0 opacity-[.06]"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }}
-                aria-hidden="true"
-              />
-              {/* radial glow */}
-              <div
-                className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full opacity-20"
-                style={{
-                  background:
-                    "radial-gradient(circle, #9D8099, transparent 70%)",
-                }}
-                aria-hidden="true"
-              />
-
-              <div className="relative flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="mb-5 inline-flex items-center gap-2.5 rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#9D8099] ring-1 ring-white/10">
-                    <cfg.Icon className="h-4 w-4" />
-                    {hero.label.trim()}
-                  </div>
-                  <p className="font-serif text-7xl font-bold leading-none tracking-tight text-white sm:text-8xl">
-                    {hero.value.toLocaleString("fr-FR")}
-                  </p>
-                  <p className="mt-4 text-base text-white/50">
-                    {STAT_CONFIG["Réservations"].description}
-                  </p>
-                </div>
-
-                {/* decorative right side — big translucent number echo */}
-                <p
-                  className="select-none font-serif text-[9rem] font-bold leading-none tracking-tight text-white/[.04] sm:text-[12rem]"
+                className="stat-rise relative overflow-hidden rounded-3xl bg-primary px-10 py-8 sm:px-14 sm:py-10"
+                style={{ animationDelay: "0ms" }}
+              >
+                {/* decorative grid lines */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[.06]"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px)",
+                    backgroundSize: "40px 40px",
+                  }}
                   aria-hidden="true"
-                >
-                  {hero.value}
-                </p>
-              </div>
-            </div>
-          );
-        })()}
+                />
+                {/* radial glow */}
+                <div
+                  className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full opacity-20"
+                  style={{
+                    background:
+                      "radial-gradient(circle, var(--color-accent), transparent 70%)",
+                  }}
+                  aria-hidden="true"
+                />
 
-      {/* ── secondary grid ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {rest.map((card, i) => {
-          const cfg = STAT_CONFIG[card.label.trim()] ?? FALLBACK_CONFIG;
-          const alert = isPending(card.label) && card.value > 0;
-
-          return (
-            <div
-              key={card.label}
-              className="stat-rise group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-              style={{
-                animationDelay: `${(i + 1) * 70}ms`,
-                borderLeft: `3px solid ${cfg.accent}`,
-              }}
-            >
-              <div className="flex flex-1 flex-col px-7 py-7">
-                {/* icon + alert badge row */}
-                <div className="mb-6 flex items-center justify-between">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-                    style={{ background: `${cfg.accent}18`, color: cfg.accent }}
-                  >
-                    <cfg.Icon className="h-5 w-5" />
-                  </div>
-                  {alert && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-600 ring-1 ring-amber-200">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                      Action
-                    </span>
-                  )}
-                </div>
-
-                {/* number */}
-                <p className="font-serif text-5xl font-bold leading-none tracking-tight text-[#0B162C]">
-                  {card.value.toLocaleString("fr-FR")}
-                </p>
-
-                {/* label + description */}
-                <div className="mt-4 space-y-0.5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#393D3A]/60">
-                    {card.label.trim()}
-                  </p>
-                  {cfg.description && (
-                    <p className="text-sm text-[#393D3A]/50">
-                      {cfg.description}
+                <div className="relative flex flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="mb-4 inline-flex items-center gap-2.5 rounded-full bg-primary-foreground/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-accent ring-1 ring-primary-foreground/10">
+                      <cfg.Icon className="h-4 w-4" />
+                      {hero.label.trim()}
+                    </div>
+                    <p className="font-serif text-7xl font-bold leading-none tracking-tight text-primary-foreground sm:text-8xl">
+                      {hero.value.toLocaleString("fr-FR")}
                     </p>
-                  )}
+                    <p className="mt-3 text-base text-primary-foreground/50">
+                      {STAT_CONFIG["Réservations"].description}
+                    </p>
+                  </div>
+
+                  {/* decorative right side — big translucent number echo */}
+                  <p
+                    className="select-none font-serif text-[9rem] font-bold leading-none tracking-tight text-primary-foreground/[.04] sm:text-[12rem]"
+                    aria-hidden="true"
+                  >
+                    {hero.value}
+                  </p>
                 </div>
               </div>
+            );
+          })()}
 
-              {/* bottom accent line that slides in on hover */}
-              <div
-                className="h-[3px] w-full scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"
-                style={{
-                  background: `linear-gradient(90deg, ${cfg.accent}, transparent)`,
-                }}
-              />
-            </div>
-          );
-        })}
+        {/* ── secondary grid ──────────────────────────────────────── */}
+        <section aria-labelledby="admin-stats" className="app-stack gap-5">
+          <h2
+            id="admin-stats"
+            className="text-sm font-bold uppercase tracking-[0.08em] text-muted-foreground"
+          >
+            Statistiques clés
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {rest.map((card, i) => {
+              const cfg = STAT_CONFIG[card.label.trim()] ?? FALLBACK_CONFIG;
+              const alert = isPending(card.label) && card.value > 0;
+
+              return (
+                <div
+                  key={card.label}
+                  className="stat-rise group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  style={{
+                    animationDelay: `${(i + 1) * 70}ms`,
+                    borderLeft: `3px solid ${cfg.accent}`,
+                  }}
+                >
+                  <div className="flex flex-1 flex-col px-6 py-6">
+                    {/* icon + alert badge row */}
+                    <div className="mb-5 flex items-center justify-between">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
+                        style={{
+                          background: `${cfg.accent}18`,
+                          color: cfg.accent,
+                        }}
+                      >
+                        <cfg.Icon className="h-5 w-5" />
+                      </div>
+                      {alert && <Badge variant="warning">Action</Badge>}
+                    </div>
+
+                    {/* number */}
+                    <p className="font-serif text-5xl font-bold leading-none tracking-tight text-foreground">
+                      {card.value.toLocaleString("fr-FR")}
+                    </p>
+
+                    {/* label + description */}
+                    <div className="mt-3 space-y-0.5">
+                      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        {card.label.trim()}
+                      </p>
+                      {cfg.description && (
+                        <p className="text-sm text-muted-foreground/80">
+                          {cfg.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* bottom accent line that slides in on hover */}
+                  <div
+                    className="h-[3px] w-full scale-x-0 origin-left transition-transform duration-300 group-hover:scale-x-100"
+                    style={{
+                      background: `linear-gradient(90deg, ${cfg.accent}, transparent)`,
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </>
   );

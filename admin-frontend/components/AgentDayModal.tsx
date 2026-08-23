@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { getAgentDayReservations, AgentDayReservation, confirmMyReservationCompletion, updateAgentReservationStatus } from "@/lib/api/reservations";
 import { setDayException } from "@/lib/api/blocked-slots";
-import { Button } from "@/components/ui/UIComponents";
+import { Button, Badge, IconClose, IconCheck } from "@/components/ui/UIComponents";
 
 type AgentDayModalProps = {
   agentId: number;
@@ -28,6 +28,20 @@ function formatPrismaDate(raw: string): string {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
 }
+
+const STATUS_BADGE_VARIANT: Record<string, "warning" | "success" | "neutral" | "danger"> = {
+  en_attente: "warning",
+  confirmee: "success",
+  terminee: "neutral",
+  rejetee: "danger",
+  annulee: "danger",
+  expiree: "neutral",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  en_attente: "En attente", confirmee: "Confirmée", terminee: "Terminée",
+  rejetee: "Rejetée", annulee: "Annulée", expiree: "Expirée",
+};
 
 export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservationChanged }: AgentDayModalProps) {
   const [tab, setTab] = useState<Tab>("reservations");
@@ -86,29 +100,22 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservat
     }
   };
 
-  const statusLabel: Record<string, string> = {
-    en_attente: "En attente", confirmee: "Confirmée", terminee: "Terminée",
-    rejetee: "Rejetée", annulee: "Annulée", expiree: "Expirée",
-  };
-  const statusColor: Record<string, string> = {
-    en_attente: "text-amber-600 bg-amber-50",
-    confirmee: "text-emerald-600 bg-emerald-50",
-    terminee: "text-stone-500 bg-stone-100",
-    rejetee: "text-red-600 bg-red-50",
-    annulee: "text-red-600 bg-red-50",
-    expiree: "text-stone-400 bg-stone-100",
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-border bg-card p-6 shadow-2xl">
 
-        <div className="flex items-start justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#0B162C] capitalize">{formatPrismaDate(date)}</h3>
-          <button onClick={onClose} className="text-[#393D3A] hover:text-[#0B162C] transition text-lg leading-none cursor-pointer">✕</button>
+        <div className="mb-4 flex items-start justify-between">
+          <h3 className="text-base font-semibold capitalize text-foreground">{formatPrismaDate(date)}</h3>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-muted-foreground transition hover:text-foreground"
+            aria-label="Fermer"
+          >
+            <IconClose className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="flex gap-1 border-b border-[var(--color-border)] mb-4">
+        <div className="mb-4 flex gap-1 border-b border-border">
           {([
             { key: "reservations", label: `Réservations (${reservations.length})` },
             { key: "exception", label: "Marquer une exception" },
@@ -116,8 +123,8 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservat
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-3 py-2 text-xs font-medium border-b-2 transition cursor-pointer ${
-                tab === t.key ? "border-[#0B162C] text-[#0B162C]" : "border-transparent text-[#393D3A] hover:text-[#0B162C]"
+              className={`cursor-pointer border-b-2 px-3 py-2 text-xs font-semibold transition ${
+                tab === t.key ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {t.label}
@@ -125,72 +132,80 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservat
           ))}
         </div>
 
-        <div className="overflow-y-auto flex-1">
+        <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <p className="text-sm text-[#393D3A] text-center py-8">Chargement...</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Chargement...</p>
           ) : tab === "reservations" ? (
             <div className="space-y-3">
               {reservations.length === 0 ? (
-                <p className="text-sm text-[#393D3A] text-center py-8">Aucune réservation ce jour.</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">Aucune réservation ce jour.</p>
               ) : (
                 reservations
                   .slice()
                   .sort((a, b) => (a.heure_reservation ?? "").localeCompare(b.heure_reservation ?? ""))
                   .map((r) => (
-                    <div key={r.id} className="rounded-lg border border-[var(--color-border)] p-3 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-[#0B162C]">
+                    <div key={r.id} className="space-y-1.5 rounded-xl border border-border p-3.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-foreground">
                           {formatPrismaTime(r.heure_reservation)}
                           {r.heure_fin_reservation && ` — ${formatPrismaTime(r.heure_fin_reservation)}`}
                           {" · "}{r.users.name}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[r.status] ?? "text-stone-500 bg-stone-100"}`}>
-                          {statusLabel[r.status] ?? r.status}
-                        </span>
+                        <Badge variant={STATUS_BADGE_VARIANT[r.status] ?? "neutral"}>
+                          {STATUS_LABEL[r.status] ?? r.status}
+                        </Badge>
                       </div>
 
                       {r.service_nom && (
-                        <p className="text-xs text-[#393D3A]">
-                          🧾 {r.service_nom}{r.service_prix ? ` — ${r.service_prix} DT` : ""}
+                        <p className="text-xs text-muted-foreground">
+                          {r.service_nom}{r.service_prix ? ` — ${r.service_prix} DT` : ""}
                         </p>
                       )}
                       {r.custom_request && (
-                        <p className="text-xs text-[#393D3A] italic">💬 "{r.custom_request}"</p>
+                        <p className="text-xs italic text-muted-foreground">"{r.custom_request}"</p>
                       )}
-                      <div className="flex gap-3 text-xs text-[#393D3A]">
-                        {r.users.phone && <span>📞 {r.users.phone}</span>}
-                        <span>✉️ {r.users.email}</span>
+                      <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                        {r.users.phone && <span>{r.users.phone}</span>}
+                        <span>{r.users.email}</span>
                       </div>
 
                       {r.status === "en_attente" && (
-                        <div className="flex gap-2 mt-1">
-                          <button
+                        <div className="mt-1 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            className="flex-1"
                             onClick={() => handleAgentDecision(r.id, "confirmee")}
                             disabled={decidingId === r.id}
-                            className="flex-1 text-xs px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition cursor-pointer disabled:opacity-50"
                           >
-                            {decidingId === r.id ? "..." : "✓ Confirmer"}
-                          </button>
-                          <button
+                            {decidingId === r.id ? "..." : <><IconCheck className="h-3.5 w-3.5" /> Confirmer</>}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="neutral"
+                            className="flex-1"
                             onClick={() => handleAgentDecision(r.id, "rejetee")}
                             disabled={decidingId === r.id}
-                            className="flex-1 text-xs px-3 py-1.5 rounded-md bg-stone-200 hover:bg-stone-300 text-stone-700 font-medium transition cursor-pointer disabled:opacity-50"
                           >
-                            {decidingId === r.id ? "..." : "✕ Rejeter"}
-                          </button>
+                            {decidingId === r.id ? "..." : <><IconClose className="h-3.5 w-3.5" /> Rejeter</>}
+                          </Button>
                         </div>
                       )}
                       {r.status === "confirmee" && !r.agent_confirmed && (
-                        <button
+                        <Button
+                          size="sm"
+                          variant="accent"
+                          className="mt-1 w-full"
                           onClick={() => handleAgentConfirm(r.id)}
                           disabled={confirmingId === r.id}
-                          className="mt-1 w-full text-xs px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition cursor-pointer disabled:opacity-50"
                         >
-                          {confirmingId === r.id ? "Confirmation..." : "✓ Confirmer la réalisation"}
-                        </button>
+                          {confirmingId === r.id ? "Confirmation..." : <><IconCheck className="h-3.5 w-3.5" /> Confirmer la réalisation</>}
+                        </Button>
                       )}
                       {r.status === "confirmee" && r.agent_confirmed && (
-                        <p className="text-xs text-emerald-600">✓ Vous avez confirmé la réalisation</p>
+                        <p className="flex items-center gap-1.5 text-xs text-[var(--color-success)]">
+                          <IconCheck className="h-3.5 w-3.5" /> Vous avez confirmé la réalisation
+                        </p>
                       )}
                     </div>
                   ))
@@ -198,14 +213,14 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservat
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-[#393D3A]">Marquer ce jour comme :</p>
+              <p className="text-sm text-muted-foreground">Marquer ce jour comme :</p>
               <Button
                 variant="danger"
                 className="w-full"
                 isLoading={settingException === "off"}
                 onClick={() => handleSetException("off")}
               >
-                🔴 Jour de repos (exception)
+                Jour de repos (exception)
               </Button>
               <Button
                 variant="outline"
@@ -213,9 +228,9 @@ export function AgentDayModal({ agentId, date, onClose, onBlockAdded, onReservat
                 isLoading={settingException === "full"}
                 onClick={() => handleSetException("full")}
               >
-                🔵 Journée pleine (selon moi)
+                Journée pleine (selon moi)
               </Button>
-              <p className="text-xs text-[#393D3A]">Recliquer sur le même bouton annule l'exception.</p>
+              <p className="text-xs text-muted-foreground">Recliquer sur le même bouton annule l'exception.</p>
             </div>
           )}
         </div>

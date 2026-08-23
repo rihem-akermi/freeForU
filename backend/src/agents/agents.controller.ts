@@ -40,6 +40,10 @@ export class AgentsController {
     return result;
   }
 
+  @Get("all")
+  async getAgents() {
+    return this.agentsService.getAllAgents();
+  }
   @Get()
   async getPublicAgents(@Query("category_id") categoryId?: string) {
     return this.agentsService.getPublicAgents(
@@ -50,11 +54,6 @@ export class AgentsController {
   @Get(":id")
   async getAgentById(@Param("id", ParseIntPipe) id: number) {
     return this.agentsService.getAgentById(id);
-  }
-
-  @Get()
-  async getAgents() {
-    return this.agentsService.getAllAgents();
   }
 
   @UseGuards(AuthGuard, RolesGuard)
