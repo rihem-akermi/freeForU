@@ -1,4 +1,6 @@
-'use client'
+"use client";
+
+import { Button } from "@/components/ui/UIComponents";
 
 type ConfirmModalProps = {
   title: string;
@@ -16,23 +18,17 @@ export function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[var(--color-card)] rounded-xl shadow-xl max-w-sm w-full p-6">
-        <h3 className="text-base font-semibold text-[var(--color-text-dark)] mb-2">{title}</h3>
-        <p className="text-sm text-[var(--color-text-body)] mb-5">{message}</p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium rounded-md text-[var(--color-text-body)] hover:bg-[var(--color-bg-alt)] transition cursor-pointer"
-          >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <h3 className="mb-2 font-serif text-lg font-bold text-foreground">{title}</h3>
+        <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{message}</p>
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="neutral" size="md" onClick={onCancel}>
             Annuler
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 text-white transition cursor-pointer"
-          >
+          </Button>
+          <Button variant="danger" size="md" onClick={onConfirm}>
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

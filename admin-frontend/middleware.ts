@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"], //le middleware ne s'applique QUE sur les routes commençant par /admin
+  matcher: ["/admin/:path*" , "/agent/:path*" , "/client/:path*"], //le middleware ne s'applique QUE sur les routes commençant par /admin
 
   // : signifie un paramètre (varie)
   // * signifie zéro ou plusieurs segments

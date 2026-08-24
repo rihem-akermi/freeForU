@@ -65,4 +65,19 @@ export class AgentsService {
   async searchAgents(name: string) {
     return await this.agentsRepository.searchAgents(name);
   }
+
+  async getPublicAgents(categoryId?: number) {
+    const agents = await this.agentsRepository.findAllPublic(categoryId);
+
+    return await Promise.all(
+      agents.map(async (agent) => {
+        const rating = await this.agentsRepository.getRatingSummary(agent.id);
+        return {
+          ...agent,
+          rating_average: rating.average,
+          rating_count: rating.count,
+        };
+      })
+    );
+  }
 }

@@ -16,5 +16,28 @@
 6. deploy migrations in production :
    npx prisma migrate deploy
 
-7. it resumes the most recent conversation for that workspace with antigravity 
+7. it resumes the most recent conversation for that workspace with antigravity
    agy -c
+
+8. create a new branch and switch to it : 
+   git switch -c ui-redesign-phase3
+
+9. check in what branch and how many branchs exists 
+   git branch
+
+10. commit in a certain branch 
+   git add .
+   git commit -m "Redesign UI foundation"
+
+
+11. launch Antigravity in powerShell
+   & "$env:LOCALAPPDATA\agy\bin\agy.exe"   
+
+12. push in a newly created local branch 
+   git push -u origin nameOfTheBranch
+
+13. This shows your last 10 commits.
+   git log --oneline --decorate -10
+
+14. This shows your local branches and their tracking information.
+   git branch - vv

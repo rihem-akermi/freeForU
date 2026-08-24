@@ -1,15 +1,16 @@
 'use client'
 import { useEffect, useState } from "react";
 import { getDayAvailability, DayAvailability } from "@/lib/api/availability";
+import { Button, IconClose } from "@/components/ui/UIComponents";
 
 type DayAvailabilityModalProps = {
   agentId: number;
   date: string;
   onClose: () => void;
-  onSelectHour: (date: string, hour: string) => void;
+  onProceed: (date: string, startTime: string | null, endTime: string | null) => void;
 };
 
-export function DayAvailabilityModal({ agentId, date, onClose, onSelectHour }: DayAvailabilityModalProps) {
+export function DayAvailabilityModal({ agentId, date, onClose, onProceed }: DayAvailabilityModalProps) {
   const [data, setData] = useState<DayAvailability | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,43 +23,44 @@ export function DayAvailabilityModal({ agentId, date, onClose, onSelectHour }: D
   }, [agentId, date]);
 
   const formattedDate = new Date(date).toLocaleDateString("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
+    weekday: "long", day: "numeric", month: "long",
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[var(--color-card)] rounded-xl shadow-xl max-w-sm w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[var(--color-text-dark)] capitalize">{formattedDate}</h3>
-          <button onClick={onClose} className="text-[var(--color-text-body)] hover:text-[var(--color-text-dark)] cursor-pointer">
-            ✕
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold capitalize text-foreground">{formattedDate}</h3>
+          <button onClick={onClose} className="cursor-pointer text-muted-foreground hover:text-foreground" aria-label="Fermer">
+            <IconClose className="h-5 w-5" />
           </button>
         </div>
 
         {loading ? (
-          <p className="text-sm text-[var(--color-text-body)] py-4 text-center">Chargement...</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">Chargement...</p>
         ) : data?.status === "sans_info" ? (
-          <p className="text-sm text-[var(--color-text-body)] py-4 text-center">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             Aucune information de disponibilité pour ce jour.
           </p>
-        ) : data && data.available_hours.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
-            {data.available_hours.map((hour) => (
-              <button
-                key={hour}
-                onClick={() => onSelectHour(date, hour)}
-                className="px-3 py-2 text-sm font-medium rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition cursor-pointer"
-              >
-                {hour}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-[var(--color-text-body)] py-4 text-center">
-            😔 Journée réservée, aucun créneau disponible.
+        ) : data?.status === "ferme" ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            L'agent ne travaille pas ce jour-là.
           </p>
+        ) : (
+          <>
+            <div className="mb-4 rounded-xl bg-muted/60 p-4 text-center">
+              <p className="text-xs uppercase text-muted-foreground">Horaires ce jour-là</p>
+              <p className="text-lg font-semibold text-foreground">
+                {data?.start_time} — {data?.end_time}
+              </p>
+            </div>
+            <p className="mb-4 text-center text-xs text-muted-foreground">
+              Vous pourrez proposer votre propre heure de rendez-vous dans le formulaire suivant.
+            </p>
+            <Button variant="primary" className="w-full" onClick={() => onProceed(date, data?.start_time ?? null, data?.end_time ?? null)}>
+              Faire une demande
+            </Button>
+          </>
         )}
       </div>
     </div>

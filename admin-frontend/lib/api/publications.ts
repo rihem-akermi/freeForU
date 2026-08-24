@@ -55,6 +55,12 @@ export async function getAgentPortfolio(agentId: number): Promise<Publication[]>
   return result.data;
 }
 
+export async function getMyPendingPublications(): Promise<Publication[]> {
+  const result = await api.get<Publication[]>("/publications/status/me");
+  return result.data;
+}
+
+
 export async function getPendingPublications(): Promise<Publication[]> {
   const result = await api.get<Publication[]>("/publications/admin");
   return result.data;

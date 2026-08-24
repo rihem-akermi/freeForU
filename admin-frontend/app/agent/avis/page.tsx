@@ -1,117 +1,105 @@
 // app/agent/avis/page.tsx
 'use client'
+import { useEffect, useState } from "react";
+import { getMe } from "@/lib/api/auth";
+import { getAgentReviews, getAgentRatingSummary, RatingSummary } from "@/lib/api/reviews";
+import { Card, PageHeader } from "@/components/ui/UIComponents";
+import type { Review } from "@/lib/data";
 
-type Review = {
-  id: number;
-  client_name: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-};
+const PUB_ACCENT = "#7D6E8C";
 
-type PublicationWithReviews = {
-  publication_id: number;
-  publication_description: string;
-  reviews: Review[];
-};
-
-// Mock — sera remplacé par un fetch GET /agent/reviews
-const mockData: PublicationWithReviews[] = [
-  {
-    publication_id: 1,
-    publication_description: "Installation complète de sanitaires pour salle de bain neuve...",
-    reviews: [
-      {
-        id: 1,
-        client_name: "Sami Trabelsi",
-        rating: 5,
-        comment: "Travail impeccable, ponctuel et très professionnel.",
-        created_at: "2026-07-05",
-      },
-      {
-        id: 2,
-        client_name: "Nour Jendoubi",
-        rating: 4,
-        comment: "Bon service, juste un peu de retard à l'arrivée.",
-        created_at: "2026-07-08",
-      },
-    ],
-  },
-  {
-    publication_id: 3,
-    publication_description: "Rénovation complète de tuyauterie ancienne...",
-    reviews: [
-      {
-        id: 3,
-        client_name: "Mehdi Karray",
-        rating: 3,
-        comment: "Correct, mais le prix final était plus élevé que prévu.",
-        created_at: "2026-06-30",
-      },
-    ],
-  },
-];
+function IcoStar({ className = "w-4 h-4", filled = true }: { className?: string; filled?: boolean }) {
+  return (
+    <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? 0 : 1.5} viewBox="0 0 24 24">
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.7z" />
+    </svg>
+  );
+}
+function StarRating({ rating, className = "h-3.5 w-3.5" }: { rating: number; className?: string }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[var(--color-warning)]">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <IcoStar key={i} className={className} filled={i < rating} />
+      ))}
+    </span>
+  );
+}
 
 export default function AvisPage() {
-  const allReviews = mockData.flatMap((pub) => pub.reviews);
-  const noteMoyenne =
-    allReviews.length > 0
-      ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
-      : null;
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [summary, setSummary] = useState<RatingSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const me = await getMe();
+        const [reviewsData, summaryData] = await Promise.all([
+          getAgentReviews(me.id),
+          getAgentRatingSummary(me.id),
+        ]);
+        setReviews(reviewsData);
+        setSummary(summaryData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) return <p className="text-sm text-muted-foreground">Chargement...</p>;
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-[var(--color-text-dark)]">
-          Les avis
-        </h1>
-        {noteMoyenne && (
-          <div className="flex items-center gap-2 bg-[var(--color-card)] rounded-full px-4 py-1.5">
-            <span className="text-lg font-bold text-[var(--color-text-dark)]">{noteMoyenne}</span>
-            <StarRating rating={Math.round(Number(noteMoyenne))} />
-            <span className="text-xs text-[var(--color-text-body)]">({allReviews.length} avis)</span>
-          </div>
-        )}
-      </div>
-
-      {allReviews.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-body)]">
-          Vous n'avez pas encore reçu d'avis.
-        </p>
-      ) : (
-        <div className="space-y-6">
-          {mockData.map((pub) => (
-            <div key={pub.publication_id}>
-              <p className="text-xs font-medium text-[var(--color-text-body)] mb-2 uppercase tracking-wide">
-                Sur : {pub.publication_description}
-              </p>
-              <div className="space-y-3">
-                {pub.reviews.map((review) => (
-                  <div key={review.id} className="bg-white border border-stone-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-[var(--color-text-dark)]">
-                        {review.client_name}
-                      </span>
-                      <span className="text-xs text-[var(--color-text-body)]">{review.created_at}</span>
-                    </div>
-                    <StarRating rating={review.rating} />
-                    <p className="text-sm text-[var(--color-text-body)] mt-2">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
+    <div className="w-full">
+      <PageHeader
+        title="Les avis"
+        subtitle="Retrouvez les retours de vos clients sur vos services."
+        badge="Espace agent"
+        actionSlot={
+          summary && summary.count > 0 ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--color-warning)]/25 bg-[var(--color-warning-soft)] px-5 py-3">
+              <span className="font-serif text-2xl font-bold text-foreground">
+                {summary.average.toFixed(1)}
+              </span>
+              <StarRating rating={Math.round(summary.average)} />
+              <span className="text-xs font-semibold text-muted-foreground">
+                {summary.count} avis
+              </span>
             </div>
+          ) : undefined
+        }
+      />
+
+      {reviews.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Vous n'avez pas encore reçu d'avis.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
+          {reviews.map((review) => (
+            <Card
+              key={review.id}
+              className="!p-4"
+              style={{ borderLeft: `3px solid ${PUB_ACCENT}` }}
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {review.users?.name ?? "Client"}
+                </span>
+                <StarRating rating={review.rating} className="h-3 w-3" />
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {new Date(review.created_at).toLocaleDateString("fr-FR", {
+                  day: "numeric", month: "short", year: "numeric",
+                })}
+              </span>
+              {review.comment && (
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{review.comment}</p>
+              )}
+            </Card>
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <span className="text-amber-400 text-sm">
-      {"★".repeat(rating)}
-      <span className="text-stone-300">{"★".repeat(5 - rating)}</span>
-    </span>
   );
 }

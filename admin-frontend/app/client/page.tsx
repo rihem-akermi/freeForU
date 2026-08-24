@@ -1,19 +1,28 @@
-"use client";
+'use client'
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getPublicOffers } from "@/lib/api/offers";
+import { getPublicAgents, PublicAgentCard } from "@/lib/api/agents";
 import { getCategories } from "@/lib/api/categories";
-import { Offer, Category } from "@/lib/data";
+import { Category } from "@/lib/data";
+import { AgentPreviewModal } from "@/components/AgentPreviewModal";
 import { AgentSearchBar } from "@/components/AgentSearchBar";
+import { Card, PageHeader } from "@/components/ui/UIComponents";
 
+function IcoStar({ className = "w-3.5 h-3.5", filled = true }: { className?: string; filled?: boolean }) {
+  return (
+    <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? 0 : 1.5} viewBox="0 0 24 24">
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.7z" />
+    </svg>
+  );
+}
 
-export default function HomePage() {
+export default function ClientHomePage() {
   const router = useRouter();
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [agents, setAgents] = useState<PublicAgentCard[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<PublicAgentCard | null>(null);
 
   useEffect(() => {
     getCategories().then(setCategories).catch(console.error);
@@ -21,34 +30,24 @@ export default function HomePage() {
 
   useEffect(() => {
     setLoading(true);
-    getPublicOffers(activeCategory ?? undefined)
-      .then(setOffers)
+    getPublicAgents(activeCategory ?? undefined)
+      .then(setAgents)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [activeCategory]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-1">
-            Trouvez le bon professionnel
-          </h1>
+    <div className="w-full">
+      <PageHeader
+        title="Trouvez le bon professionnel"
+        subtitle="Parcourez les profils disponibles près de chez vous."
+        badge="Espace client"
+      />
 
-          <p className="text-sm text-[var(--color-text-body)]">
-            Parcourez les offres disponibles près de chez vous.
-          </p>
-        </div>
+      <AgentSearchBar />
 
-        <AgentSearchBar />
-      </div>
-
-      <div className="flex gap-2 flex-wrap m-6">
-        <CategoryPill
-          label="Toutes"
-          active={activeCategory === null}
-          onClick={() => setActiveCategory(null)}
-        />
+      <div className="my-6 flex flex-wrap gap-2">
+        <CategoryPill label="Toutes" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
         {categories.map((c) => (
           <CategoryPill
             key={c.id}
@@ -60,52 +59,36 @@ export default function HomePage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
-      ) : offers.length === 0 ? (
-        <p className="text-sm text-[var(--color-text-body)]">
-          Aucune offre disponible pour cette catégorie.
-        </p>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      ) : agents.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun professionnel pour cette catégorie.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {offers.map((offer) => (
-            <OfferCard
-              key={offer.id}
-              offer={offer}
-              onClick={() => setSelectedOffer(offer)}
-            />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {agents.map((agent) => (
+            <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />
           ))}
         </div>
       )}
 
-      {selectedOffer && (
-        <OfferModal
-          offer={selectedOffer}
-          onClose={() => setSelectedOffer(null)}
-          onViewProfile={() =>
-            router.push(`client/agent/${selectedOffer.agents?.id}`)
-          }
+      {selectedAgent && (
+        <AgentPreviewModal
+          agent={selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+          onViewProfile={() => router.push(`/client/agent/${selectedAgent.id}`)}
         />
       )}
     </div>
   );
 }
 
-function CategoryPill({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function CategoryPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition cursor-pointer ${
+      className={`cursor-pointer rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
         active
-          ? "bg-[var(--color-primary)] text-white"
-          : "bg-[var(--color-bg-alt)] text-[var(--color-text-body)] hover:bg-[var(--color-primary)]/10"
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground hover:bg-accent/15"
       }`}
     >
       {label}
@@ -113,126 +96,34 @@ function CategoryPill({
   );
 }
 
-function OfferCard({ offer, onClick }: { offer: Offer; onClick: () => void }) {
+function AgentCard({ agent, onClick }: { agent: PublicAgentCard; onClick: () => void }) {
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="bg-[var(--color-card)] rounded-xl overflow-hidden border border-[var(--color-bg-alt)] shadow-sm hover:shadow-md transition cursor-pointer"
-    >
-      <div className="h-32 bg-[var(--color-bg-alt)]">
-        {offer.cover_image && (
-          <img
-            src={offer.cover_image}
-            alt={offer.title}
-            className="w-full h-full object-cover"
-          />
-        )}
-      </div>
-      <div className="p-3">
-        {offer.agents && (
-          <div className="flex items-center gap-1.5 mt-1.5 mb-1.5">
-            <div className="w-5 h-5 rounded-full bg-[var(--color-bg-alt)] overflow-hidden shrink-0">
-              {offer.agents.photo_url && (
-                <img
-                  src={offer.agents.photo_url}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-            <span className="text-xs text-[var(--color-text-body)] truncate">
-              {offer.agents.name} · {offer.agents.ville}
-            </span>
-          </div>
-        )}
-        <p className="text-sm font-medium text-[var(--color-text-dark)] truncate">
-          {offer.title}
-        </p>
-        {(offer.min_price || offer.max_price) && (
-          <p className="text-xs text-[var(--color-primary)] font-medium mt-0.5">
-            {offer.min_price ? `${Number(offer.min_price)} DT` : ""}
-            {offer.min_price && offer.max_price ? " – " : ""}
-            {offer.max_price ? `${Number(offer.max_price)} DT` : ""}
-          </p>
-        )}
-        
-      </div>
-    </div>
-  );
-}
-
-function OfferModal({
-  offer,
-  onClose,
-  onViewProfile,
-}: {
-  offer: Offer;
-  onClose: () => void;
-  onViewProfile: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[var(--color-card)] rounded-xl shadow-xl max-w-md w-full overflow-hidden">
-        {offer.cover_image && (
-          <img
-            src={offer.cover_image}
-            alt={offer.title}
-            className="w-full h-48 object-cover"
-          />
-        )}
-        <div className="p-5">
-          <h3 className="text-lg font-semibold text-[var(--color-text-dark)]">
-            {offer.title}
-          </h3>
-          {(offer.min_price || offer.max_price) && (
-            <p className="text-sm text-[var(--color-primary)] font-medium mt-1">
-              {offer.min_price ? `${Number(offer.min_price)} DT` : ""}
-              {offer.min_price && offer.max_price ? " – " : ""}
-              {offer.max_price ? `${Number(offer.max_price)} DT` : ""}
-            </p>
+className="cursor-pointer !p-4 border-2 border-border/70 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"    >
+      <div className="flex items-center gap-3">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-muted">
+          {agent.photo_url && (
+            <img src={agent.photo_url} alt={agent.name} className="h-full w-full object-cover" />
           )}
-          <p className="text-sm text-[var(--color-text-body)] mt-3">
-            {offer.description}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">{agent.name}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {agent.categories?.name} · {agent.ville}
           </p>
-
-          {offer.agents && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[var(--color-bg-alt)]">
-              <div className="w-9 h-9 rounded-full bg-[var(--color-bg-alt)] overflow-hidden shrink-0">
-                {offer.agents.photo_url && (
-                  <img
-                    src={offer.agents.photo_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[var(--color-text-dark)]">
-                  {offer.agents.name}
-                </p>
-                <p className="text-xs text-[var(--color-text-body)]">
-                  {offer.agents.ville}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-5">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-md text-[var(--color-text-body)] hover:bg-[var(--color-bg-alt)] transition cursor-pointer"
-            >
-              Fermer
-            </button>
-            <button
-              onClick={onViewProfile}
-              className="flex-1 px-4 py-2 text-sm font-medium rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white transition cursor-pointer"
-            >
-              Voir le profil complet
-            </button>
-          </div>
         </div>
       </div>
-    </div>
+
+      <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-[var(--color-warning)]">
+        <IcoStar className="h-3 w-3" />
+        {agent.rating_average.toFixed(1)}
+        <span className="font-normal text-muted-foreground">({agent.rating_count} avis)</span>
+      </p>
+
+      {agent.bio && (
+        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{agent.bio}</p>
+      )}
+    </Card>
   );
 }

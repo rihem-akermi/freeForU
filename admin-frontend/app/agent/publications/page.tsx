@@ -10,9 +10,45 @@ import { Toast } from "@/components/Toast";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { formatDate } from "@/lib/utils/formatDate";
 import { Publication } from "@/lib/data";
+import {
+  Button,
+  Input,
+  Textarea,
+  Card,
+  Badge,
+  PageHeader,
+  IconAdd,
+  IconEdit,
+  IconDelete,
+  IconClose,
+} from "@/components/ui/UIComponents";
 
 type PublicationFormState = { titre: string; description: string };
 const emptyForm: PublicationFormState = { titre: "", description: "" };
+
+const STATUS_ACCENT: Record<Publication["status"], string> = {
+  en_attente: "#C4956A", // warm terracotta
+  approuvee: "#2f6f58", // success token color
+  rejetee: "#b24b4b", // danger token color
+};
+
+function IcoImage({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 16l-5.5-5.5L9 17" />
+    </svg>
+  );
+}
+function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
+    </svg>
+  );
+}
 
 export default function MesPublicationsPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -120,7 +156,7 @@ export default function MesPublicationsPage() {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full">
       {toast && (
         <Toast
           message={toast.message}
@@ -138,141 +174,127 @@ export default function MesPublicationsPage() {
         />
       )}
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-[var(--color-text-dark)]">
-          Mes publications
-        </h1>
-        <button
-          onClick={showForm ? closeForm : openCreateForm}
-          className="rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-4 py-2 text-sm font-medium transition cursor-pointer"
-        >
-          {showForm ? "Annuler" : "+ Ajouter une publication"}
-        </button>
-      </div>
+      <PageHeader
+        title="Mes publications"
+        subtitle="Mettez en avant vos réalisations pour attirer de nouveaux clients."
+        badge="Espace agent"
+        actionSlot={
+          <Button variant={showForm ? "neutral" : "primary"} onClick={showForm ? closeForm : openCreateForm}>
+            {showForm ? <IconClose /> : <IconAdd />}
+            {showForm ? "Annuler" : "Ajouter une publication"}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <div className="bg-[var(--color-card)] rounded-xl p-5 mb-6 space-y-4 shadow-sm border border-[var(--color-bg-alt)]">
-          <h2 className="text-sm font-semibold text-[var(--color-text-dark)]">
+        <Card
+          className="mb-8 !p-6 sm:!p-8"
+          style={{ borderLeft: "4px solid #7D6E8C" }}
+        >
+          <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-foreground">
             {editingId ? "Modifier la publication" : "Nouvelle publication"}
           </h2>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[var(--color-text-body)]">
-              Photo {editingId && "(laisser vide pour garder l'actuelle)"}
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-              className="input"
-            />
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Photo {editingId && "(laisser vide pour garder l'actuelle)"}
+                </label>
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-accent/40 px-4 py-6 text-center transition hover:border-accent">
+                  <IcoImage className="h-6 w-6 text-muted-foreground/50" />
+                  <span className="text-xs text-muted-foreground">
+                    {photoFile ? photoFile.name : "Cliquez pour choisir une photo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {!editingId && (
+                <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <IcoInfo className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  Votre publication sera visible publiquement après validation
+                  par un administrateur.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <Input
+                label="Titre"
+                value={form.titre}
+                onChange={(e) => setForm({ ...form, titre: e.target.value })}
+                placeholder="Ex : Rénovation salon"
+              />
+              <Textarea
+                label="Description"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                rows={4}
+                placeholder="Décrivez le service ou le chantier que vous voulez mettre en avant..."
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[var(--color-text-body)]">
-              Titre
-            </label>
-            <input
-              value={form.titre}
-              onChange={(e) => setForm({ ...form, titre: e.target.value })}
-              placeholder="Ex : Rénovation salon"
-              className="input"
-            />
+          <div className="mt-5 flex justify-end">
+            <Button variant="accent" isLoading={saving} onClick={handleSubmit}>
+              {editingId ? "Enregistrer les modifications" : "Publier"}
+            </Button>
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[var(--color-text-body)]">
-              Description
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              rows={3}
-              placeholder="Décrivez le service ou le chantier que vous voulez mettre en avant..."
-              className="input resize-none"
-            />
-          </div>
-
-          {!editingId && (
-            <p className="text-xs text-[var(--color-text-body)]">
-              ⓘ Votre publication sera visible publiquement après validation par
-              un administrateur.
-            </p>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-5 py-2.5 text-sm font-medium transition disabled:opacity-50 cursor-pointer"
-          >
-            {saving
-              ? "Enregistrement..."
-              : editingId
-                ? "Enregistrer les modifications"
-                : "Publier"}
-          </button>
-        </div>
+        </Card>
       )}
 
       {loading ? (
-        <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      ) : publications.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Vous n'avez pas encore publié. Cliquez sur "Ajouter une publication"
+          pour commencer.
+        </p>
       ) : (
-        <div className="space-y-4">
-          {publications.length === 0 && (
-            <p className="text-sm text-[var(--color-text-body)]">
-              Vous n'avez pas encore publié. Cliquez sur "+ Ajouter une
-              publication" pour commencer.
-            </p>
-          )}
-
-          {publications.map((pub) => (
-            <div
-              key={pub.id}
-              className="relative flex gap-4 bg-white border border-stone-200 rounded-lg p-4"
-            >
-              <div className="absolute top-2 right-2 flex gap-2">
-                  <button
-                    onClick={() => openEditForm(pub)}
-                    className="text-xs hover:scale-125 transition cursor-pointer"
-                  >
-                    🖊️
-                  </button>
-
-                  <button
-                    onClick={() => setDeleteTarget(pub)}
-                    className="text-xs hover:scale-125 transition cursor-pointer"
-                  >
-                    🗑️
-                  </button>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {publications.map((pub) => {
+            const accent = STATUS_ACCENT[pub.status];
+            return (
+              <Card
+                key={pub.id}
+                className="group relative flex gap-4 !p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                style={{ borderLeft: `4px solid ${accent}` }}
+              >
+                <div className="absolute right-4 top-4 flex gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <Button size="sm" variant="outline" onClick={() => openEditForm(pub)}>
+                    <IconEdit />
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => setDeleteTarget(pub)}>
+                    <IconDelete />
+                  </Button>
                 </div>
-              <img
-                src={pub.photo_url}
-                alt=""
-                className="w-28 h-20 object-cover rounded-md shrink-0"
-              />
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-dark)]">
-                    {pub.titre}
-                  </p>
-                  <p className="text-sm text-[var(--color-text-body)] mt-0.5">
-                    {pub.description}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <PublicationStatusBadge status={pub.status} />
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-[var(--color-text-body)]">
+
+                <img
+                  src={pub.photo_url}
+                  alt=""
+                  className="h-24 w-32 shrink-0 rounded-lg object-cover"
+                />
+                <div className="flex flex-1 flex-col justify-between gap-2 pr-16">
+                  <div>
+                    <p className="font-semibold text-foreground">{pub.titre}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{pub.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <PublicationStatusBadge status={pub.status} />
+                    <span className="text-xs text-muted-foreground">
                       {formatDate(pub.created_at)}
                     </span>
-                    
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
@@ -280,20 +302,11 @@ export default function MesPublicationsPage() {
 }
 
 function PublicationStatusBadge({ status }: { status: Publication["status"] }) {
-  const map = {
-    en_attente: { label: "En attente", color: "bg-amber-100 text-amber-700" },
-    approuvee: {
-      label: "Approuvée ✅",
-      color: "bg-emerald-100 text-emerald-700",
-    },
-    rejetee: { label: "Rejetée", color: "bg-red-100 text-red-700" },
+  const map: Record<Publication["status"], { label: string; variant: "warning" | "success" | "danger" }> = {
+    en_attente: { label: "En attente", variant: "warning" },
+    approuvee: { label: "Approuvée", variant: "success" },
+    rejetee: { label: "Rejetée", variant: "danger" },
   };
   const s = map[status];
-  return (
-    <span
-      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${s.color}`}
-    >
-      {s.label}
-    </span>
-  );
+  return <Badge variant={s.variant}>{s.label}</Badge>;
 }

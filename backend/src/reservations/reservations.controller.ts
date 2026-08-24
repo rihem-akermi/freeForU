@@ -34,6 +34,15 @@ export class ReservationsController {
   }
 
   @UseGuards(AuthGuard, RolesGuard)
+  @Roles("AGENT")
+  @Get("status/me")
+  async getMyPendingReservationsAsAgent(@Req() req) {
+    return this.reservationsService.getMyPendingReservationsAsAgent(
+      req.user.sub
+    );
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles("CLIENT")
   @Get("me")
   async getMyReservations(@Req() req) {
@@ -49,8 +58,7 @@ export class ReservationsController {
 
   @Get()
   async getReservations() {
-    console.log("getting infos ");
-    const reservations = await this.reservationsService.getAllReservations(); //table
+    const reservations = await this.reservationsService.getAllReservations();
     return reservations;
   }
 
@@ -63,8 +71,9 @@ export class ReservationsController {
       agentId: body.agentId,
       dateReservation: body.dateReservation,
       heureReservation: body.heureReservation,
-      offerId: body.offerId,
+      heureFinReservation: body.heureFinReservation,
       customRequest: body.customRequest,
+      serviceId: body.serviceId,
     });
   }
 
@@ -73,12 +82,8 @@ export class ReservationsController {
   @Post("me")
   async createMyReservation(@Req() req, @Body() body: CreateMyReservationDto) {
     return await this.reservationsService.createMyReservation(
-      body.agentId,
-      body.dateReservation,
-      body.heureReservation,
-      req.user.sub,
-      body.offerId,
-      body.customRequest
+      body,
+      req.user.sub
     );
   }
 
@@ -91,6 +96,13 @@ export class ReservationsController {
       req.user.sub,
       req.user.role
     );
+  }
+
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles("CLIENT")
+  @Patch(":id/cancel")
+  async cancelReservation(@Req() req, @Param("id", ParseIntPipe) id: number) {
+    return this.reservationsService.cancelByClient(id, req.user.sub);
   }
 
   @UseGuards(AuthGuard, RolesGuard)

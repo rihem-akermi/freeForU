@@ -24,6 +24,9 @@ export default function Navbar() {
           <Link href="#services" className={styles.navLink}>
             Services
           </Link>
+          <Link href="#professionals" className={styles.navLink}>
+            Nos professionnels
+          </Link>
           <Link href="#contact" className={styles.navLink}>
             Contact
           </Link>
@@ -61,6 +64,13 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
           >
             Services
+          </Link>
+          <Link
+            href="#professionals"
+            className={styles.navLink}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Nos professionnels
           </Link>
           <Link
             href="#contact"

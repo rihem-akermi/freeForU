@@ -7,8 +7,7 @@ const adminLinks = [
   { href: "/admin/reservations", label: "Réservations" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/categories", label: "Categories" },
-    { href: "/admin/moderation", label: "Offers / Pubs / Reviews" },
-
+  { href: "/admin/moderation", label: "Pubs / Reviews" },
 ];
 
 export default function AdminLayout({
@@ -17,9 +16,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen bg-background md:flex">
       <Sidebar title="Admin" links={adminLinks} />
-      <main className="flex-1 p-8">{children}</main>
+      <main className="app-shell-main min-w-0 w-full flex-1">
+        <div className="app-content-container">{children}</div>
+      </main>
     </div>
   );
 }

@@ -4,6 +4,55 @@ import { getMyProfile, updateMyProfile } from "@/lib/api/users";
 import { Toast } from "@/components/Toast";
 import { formatDate } from "@/lib/utils/formatDate";
 import type { User } from "@/lib/data";
+import { Card, Input, Button, PageHeader } from "@/components/ui/UIComponents";
+
+const PERSONAL_ACCENT = "#46607D"; // soft navy
+const ACCOUNT_ACCENT = "#7D6E8C"; // soft violet
+
+function IcoUser({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0" />
+    </svg>
+  );
+}
+function IcoIdCard({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4zM8 10h.01M8 14h4M14 10h2M14 14h2" />
+      <circle cx="8" cy="12" r="1.5" />
+    </svg>
+  );
+}
+function IcoPencil({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  accent,
+  children,
+}: {
+  icon: (p: { className?: string }) => React.JSX.Element;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex items-center gap-3">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: `${accent}18`, color: accent }}
+      >
+        <Icon />
+      </span>
+      <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">{children}</h2>
+    </div>
+  );
+}
 
 export default function MesInfosPage() {
   const [profile, setProfile] = useState<User | null>(null);
@@ -45,7 +94,7 @@ export default function MesInfosPage() {
           phone: profile.phone,
           ville: profile.ville,
         },
-        photoFile ?? undefined
+        photoFile ?? undefined,
       );
       setProfile(updated);
       setPhotoFile(null);
@@ -58,74 +107,83 @@ export default function MesInfosPage() {
     }
   };
 
-  if (loading) return <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>;
-  if (!profile) return <p className="text-sm text-red-600">Profil introuvable.</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Chargement...</p>;
+  if (!profile) return <p className="text-sm text-[var(--color-danger)]">Profil introuvable.</p>;
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-1">Mes Infos</h1>
-      <p className="text-sm text-[var(--color-text-body)] mb-6">Gérez vos informations personnelles.</p>
+      <PageHeader
+        title="Mes Infos"
+        subtitle="Gérez vos informations personnelles."
+        badge="Espace client"
+      />
 
-      <Section title="Infos de base">
-        <div className="flex items-center gap-5">
-          <div className="flex flex-col items-center gap-2 shrink-0">
-            <label htmlFor="photo-upload" className="cursor-pointer group relative block">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-bg-alt)] border-2 border-dashed border-[var(--color-primary)]/40 flex items-center justify-center group-hover:border-[var(--color-primary)] transition">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Photo de profil" className="w-full h-full object-cover" />
-                ) : (
-                  <svg className="w-10 h-10 text-[var(--color-text-body)]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                  </svg>
-                )}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* ── Infos personnelles (éditable) ─────────────────────── */}
+        <Card className="!p-6 sm:!p-8" style={{ borderLeft: `4px solid ${PERSONAL_ACCENT}` }}>
+          <SectionHeading icon={IcoUser} accent={PERSONAL_ACCENT}>
+            Infos personnelles
+          </SectionHeading>
+
+          <div className="rounded-xl border bg-background/60 p-5 sm:p-6" style={{ borderColor: `${PERSONAL_ACCENT}30` }}>
+            <div className="flex flex-col items-start gap-6 sm:flex-row">
+              <div className="flex shrink-0 flex-col items-center gap-2">
+                <label htmlFor="photo-upload" className="group relative block cursor-pointer">
+                  <div
+                    className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed bg-muted transition"
+                    style={{ borderColor: `${PERSONAL_ACCENT}55` }}
+                  >
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Photo de profil" className="h-full w-full object-cover" />
+                    ) : (
+                      <IcoUser className="h-9 w-9 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  <div
+                    className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full text-white transition"
+                    style={{ background: PERSONAL_ACCENT }}
+                  >
+                    <IcoPencil />
+                  </div>
+                </label>
+                <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                <span className="text-xs text-muted-foreground">Photo de profil</span>
               </div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs group-hover:bg-[var(--color-primary-dark)] transition">
-                ✎
+
+              <div className="grid w-full flex-1 grid-cols-1 gap-4">
+                <Input label="Nom complet" value={profile.name} onChange={(e) => handleChange("name", e.target.value)} />
+                <Input label="Téléphone" value={profile.phone} onChange={(e) => handleChange("phone", e.target.value)} />
+                <Input label="Ville" value={profile.ville} onChange={(e) => handleChange("ville", e.target.value)} />
               </div>
-            </label>
-            <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 w-full">
-            <Field label="Nom complet">
-              <input value={profile.name} onChange={(e) => handleChange("name", e.target.value)} className="input" />
-            </Field>
-            <Field label="Téléphone">
-              <input value={profile.phone} onChange={(e) => handleChange("phone", e.target.value)} className="input" />
-            </Field>
-            <Field label="Email">
-              <input value={profile.email} disabled className="input opacity-60 cursor-not-allowed" />
-            </Field>
-            <Field label="Ville">
-              <input value={profile.ville} onChange={(e) => handleChange("ville", e.target.value)} className="input" />
-            </Field>
+          <Button variant="primary" size="lg" isLoading={saving} onClick={handleSubmit} className="mt-6">
+            Enregistrer les modifications
+          </Button>
+        </Card>
+
+        {/* ── Compte (lecture seule) ─────────────────────────────── */}
+        <Card className="!p-6 sm:!p-8" style={{ borderLeft: `4px solid ${ACCOUNT_ACCENT}` }}>
+          <SectionHeading icon={IcoIdCard} accent={ACCOUNT_ACCENT}>
+            Compte
+          </SectionHeading>
+
+          <div className="rounded-xl border bg-background/60 p-5 sm:p-6" style={{ borderColor: `${ACCOUNT_ACCENT}30` }}>
+            <div className="grid grid-cols-1 gap-4">
+              <Input label="Email" value={profile.email} disabled />
+              {profile.created_at && (
+                <Input label="Membre depuis" value={formatDate(profile.created_at)} disabled />
+              )}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              L'adresse email est liée à votre compte et ne peut pas être modifiée ici.
+            </p>
           </div>
-        </div>
-      </Section>
-
-      <button onClick={handleSubmit} disabled={saving} className="mt-2 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-6 py-2.5 text-sm font-medium transition disabled:opacity-50 cursor-pointer">
-        {saving ? "Enregistrement..." : "Enregistrer"}
-      </button>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-[var(--color-card)] rounded-xl p-5 mb-5 shadow-sm border border-[var(--color-bg-alt)]">
-      <h2 className="text-sm font-semibold text-[var(--color-text-dark)] mb-4 uppercase tracking-wide">{title}</h2>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-[var(--color-text-body)]">{label}</label>
-      {children}
+        </Card>
+      </div>
     </div>
   );
 }

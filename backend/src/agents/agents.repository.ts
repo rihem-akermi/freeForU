@@ -16,19 +16,6 @@ export class AgentsRepository {
         id: "asc",
       },
     });
-
-  /*
-  probleme du category : 
-  {
-  "id": 1,
-  "name": "Ali",
-  "categories": {
-    "id": 2,
-    "nom": "Photographe"
-  }
-}
-  */
-    
   }
 
   async findById(id: number) {
@@ -107,5 +94,29 @@ export class AgentsRepository {
 
       take: 10,
     });
+  }
+
+  async findAllPublic(categoryId?: number) {
+    return this.prisma.agents.findMany({
+      where: { ...(categoryId && { category_id: categoryId }) },
+      select: {
+        id: true,
+        name: true,
+        ville: true,
+        photo_url: true,
+        bio: true,
+        category_id: true,
+        categories: { select: { name: true } },
+      }
+    });
+  }
+
+  async getRatingSummary(agentId: number) {
+    const result = await this.prisma.reviews.aggregate({
+      where: { agent_id: agentId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    return { average: result._avg.rating ?? 0, count: result._count.rating };
   }
 }

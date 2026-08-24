@@ -6,6 +6,128 @@ import { getCategories } from "@/lib/api/categories";
 import type { Agent, Category } from "@/lib/data";
 
 import { Toast } from "@/components/Toast";
+import WorkingHoursEditor from "@/components/WorkingHoursEditor";
+import {
+  Button,
+  Input,
+  Select,
+  Textarea,
+  Card,
+  Badge,
+  PageHeader,
+} from "@/components/ui/UIComponents";
+
+/* ── section icons ─────────────────────────────────────────────── */
+function IcoUser({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0" />
+    </svg>
+  );
+}
+function IcoBriefcase({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+    </svg>
+  );
+}
+function IcoIdCard({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4zM8 10h.01M8 14h4M14 10h2M14 14h2" />
+      <circle cx="8" cy="12" r="1.5" />
+    </svg>
+  );
+}
+function IcoClock({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+function IcoShield({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v6c0 4.5-3 8.25-7 9-4-.75-7-4.5-7-9V6l7-3z" />
+    </svg>
+  );
+}
+function IcoPencil({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    </svg>
+  );
+}
+function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
+    </svg>
+  );
+}
+function IcoUpload({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    </svg>
+  );
+}
+
+/* ── per-section accent palette ───────────────────────────────── */
+const SECTION_ACCENT = {
+  base: "#46607D", // soft navy
+  pro: "#7D6E8C", // soft violet
+  perso: "#9C5F63", // burgundy
+  dispo: "#C4956A", // warm terracotta
+  verif: "#9D8099", // brand mauve
+};
+
+function SectionHeading({
+  icon: Icon,
+  accent,
+  children,
+}: {
+  icon: (p: { className?: string }) => React.JSX.Element;
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-5 flex items-center gap-3">
+      <span
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{ background: `${accent}18`, color: accent }}
+      >
+        <Icon />
+      </span>
+      <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">
+        {children}
+      </h2>
+    </div>
+  );
+}
+
+/* ── nested inner panel — same depth effect as WorkingHoursEditor's
+   own Card sitting inside its parent section Card ──────────────── */
+function InnerPanel({
+  accent,
+  children,
+}: {
+  accent: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-xl border bg-background/60 p-5 sm:p-6"
+      style={{ borderColor: `${accent}30` }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function MesInfosPage() {
   const [profile, setProfile] = useState<Agent | null>(null);
@@ -84,14 +206,10 @@ export default function MesInfosPage() {
       );
       setProfile(updated);
       setPhotoFile(null);
-      setToast({ message: "Profil updated ✅", type: "success" });
+      setToast({ message: "Profil mis à jour avec succès.", type: "success" });
     } catch (err) {
       console.error(err);
-      setToast({
-        message: "❌ Erreur, réessayez.",
-        type: "error",
-      });
-
+      setToast({ message: "Erreur, réessayez.", type: "error" });
       setError("Erreur lors de l'enregistrement, réessayez.");
     } finally {
       setSaving(false);
@@ -99,302 +217,242 @@ export default function MesInfosPage() {
   };
 
   if (loading) {
-    return (
-      <p className="text-sm text-[var(--color-text-body)]">Chargement...</p>
-    );
+    return <p className="text-sm text-muted-foreground">Chargement...</p>;
   }
 
   if (!profile) {
-    return (
-      <p className="text-sm text-red-600">{error || "Profil introuvable."}</p>
-    );
+    return <p className="text-sm text-[var(--color-danger)]">{error || "Profil introuvable."}</p>;
   }
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full">
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      <h1 className="text-2xl font-semibold text-[var(--color-text-dark)] mb-1">
-        Mes Infos
-      </h1>
-      <p className="text-sm text-[var(--color-text-body)] mb-6">
-        Gérez vos informations personnelles et professionnelles.
-      </p>
+      <PageHeader
+        title="Mes Infos"
+        subtitle="Gérez vos informations personnelles et professionnelles."
+        badge="Espace agent"
+      />
 
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {error && <p className="mb-4 text-sm text-[var(--color-danger)]">{error}</p>}
 
-      <Section title="Infos de base">
-        <div className="flex flex-col sm:flex-row gap-6 items-start">
-          <div className="flex flex-col items-center gap-2 shrink-0">
-            <label
-              htmlFor="photo-upload"
-              className="cursor-pointer group relative block"
-            >
-              <div className="w-28 h-28 rounded-full overflow-hidden bg-[var(--color-bg-alt)] border-2 border-dashed border-[var(--color-primary)]/40 flex items-center justify-center group-hover:border-[var(--color-primary)] transition">
-                {photoPreview ? (
-                  <img
-                    src={photoPreview}
-                    alt="Photo de profil"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <svg
-                    className="w-10 h-10 text-[var(--color-text-body)]/40"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* ── 1. Infos de base ──────────────────────────────────── */}
+        <Card
+          className="!p-6 sm:!p-8"
+          style={{ borderLeft: `4px solid ${SECTION_ACCENT.base}` }}
+        >
+          <SectionHeading icon={IcoUser} accent={SECTION_ACCENT.base}>
+            Infos de base
+          </SectionHeading>
+
+          <InnerPanel accent={SECTION_ACCENT.base}>
+            <div className="flex flex-col items-start gap-6 sm:flex-row">
+              <div className="flex shrink-0 flex-col items-center gap-2">
+                <label htmlFor="photo-upload" className="group relative block cursor-pointer">
+                  <div
+                    className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed bg-muted transition"
+                    style={{ borderColor: `${SECTION_ACCENT.base}55` }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                    />
-                  </svg>
-                )}
-              </div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs group-hover:bg-[var(--color-primary-dark)] transition">
-                ✎
-              </div>
-            </label>
-            <input
-              id="photo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
-            <span className="text-xs text-[var(--color-text-body)]">
-              Photo de profil
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 w-full">
-            <Field label="Nom complet">
-              <input
-                value={profile.name ?? ""}
-                onChange={(e) => handleChange("name", e.target.value)}
-                className="input"
-              />
-            </Field>
-            <Field label="Téléphone">
-              <input
-                value={profile.phone ?? ""}
-                onChange={(e) => handleChange("phone", e.target.value)}
-                className="input"
-              />
-            </Field>
-            <Field label="Email">
-              <input
-                value={profile.email ?? ""}
-                disabled
-                className="input opacity-60 cursor-not-allowed"
-              />
-            </Field>
-            <Field label="Ville">
-              <input
-                value={profile.ville ?? ""}
-                onChange={(e) => handleChange("ville", e.target.value)}
-                className="input"
-              />
-            </Field>
-          </div>
-        </div>
-      </Section>
-
-      <Section title="Profil professionnel">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Catégorie">
-            <select
-              value={profile.categories.id ?? ""}
-              onChange={(e) =>
-                handleChange("category_id", Number(e.target.value))
-              }
-              className="input"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Zone géographique d'intervention">
-            <input
-              value={profile.zone ?? ""}
-              onChange={(e) => handleChange("zone", e.target.value)}
-              placeholder="Ex : Sfax"
-              className="input"
-            />
-          </Field>
-          <Field label="Années d'expérience">
-            <input
-              type="number"
-              min="0"
-              value={profile.experience_years ?? ""}
-              onChange={(e) => handleChange("experience_years", e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Mode de service">
-            <div className="flex gap-3 mt-1">
-              {[
-                { value: "se_deplace", label: "Je me déplace" },
-                { value: "recoit", label: "Je reçois" },
-                { value: "les_deux", label: "Les deux" },
-              ].map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border cursor-pointer transition ${
-                    profile.service_mode === opt.value
-                      ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-                      : "border-[var(--color-bg-alt)] text-[var(--color-text-body)] hover:border-[var(--color-primary)]/40"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="service_mode"
-                    checked={profile.service_mode === opt.value}
-                    onChange={() => handleChange("service_mode", opt.value)}
-                    className="hidden"
-                  />
-                  {opt.label}
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Photo de profil" className="h-full w-full object-cover" />
+                    ) : (
+                      <IcoUser className="h-9 w-9 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  <div
+                    className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full text-white transition"
+                    style={{ background: SECTION_ACCENT.base }}
+                  >
+                    <IcoPencil />
+                  </div>
                 </label>
-              ))}
+                <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                <span className="text-xs text-muted-foreground">Photo de profil</span>
+              </div>
+
+              <div className="grid w-full flex-1 grid-cols-1 gap-4">
+                <Input label="Nom complet" value={profile.name ?? ""} onChange={(e) => handleChange("name", e.target.value)} />
+                <Input label="Téléphone" value={profile.phone ?? ""} onChange={(e) => handleChange("phone", e.target.value)} />
+                <Input label="Email" value={profile.email ?? ""} disabled />
+                <Input label="Ville" value={profile.ville ?? ""} onChange={(e) => handleChange("ville", e.target.value)} />
+              </div>
             </div>
-          </Field>
-        </div>
+          </InnerPanel>
+        </Card>
 
-        <Field label="Description / bio courte">
-          <textarea
-            value={profile.bio ?? ""}
-            onChange={(e) => handleChange("bio", e.target.value)}
-            rows={3}
-            placeholder="Présentez-vous en quelques mots..."
-            className="input resize-none"
-          />
-        </Field>
-      </Section>
+        {/* ── 2. Profil professionnel ───────────────────────────── */}
+        <Card
+          className="!p-6 sm:!p-8"
+          style={{ borderLeft: `4px solid ${SECTION_ACCENT.pro}` }}
+        >
+          <SectionHeading icon={IcoBriefcase} accent={SECTION_ACCENT.pro}>
+            Profil professionnel
+          </SectionHeading>
 
-      <Section title="Infos personnelles">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Âge">
-            <input
-              type="number"
-              min="0"
-              value={profile.age ?? ""}
-              onChange={(e) => handleChange("age", e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Sexe">
-            <select
-              value={profile.sexe ?? ""}
-              onChange={(e) => handleChange("sexe", e.target.value)}
-              className="input"
-            >
-              <option value="">Préférer ne pas dire</option>
-              <option value="homme">Homme</option>
-              <option value="femme">Femme</option>
-            </select>
-          </Field>
-          <Field label="Facebook">
-            <input
-              value={profile.social_links?.facebook ?? ""}
-              onChange={(e) => handleSocialChange("facebook", e.target.value)}
-              placeholder="https://facebook.com/..."
-              className="input"
-            />
-          </Field>
-          <Field label="Instagram">
-            <input
-              value={profile.social_links?.instagram ?? ""}
-              onChange={(e) => handleSocialChange("instagram", e.target.value)}
-              placeholder="https://instagram.com/..."
-              className="input"
-            />
-          </Field>
-        </div>
-      </Section>
+          <InnerPanel accent={SECTION_ACCENT.pro}>
+            <div className="grid grid-cols-1 gap-4">
+              <Select
+                label="Catégorie"
+                value={profile.categories.id ?? ""}
+                onChange={(e) => handleChange("category_id", Number(e.target.value))}
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </Select>
+              <Input
+                label="Zone géographique d'intervention"
+                value={profile.zone ?? ""}
+                onChange={(e) => handleChange("zone", e.target.value)}
+                placeholder="Ex : Sfax"
+              />
+              <Input
+                label="Années d'expérience"
+                type="number"
+                min="0"
+                value={profile.experience_years ?? ""}
+                onChange={(e) => handleChange("experience_years", e.target.value)}
+              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Mode de service</label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {[
+                    { value: "se_deplace", label: "Je me déplace" },
+                    { value: "recoit", label: "Je reçois" },
+                    { value: "les_deux", label: "Les deux" },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      size="sm"
+                      variant={profile.service_mode === opt.value ? "primary" : "outline"}
+                      onClick={() => handleChange("service_mode", opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <Textarea
+                label="Description / bio courte"
+                value={profile.bio ?? ""}
+                onChange={(e) => handleChange("bio", e.target.value)}
+                rows={3}
+                placeholder="Présentez-vous en quelques mots..."
+              />
+            </div>
+          </InnerPanel>
+        </Card>
 
-      <Section title="Vérification">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FileDropZone label="Carte d'identité" disabled />
-          <FileDropZone label="Certificat / attestation" disabled accept="image/*,.pdf" />
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-[var(--color-text-body)]">
-            ⓘ L'upload de ces documents sera activé prochainement.
-          </p>
-          <StatusBadge status={profile.verification_status ?? "non_verifie"} />
-        </div>
-      </Section>
+        {/* ── 3. Infos personnelles ─────────────────────────────── */}
+        <Card
+          className="!p-6 sm:!p-8"
+          style={{ borderLeft: `4px solid ${SECTION_ACCENT.perso}` }}
+        >
+          <SectionHeading icon={IcoIdCard} accent={SECTION_ACCENT.perso}>
+            Infos personnelles
+          </SectionHeading>
 
-      <button
-        onClick={handleSubmit}
-        disabled={saving}
-        className="mt-2 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white px-6 py-2.5 text-sm font-medium transition disabled:opacity-50"
-      >
-        {saving ? "Enregistrement..." : "Enregistrer les modifications"}
-      </button>
+          <InnerPanel accent={SECTION_ACCENT.perso}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="Âge"
+                type="number"
+                min="0"
+                value={profile.age ?? ""}
+                onChange={(e) => handleChange("age", e.target.value)}
+              />
+              <Select label="Sexe" value={profile.sexe ?? ""} onChange={(e) => handleChange("sexe", e.target.value)}>
+                <option value="">Préférer ne pas dire</option>
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+              </Select>
+              <Input
+                label="Facebook"
+                value={profile.social_links?.facebook ?? ""}
+                onChange={(e) => handleSocialChange("facebook", e.target.value)}
+                placeholder="https://facebook.com/..."
+              />
+              <Input
+                label="Instagram"
+                value={profile.social_links?.instagram ?? ""}
+                onChange={(e) => handleSocialChange("instagram", e.target.value)}
+                placeholder="https://instagram.com/..."
+              />
+            </div>
+          </InnerPanel>
+        </Card>
+
+        {/* ── 4. Disponibilités ─────────────────────────────────── */}
+        <Card
+          className="!p-6 sm:!p-8"
+          style={{ borderLeft: `4px solid ${SECTION_ACCENT.dispo}` }}
+        >
+          <SectionHeading icon={IcoClock} accent={SECTION_ACCENT.dispo}>
+            Disponibilités de la semaine
+          </SectionHeading>
+          <WorkingHoursEditor />
+        </Card>
+
+        {/* ── 5. Vérification (full width) ──────────────────────── */}
+        <Card
+          className="!p-6 sm:!p-8 xl:col-span-2"
+          style={{ borderLeft: `4px solid ${SECTION_ACCENT.verif}` }}
+        >
+          <SectionHeading icon={IcoShield} accent={SECTION_ACCENT.verif}>
+            Vérification
+          </SectionHeading>
+
+          <InnerPanel accent={SECTION_ACCENT.verif}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <FileDropZone label="Carte d'identité" disabled accent={SECTION_ACCENT.verif} />
+              <FileDropZone label="Certificat / attestation" disabled accept="image/*,.pdf" accent={SECTION_ACCENT.verif} />
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <IcoInfo className="h-3.5 w-3.5 shrink-0" />
+                L'upload de ces documents sera activé prochainement.
+              </p>
+              <StatusBadge status={profile.verification_status ?? "non_verifie"} />
+            </div>
+          </InnerPanel>
+        </Card>
+      </div>
+
+      <Button variant="primary" size="lg" isLoading={saving} onClick={handleSubmit} className="mt-6">
+        Enregistrer les modifications
+      </Button>
     </div>
   );
 }
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-[var(--color-card)] rounded-xl p-5 mb-5 shadow-sm border border-[var(--color-bg-alt)]">
-      <h2 className="text-sm font-semibold text-[var(--color-text-dark)] mb-4 uppercase tracking-wide">
-        {title}
-      </h2>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-[var(--color-text-body)]">{label}</label>
-      {children}
-    </div>
-  );
-
-}
-
 
 function FileDropZone({
   label,
   disabled = false,
   accept = "image/*",
+  accent,
 }: {
   label: string;
   disabled?: boolean;
   accept?: string;
+  accent: string;
 }) {
   const [fileName, setFileName] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium text-[var(--color-text-body)]">{label}</label>
+      <label className="text-xs font-bold uppercase tracking-wider text-foreground">{label}</label>
       <label
-        className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-6 text-center transition ${
-          disabled
-            ? "border-[var(--color-bg-alt)] bg-[var(--color-bg-alt)]/40 cursor-not-allowed opacity-60"
-            : "border-[var(--color-primary)]/40 hover:border-[var(--color-primary)] cursor-pointer"
+        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+          disabled ? "cursor-not-allowed bg-muted/40 opacity-60" : "cursor-pointer"
         }`}
+        style={{ borderColor: disabled ? "var(--color-border)" : `${accent}55` }}
       >
-        <svg className="w-6 h-6 text-[var(--color-text-body)]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-        </svg>
-        <span className="text-xs text-[var(--color-text-body)]">
-          {fileName ?? "Cliquez pour choisir un fichier"}
-        </span>
+        <IcoUpload className="h-6 w-6 text-muted-foreground/50" />
+        <span className="text-xs text-muted-foreground">{fileName ?? "Cliquez pour choisir un fichier"}</span>
         <input
           type="file"
           accept={accept}
@@ -408,16 +466,12 @@ function FileDropZone({
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; color: string }> = {
-    non_verifie: { label: "Non vérifié", color: "bg-stone-200 text-stone-600" },
-    en_attente: { label: "En attente", color: "bg-amber-100 text-amber-700" },
-    verifie: { label: "Vérifié ✅", color: "bg-emerald-100 text-emerald-700" },
-    rejete: { label: "Rejeté", color: "bg-red-100 text-red-700" },
+  const map: Record<string, { label: string; variant: "neutral" | "warning" | "success" | "danger" }> = {
+    non_verifie: { label: "Non vérifié", variant: "neutral" },
+    en_attente: { label: "En attente", variant: "warning" },
+    verifie: { label: "Vérifié", variant: "success" },
+    rejete: { label: "Rejeté", variant: "danger" },
   };
   const s = map[status] ?? map.non_verifie;
-  return (
-    <span className={`inline-block w-fit rounded-full px-3 py-1 text-xs font-medium ${s.color}`}>
-      {s.label}
-    </span>
-  );
+  return <Badge variant={s.variant}>{s.label}</Badge>;
 }

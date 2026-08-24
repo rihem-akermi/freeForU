@@ -6,23 +6,85 @@ import {
   deleteReservation,
   updateReservation,
 } from "@/lib/api/reservations";
-
+import { getServicesByAgent } from "@/lib/api/services";
 import { searchClients, ClientSearchResult } from "@/lib/api/users";
 import { searchAgents, AgentSearchResult } from "@/lib/api/agents";
-import { getAgentOffers } from "@/lib/api/offers";
 import { Toast } from "@/components/Toast";
-import { Offer , Reservation} from "@/lib/data";
+import { Reservation, Service } from "@/lib/data";
+import {
+  Button,
+  Input,
+  Select,
+  Textarea,
+  Badge,
+  PageHeader,
+  IconAdd,
+  IconEdit,
+  IconDelete,
+  IconCheck,
+  IconClose,
+} from "@/components/ui/UIComponents";
 
-const STATUS_OPTIONS = ["en_attente", "confirmee", "terminee", "annulee"] as const;
+const STATUS_OPTIONS = [
+  "en_attente",
+  "confirmee",
+  "terminee",
+  "rejetee",
+  "annulee",
+  "expiree",
+] as const;
+
+const STATUS_BADGE_MAP: Record<
+  string,
+  "warning" | "success" | "neutral" | "danger"
+> = {
+  en_attente: "warning",
+  confirmee: "success",
+  terminee: "neutral",
+  rejetee: "danger",
+  annulee: "danger",
+  expiree: "neutral",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  en_attente: "En attente",
+  confirmee: "Confirmée",
+  terminee: "Terminée",
+  rejetee: "Rejetée",
+  annulee: "Annulée",
+  expiree: "Expirée",
+};
+
+/* Row tints now pull from the app's actual semantic tokens instead of
+   arbitrary Tailwind defaults (amber/violet/sky/stone), so the meaning
+   (pending/confirmed/done/rejected/expired) stays functional while the
+   colors stay within the established palette. */
+const ROW_STYLE: Record<string, string> = {
+  en_attente: "bg-[var(--color-warning-soft)] hover:brightness-[.97]",
+  confirmee: "bg-accent/[0.08] hover:bg-accent/[0.13]",
+  terminee: "bg-[var(--color-info-soft)] hover:brightness-[.97]",
+  rejetee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  annulee: "bg-[var(--color-danger-soft)] hover:brightness-[.97]",
+  expiree: "bg-muted hover:bg-muted/70",
+};
+
+const STATUS_TEXT: Record<string, string> = {
+  en_attente: "En attente",
+  confirmee: "Confirmée",
+  terminee: "Terminée",
+  rejetee: "Rejetée",
+  annulee: "Annulée",
+  expiree: "Expirée",
+};
 
 type NewReservationForm = {
   clientId: number;
   agentId: number;
+  serviceId: number;
   dateReservation: string;
   heureReservation: string;
-  offerId: string; // "" ou "autre" ou l'id en string (valeur de <select>)
+  heureFinReservation: string;
   customRequest: string;
-
   clientName: string;
   agentName: string;
 };
@@ -30,15 +92,16 @@ type NewReservationForm = {
 const emptyNewReservation: NewReservationForm = {
   clientId: 0,
   agentId: 0,
+  serviceId: 0,
   dateReservation: "",
   heureReservation: "",
-  offerId: "",
+  heureFinReservation: "",
   customRequest: "",
   clientName: "",
   agentName: "",
 };
 
-type EditableReservation = Partial<
+type EditableReservation = Partial <
   Pick<Reservation, "status" | "date_reservation">
 >;
 
@@ -62,25 +125,43 @@ export default function ReservationsPage({
 }) {
   const [clients, setClients] = useState<ClientSearchResult[]>([]);
   const [agents, setAgents] = useState<AgentSearchResult[]>([]);
-  const [agentOffers, setAgentOffers] = useState<Offer[]>([]);
-
-  const [selectedClient, setSelectedClient] = useState<ClientSearchResult | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState<AgentSearchResult | null>(null);
-
+  const [selectedClient, setSelectedClient] =
+    useState<ClientSearchResult | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentSearchResult | null>(
+    null,
+  );
+  const [agentServices, setAgentServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
   const [reservations, setReservations] = useState(initialReservations);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editedForm, setEditedForm] = useState<EditableReservation>({});
-  const [newReservation, setNewReservation] = useState<NewReservationForm>(emptyNewReservation);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [newReservation, setNewReservation] =
+    useState<NewReservationForm>(emptyNewReservation);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const [requestMode, setRequestMode] = useState<"service" | "custom">(
+    "service",
+  );
 
-  // Charge les offres de l'agent dès qu'il est sélectionné
+  const [showArchived, setShowArchived] = useState(false);
+  const visibleReservations = reservations.filter((r) =>
+    showArchived ? true : !r.archived,
+  );
+
+  // Dès qu'un agent est choisi, on charge ses services disponibles
   useEffect(() => {
-    if (selectedAgent) {
-      getAgentOffers(selectedAgent.id).then(setAgentOffers).catch(console.error);
-    } else {
-      setAgentOffers([]);
+    if (!selectedAgent) {
+      setAgentServices([]);
+      return;
     }
+    setLoadingServices(true);
+    getServicesByAgent(selectedAgent.id)
+      .then(setAgentServices)
+      .catch(console.error)
+      .finally(() => setLoadingServices(false));
   }, [selectedAgent]);
 
   async function handleClientSearch(value: string) {
@@ -102,13 +183,18 @@ export default function ReservationsPage({
       setToast({ message: "Réservation supprimée.", type: "success" });
     } catch (error: any) {
       setToast({
-        message: error?.response?.data?.message ?? "Erreur lors de la suppression.",
+        message:
+          error?.response?.data?.message ?? "Erreur lors de la suppression.",
         type: "error",
       });
     }
   }
 
   function handleAddChange(field: keyof NewReservationForm, value: string) {
+    if (field === "serviceId") {
+      setNewReservation((prev) => ({ ...prev, serviceId: Number(value) }));
+      return;
+    }
     setNewReservation((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -127,13 +213,16 @@ export default function ReservationsPage({
   async function handleSaveEdit(id: number) {
     try {
       const updated = await updateReservation(id, editedForm);
-      setReservations((prev) => prev.map((res) => (res.id === id ? { ...res, ...updated } : res)));
+      setReservations((prev) =>
+        prev.map((res) => (res.id === id ? { ...res, ...updated } : res)),
+      );
       setEditingId(null);
       setEditedForm({});
       setToast({ message: "Réservation modifiée.", type: "success" });
     } catch (error: any) {
       setToast({
-        message: error?.response?.data?.message ?? "Erreur lors de la modification.",
+        message:
+          error?.response?.data?.message ?? "Erreur lors de la modification.",
         type: "error",
       });
     }
@@ -141,19 +230,44 @@ export default function ReservationsPage({
 
   async function handleAddReservation() {
     if (!selectedClient || !selectedAgent) {
-      setToast({ message: "Veuillez choisir un client et un agent dans la liste.", type: "error" });
+      setToast({
+        message: "Veuillez choisir un client et un agent dans la liste.",
+        type: "error",
+      });
+      return;
+    }
+    if (requestMode === "service" && !newReservation.serviceId) {
+      setToast({
+        message: "Veuillez choisir un service pour cet agent.",
+        type: "error",
+      });
+      return;
+    }
+    if (
+      requestMode === "custom" &&
+      newReservation.customRequest.trim().length < 5
+    ) {
+      setToast({
+        message: "Décrivez la demande personnalisée (5 caractères minimum).",
+        type: "error",
+      });
       return;
     }
     if (!newReservation.dateReservation || !newReservation.heureReservation) {
-      setToast({ message: "Veuillez renseigner une date et une heure.", type: "error" });
+      setToast({
+        message: "Veuillez renseigner une date et une heure de début.",
+        type: "error",
+      });
       return;
     }
-    if (!newReservation.offerId) {
-      setToast({ message: "Veuillez choisir une offre ou une demande personnalisée.", type: "error" });
-      return;
-    }
-    if (newReservation.offerId === "autre" && !newReservation.customRequest.trim()) {
-      setToast({ message: "Veuillez décrire la demande personnalisée.", type: "error" });
+    if (
+      newReservation.heureFinReservation &&
+      newReservation.heureFinReservation <= newReservation.heureReservation
+    ) {
+      setToast({
+        message: "L'heure de fin doit être après l'heure de début.",
+        type: "error",
+      });
       return;
     }
 
@@ -163,225 +277,393 @@ export default function ReservationsPage({
         agentId: selectedAgent.id,
         dateReservation: newReservation.dateReservation,
         heureReservation: newReservation.heureReservation,
-        offerId: newReservation.offerId !== "autre" ? Number(newReservation.offerId) : undefined,
-        customRequest: newReservation.offerId === "autre" ? newReservation.customRequest : undefined,
+        heureFinReservation: newReservation.heureFinReservation || undefined,
+        serviceId:
+          requestMode === "service" ? newReservation.serviceId : undefined,
+        customRequest:
+          requestMode === "custom" ? newReservation.customRequest : undefined,
       });
       setReservations((prev) => [created, ...prev]);
       setShowAddForm(false);
       setNewReservation(emptyNewReservation);
       setSelectedClient(null);
       setSelectedAgent(null);
+      setAgentServices([]);
+      setRequestMode("service");
       setToast({ message: "Réservation créée avec succès.", type: "success" });
     } catch (error: any) {
       setToast({
-        message: error?.response?.data?.message ?? "Cette réservation est invalide.",
+        message:
+          error?.response?.data?.message ?? "Cette réservation est invalide.",
         type: "error",
       });
     }
   }
 
   return (
-    <div>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+    <div className="w-full">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={() => setShowAddForm((prev) => !prev)}
-          className="cursor-pointer rounded-full bg-stone-900 px-4 py-2 text-white hover:scale-105"
-        >
-          {showAddForm ? "✖️ Annuler" : "➕ Ajouter une réservation"}
-        </button>
-      </div>
+      <PageHeader
+        title="Gestion des réservations"
+        subtitle="Consultez, modifiez ou créez des réservations."
+        badge="Administration"
+        actionSlot={
+          <div className="flex items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="cursor-pointer accent-accent"
+              />
+              Afficher les archivées
+            </label>
+            <Button
+              variant={showAddForm ? "neutral" : "primary"}
+              onClick={() => setShowAddForm((prev) => !prev)}
+            >
+              {showAddForm ? <IconClose /> : <IconAdd />}
+              {showAddForm ? "Annuler" : "Ajouter une réservation"}
+            </Button>
+          </div>
+        }
+      />
 
       {showAddForm && (
-        <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg border-2 border-stone-900 bg-stone-50 p-4">
-          <div className="relative">
-            <input
-              placeholder="Nom du client"
-              value={newReservation.clientName}
-              onChange={(e) => handleClientSearch(e.target.value)}
-              className="rounded border px-2 py-1 w-full"
+        <div className="mb-6 space-y-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="relative">
+              <Input
+                label="Client"
+                placeholder="Rechercher un client..."
+                value={newReservation.clientName}
+                onChange={(e) => handleClientSearch(e.target.value)}
+              />
+              {clients.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                  {clients.map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => {
+                        setSelectedClient(client);
+                        setNewReservation((prev) => ({
+                          ...prev,
+                          clientId: client.id,
+                          clientName: client.name,
+                        }));
+                        setClients([]);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm transition hover:bg-accent/[0.08]"
+                    >
+                      <div className="font-semibold text-foreground">
+                        {client.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {client.phone} · {client.ville}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <Input
+                label="Agent"
+                placeholder="Rechercher un agent..."
+                value={newReservation.agentName}
+                onChange={(e) => handleAgentSearch(e.target.value)}
+              />
+              {agents.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                  {agents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={() => {
+                        setSelectedAgent(agent);
+                        setNewReservation((prev) => ({
+                          ...prev,
+                          agentId: agent.id,
+                          agentName: agent.name,
+                          serviceId: 0, // reset le service quand on change d'agent
+                        }));
+                        setAgents([]);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm transition hover:bg-accent/[0.08]"
+                    >
+                      <div className="font-semibold text-foreground">
+                        {agent.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {agent.phone} · {agent.ville}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sélection du service — visible seulement une fois l'agent choisi */}
+
+            <Input
+              label="Heure de début"
+              type="time"
+              value={newReservation.heureReservation}
+              onChange={(e) =>
+                handleAddChange("heureReservation", e.target.value)
+              }
             />
-            {clients.length > 0 && (
-              <div className="absolute z-10 w-full bg-white border">
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    onClick={() => {
-                      setSelectedClient(client);
-                      setNewReservation((prev) => ({ ...prev, clientId: client.id, clientName: client.name }));
-                      setClients([]);
-                    }}
-                    className="cursor-pointer p-2 hover:bg-stone-100"
-                  >
-                    <div>{client.name}</div>
-                    <div className="text-sm text-stone-500">📞 {client.phone} - 📍 {client.ville}</div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <Input
+              label="Heure de fin"
+              type="time"
+              value={newReservation.heureFinReservation}
+              onChange={(e) =>
+                handleAddChange("heureFinReservation", e.target.value)
+              }
+            />
           </div>
 
-          <div className="relative">
-            <input
-              placeholder="Nom de l'agent"
-              value={newReservation.agentName}
-              onChange={(e) => handleAgentSearch(e.target.value)}
-              className="rounded border px-2 py-1 w-full"
-            />
-            {agents.length > 0 && (
-              <div className="absolute z-10 w-full bg-white border">
-                {agents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    onClick={() => {
-                      setSelectedAgent(agent);
-                      setNewReservation((prev) => ({ ...prev, agentId: agent.id, agentName: agent.name }));
-                      setAgents([]);
-                    }}
-                    className="cursor-pointer p-2 hover:bg-stone-100"
-                  >
-                    <div>{agent.name}</div>
-                    <div className="text-sm text-stone-500">📞 {agent.phone} - 📍 {agent.ville}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <input
+          <Input
+            label="Date"
             type="date"
             value={newReservation.dateReservation}
             onChange={(e) => handleAddChange("dateReservation", e.target.value)}
-            className="rounded border px-2 py-1"
           />
 
-          <input
-            type="time"
-            value={newReservation.heureReservation}
-            onChange={(e) => handleAddChange("heureReservation", e.target.value)}
-            className="rounded border px-2 py-1"
-          />
+          <div className="col-span-2 flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={requestMode === "service" ? "primary" : "outline"}
+              onClick={() => setRequestMode("service")}
+            >
+              Service précis
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={requestMode === "custom" ? "primary" : "outline"}
+              onClick={() => setRequestMode("custom")}
+            >
+              Demande personnalisée
+            </Button>
+          </div>
 
-          <select
-            value={newReservation.offerId}
-            onChange={(e) => handleAddChange("offerId", e.target.value)}
-            disabled={!selectedAgent}
-            className="rounded border px-2 py-1 col-span-2 disabled:opacity-50"
-          >
-            <option value="">
-              {selectedAgent ? "-- Choisir une offre --" : "Sélectionnez d'abord un agent"}
-            </option>
-            {agentOffers.map((offer) => (
-              <option key={offer.id} value={offer.id}>
-                {offer.title} {offer.min_price ? `(${Number(offer.min_price)} DT+)` : ""}
+          {requestMode === "service" && selectedAgent && (
+            <Select
+              label="Service"
+              value={String(newReservation.serviceId)}
+              onChange={(e) => handleAddChange("serviceId", e.target.value)}
+            >
+              <option value="0">
+                {loadingServices ? "Chargement..." : "-- Choisir un service --"}
               </option>
-            ))}
-            <option value="autre">Autre — demande personnalisée</option>
-          </select>
+              {agentServices.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nom} ({s.type_prix === "a_partir_de" ? "à partir de " : ""}
+                  {s.prix} DT)
+                </option>
+              ))}
+            </Select>
+          )}
 
-          {newReservation.offerId === "autre" && (
-            <textarea
-              placeholder="Décrire la demande personnalisée..."
+          {requestMode === "custom" && (
+            <Textarea
+              label="Demande personnalisée"
+              placeholder="Décrire la demande du client..."
               value={newReservation.customRequest}
               onChange={(e) => handleAddChange("customRequest", e.target.value)}
-              className="rounded border px-2 py-1 col-span-2"
+              className="col-span-2"
               rows={2}
             />
           )}
 
-          <button
-            onClick={handleAddReservation}
-            className="cursor-pointer rounded-full bg-emerald-600 px-4 py-2 text-white hover:scale-105 col-span-2"
-          >
-            ✅ Enregistrer
-          </button>
+          <div className="flex justify-end">
+            <Button variant="accent" onClick={handleAddReservation}>
+              <IconCheck /> Enregistrer
+            </Button>
+          </div>
         </div>
       )}
 
-      <table className="w-full overflow-hidden rounded-lg border border-stone-200 bg-white text-sm">
-        <thead className="bg-stone-50 text-left text-stone-500">
-          <tr>
-            <th className="px-4 py-3 font-normal">Client</th>
-            <th className="px-4 py-3 font-normal">Agent</th>
-            <th className="px-4 py-3 font-normal">Service</th>
-            <th className="px-4 py-3 font-normal">Date</th>
-            <th className="px-4 py-3 font-normal">Heure</th>
-            <th className="px-4 py-3 font-normal">Status</th>
-            <th className="px-4 py-3 font-normal">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reservations.map((r) => {
-            const isEditing = editingId === r.id;
-            const serviceLabel = r.offers?.title ?? r.custom_request ?? "—";
-            const hour = r.heure_reservation
-              ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
-              : "—";
-
-            return (
-              <tr key={r.id} className="border-t border-stone-100">
-                <td className="px-4 py-3">
-                  <div>{r.users?.name}</div>
-                  <div className="text-xs text-stone-500">📞 {r.users?.phone}</div>
-                </td>
-                <td className="px-4 py-3">
-                  <div>{r.agents?.name}</div>
-                  <div className="text-xs text-stone-500">📞 {r.agents?.phone}</div>
-                </td>
-                <td className="px-4 py-3 text-stone-500 max-w-[160px] truncate" title={serviceLabel}>
-                  {serviceLabel}
-                </td>
-                <td className="px-4 py-3 text-stone-500">
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      value={toDateInputValue(editedForm.date_reservation ?? "")}
-                      onChange={(e) => handleEditChange("date_reservation", e.target.value)}
-                      className="rounded border px-1 py-0.5"
-                    />
-                  ) : (
-                    formatDate(r.date_reservation)
-                  )}
-                </td>
-                <td className="px-4 py-3 text-stone-500">{hour}</td>
-                <td className="px-4 py-3">
-                  {isEditing ? (
-                    <select
-                      value={editedForm.status ?? "en_attente"}
-                      onChange={(e) => handleEditChange("status", e.target.value)}
-                      className="rounded border px-1 py-0.5"
-                    >
-                      {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    r.status
-                  )}
-                </td>
-                <td className="px-4 py-3 text-xl">
-                  {isEditing ? (
-                    <button onClick={() => handleSaveEdit(r.id)} className="cursor-pointer hover:scale-135">
-                      ✅
-                    </button>
-                  ) : (
-                    <>
-                      <button onClick={() => handleDelete(r.id)} className="cursor-pointer hover:scale-135">
-                        🗑️
-                      </button>
-                      <span> / </span>
-                      <button onClick={() => handleEditClick(r)} className="cursor-pointer hover:scale-135">
-                        🖋️
-                      </button>
-                    </>
-                  )}
-                </td>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="border-b-2 border-accent/25 bg-accent/[0.07] text-xs font-bold uppercase tracking-wider text-primary">
+              <tr>
+                <th className="px-5 py-4">Client</th>
+                <th className="px-5 py-4">Agent</th>
+                <th className="px-5 py-4">Service</th>
+                <th className="px-5 py-4">Date</th>
+                <th className="px-5 py-4">Heure</th>
+                <th className="px-5 py-4">Statut</th>
+                <th className="px-5 py-4 text-right">Actions</th>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </thead>
+            <tbody className="divide-y divide-border text-foreground">
+              {visibleReservations.map((r) => {
+                const isEditing = editingId === r.id;
+                const hour = r.heure_reservation
+                  ? new Date(r.heure_reservation).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "—";
+                const hourFin = r.heure_fin_reservation
+                  ? new Date(r.heure_fin_reservation).toLocaleTimeString(
+                      "fr-FR",
+                      {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )
+                  : null;
+
+                return (
+                  <tr
+                    key={r.id}
+                    className={`transition-colors duration-150 ${ROW_STYLE[r.status] ?? ""} ${r.archived ? "opacity-60" : ""}`}
+                  >
+                    <td className="px-5 py-4">
+                      <div className="font-semibold text-foreground">
+                        {r.users?.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.users?.phone}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="font-semibold text-foreground">
+                        {r.agents?.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.agents?.phone}
+                      </div>
+                    </td>
+                    <td className="max-w-[180px] px-5 py-4 text-muted-foreground">
+                      {r.service_nom ? (
+                        <>
+                          <div
+                            className="truncate font-medium text-foreground"
+                            title={r.service_nom}
+                          >
+                            {r.service_nom}
+                          </div>
+                          {r.custom_request && (
+                            <div
+                              className="truncate text-xs"
+                              title={r.custom_request}
+                            >
+                              {r.custom_request}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="truncate" title={r.custom_request ?? ""}>
+                          {r.custom_request ?? "Aucune demande"}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {isEditing ? (
+                        <input
+                          type="date"
+                          value={toDateInputValue(
+                            editedForm.date_reservation ?? "",
+                          )}
+                          onChange={(e) =>
+                            handleEditChange("date_reservation", e.target.value)
+                          }
+                          className="rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        />
+                      ) : (
+                        formatDate(r.date_reservation)
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-muted-foreground">
+                      {hour}
+                      {hourFin && ` → ${hourFin}`}
+                    </td>
+                    <td className="px-5 py-4">
+                      {isEditing ? (
+                        <select
+                          value={editedForm.status ?? "en_attente"}
+                          onChange={(e) =>
+                            handleEditChange("status", e.target.value)
+                          }
+                          className="cursor-pointer rounded-lg border border-border bg-muted/60 px-2 py-1 text-xs outline-none focus:bg-card"
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {STATUS_LABEL[status]}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={STATUS_BADGE_MAP[r.status] ?? "neutral"}>
+                            {STATUS_TEXT[r.status] ?? r.status}
+                          </Badge>
+                          {r.archived && (
+                            <Badge variant="neutral">Archivée</Badge>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {isEditing ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="accent"
+                            onClick={() => handleSaveEdit(r.id)}
+                          >
+                            <IconCheck /> Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="neutral"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditedForm({});
+                            }}
+                          >
+                            <IconClose />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditClick(r)}
+                          >
+                            <IconEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDelete(r.id)}
+                          >
+                            <IconDelete />
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

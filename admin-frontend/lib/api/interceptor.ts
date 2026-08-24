@@ -3,17 +3,16 @@ import { User, Agent, Reservation } from "../data";
 
 export type { User, Agent, Reservation };
 
-const backendUrl = 'http://localhost:3001';
+const backendUrl = "http://localhost:3001";
 
 // on crée une instance axios
 const api = axios.create({
   baseURL: backendUrl,
-  withCredentials: true, // dit à axios d'envoyer automatiquement les cookies avec chaque requête
-
+  withCredentials: true,
+  // dit à axios d'envoyer automatiquement les cookies avec chaque requête
 });
- 
 
-// le token est dans le cookie 
+// le token est dans le cookie
 // Plus besoin d'intercepteur de REQUÊTE pour ajouter le token à la main !
 api.interceptors.response.use(
   (response) => response,
@@ -25,18 +24,32 @@ api.interceptors.response.use(
       console.log("⏰ Access token expiré, tentative de refresh...");
 
       try {
-        await axios.post(`${backendUrl}/auth/refresh`, {}, { withCredentials: true });
-        console.log("✅ Nouveau access token obtenu (cookie mis à jour), on rejoue la requête");
-        return api(originalRequest); // 👈 le nouveau cookie est déjà posé par le backend, pas besoin de le remanipuler ici
+        await axios.post(
+          `${backendUrl}/auth/refresh`,
+          {},
+          { withCredentials: true },
+        );
+        console.log("✅ Nouveau access token obtenu, on rejoue la requête");
+
+        // Forcer la recréation propre de la requête
+        return api({
+          method: originalRequest.method,
+          url: originalRequest.url,
+          data: originalRequest.data,
+          params: originalRequest.params,
+          withCredentials: true,
+        });
       } catch (refreshError) {
         console.log("❌ Refresh échoué, redirection login");
-        window.location.href = "/login";
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
