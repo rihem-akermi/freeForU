@@ -76,7 +76,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Horizontal Track Container */
 .carouselTrack {
   display: flex;
   gap: 2rem;
@@ -85,13 +84,8 @@
   scroll-snap-type: x mandatory;
   padding-bottom: 2rem;
   padding-top: 0.5rem;
-  margin-left: -0.5rem;
-  margin-right: -0.5rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .carouselTrack::-webkit-scrollbar {
