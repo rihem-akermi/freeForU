@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getAgentById } from "@/lib/api/agents";
@@ -187,7 +187,7 @@ export default function AgentProfilePage() {
         </div>
       </div>
 
-      <div className="mb-6 flex gap-1 border-b border-border">
+      <div className="mb-6 flex gap-1 border-b border-border overflow-x-auto scrollbar-hide">
         {(
           [
             { key: "infos", label: "Infos" },
@@ -200,7 +200,7 @@ export default function AgentProfilePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`cursor-pointer border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
+            className={`cursor-pointer shrink-0 border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
               activeTab === tab.key
                 ? "border-accent text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -233,7 +233,7 @@ export default function AgentProfilePage() {
               Réservation pour : <strong>{selectedService.nom}</strong>
             </div>
           )}
-          <div className="max-w-sm">
+          <div>
             <AvailabilityCalendar
               agentId={agentId}
               onSelectDay={(date) => setSelectedDate(date)}

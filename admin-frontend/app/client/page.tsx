@@ -44,9 +44,9 @@ export default function ClientHomePage() {
         badge="Espace client"
       />
 
-      <AgentSearchBar />
+      <div className="mb-5 mt-2"><AgentSearchBar /></div>
 
-      <div className="my-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         <CategoryPill label="Toutes" active={activeCategory === null} onClick={() => setActiveCategory(null)} />
         {categories.map((c) => (
           <CategoryPill
@@ -63,7 +63,7 @@ export default function ClientHomePage() {
       ) : agents.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aucun professionnel pour cette catégorie.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {agents.map((agent) => (
             <AgentCard key={agent.id} agent={agent} onClick={() => setSelectedAgent(agent)} />
           ))}

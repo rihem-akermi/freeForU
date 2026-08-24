@@ -63,10 +63,15 @@
    git push -u origin main
 -----------------------------------------
 
+
+-------------------------------------------------------
 * delete a non merged branch : 
+   git switch main
    git branch -D new-vitrine
 
 * delete a merged branch 
+   git switch main
+   git pull origin main <- to add the changes 
    git branch -d new-vitrine
    git push origin --delete new-vitrine
 
@@ -74,10 +79,11 @@ main = stable version
        │
        ├── feature branch → experiment
        │                    │
-       │                    ├── like it → PR → merge → delete branch : git branch -D new-vitrine
+       │                    ├── like it → PR → merge → delete branch : git branch -d new-vitrine
        │                    │
-       │                    └── hate it → delete branch :  git branch -d new-vitrine
+       │                    └── hate it → delete branch :  git branch -D new-vitrine
        │
        └── remains untouched
 
 GitHub → Pull Request → review → merge → delete branch
+-----------------------------------------------------------

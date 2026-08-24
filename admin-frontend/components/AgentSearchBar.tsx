@@ -37,7 +37,7 @@ export function AgentSearchBar() {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative w-full max-w-md">
+    <div ref={wrapperRef} className="relative w-full max-w-xl">
       <div className="relative">
         <svg
           className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/50"

@@ -41,7 +41,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2.2rem;
+  gap: clamp(1.5rem, 2vw, 2.2rem);
   width: 100%;
 }
 
@@ -176,7 +176,7 @@
   color: #ffffff;
 }
 
-@media (max-width: 1440px) {
+@media (max-width: 1280px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
   }

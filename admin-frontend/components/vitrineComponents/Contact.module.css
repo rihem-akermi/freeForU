@@ -38,7 +38,7 @@
 .grid {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
-  gap: 5rem;
+  gap: clamp(2.5rem, 4vw, 5rem);
   align-items: stretch;
 }
 
