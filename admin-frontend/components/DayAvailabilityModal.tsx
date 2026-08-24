@@ -1,13 +1,13 @@
 'use client'
 import { useEffect, useState } from "react";
 import { getDayAvailability, DayAvailability } from "@/lib/api/availability";
-import { Button } from "@/components/ui/UIComponents";
+import { Button, IconClose } from "@/components/ui/UIComponents";
 
 type DayAvailabilityModalProps = {
   agentId: number;
   date: string;
   onClose: () => void;
-  onProceed: (date: string , startTime: string | null, endTime: string | null) => void; 
+  onProceed: (date: string, startTime: string | null, endTime: string | null) => void;
 };
 
 export function DayAvailabilityModal({ agentId, date, onClose, onProceed }: DayAvailabilityModalProps) {
@@ -27,35 +27,37 @@ export function DayAvailabilityModal({ agentId, date, onClose, onProceed }: DayA
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-[#0B162C] capitalize">{formattedDate}</h3>
-          <button onClick={onClose} className="text-[#393D3A] hover:text-[#0B162C] cursor-pointer">✕</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold capitalize text-foreground">{formattedDate}</h3>
+          <button onClick={onClose} className="cursor-pointer text-muted-foreground hover:text-foreground" aria-label="Fermer">
+            <IconClose className="h-5 w-5" />
+          </button>
         </div>
 
         {loading ? (
-          <p className="text-sm text-[#393D3A] py-4 text-center">Chargement...</p>
+          <p className="py-4 text-center text-sm text-muted-foreground">Chargement...</p>
         ) : data?.status === "sans_info" ? (
-          <p className="text-sm text-[#393D3A] py-4 text-center">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             Aucune information de disponibilité pour ce jour.
           </p>
         ) : data?.status === "ferme" ? (
-          <p className="text-sm text-[#393D3A] py-4 text-center">
-            😔 L'agent ne travaille pas ce jour-là.
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            L'agent ne travaille pas ce jour-là.
           </p>
         ) : (
           <>
-            <div className="rounded-xl bg-[#EEECF2]/60 p-4 mb-4 text-center">
-              <p className="text-xs uppercase text-[#393D3A]">Horaires ce jour-là</p>
-              <p className="text-lg font-semibold text-[#0B162C]">
+            <div className="mb-4 rounded-xl bg-muted/60 p-4 text-center">
+              <p className="text-xs uppercase text-muted-foreground">Horaires ce jour-là</p>
+              <p className="text-lg font-semibold text-foreground">
                 {data?.start_time} — {data?.end_time}
               </p>
             </div>
-            <p className="text-xs text-[#393D3A] mb-4 text-center">
+            <p className="mb-4 text-center text-xs text-muted-foreground">
               Vous pourrez proposer votre propre heure de rendez-vous dans le formulaire suivant.
             </p>
-            <Button variant="primary" className="w-full" onClick={() => onProceed(date , data?.start_time ?? null, data?.end_time ?? null)}>
+            <Button variant="primary" className="w-full" onClick={() => onProceed(date, data?.start_time ?? null, data?.end_time ?? null)}>
               Faire une demande
             </Button>
           </>

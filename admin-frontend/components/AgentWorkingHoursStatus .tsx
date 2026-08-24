@@ -2,9 +2,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getAgentWorkingHours, DayHours } from "@/lib/api/working-hours";
+import { Card } from "@/components/ui/UIComponents";
 
 const DAY_LABELS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Lundi → Dimanche à l'affichage
+const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const ACCENT = "#C4956A"; // warm terracotta
 
 function timeFromDb(raw: string | null): string {
   if (!raw) return "";
@@ -21,9 +23,16 @@ function to12h(hhmm: string): string {
   return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
+function IcoClock({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 export default function AgentWorkingHoursStatus({ agentId }: { agentId: number }) {
   const [hours, setHours] = useState<DayHours[]>([]);
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,46 +42,65 @@ export default function AgentWorkingHoursStatus({ agentId }: { agentId: number }
       .finally(() => setLoading(false));
   }, [agentId]);
 
-  if (loading || hours.length === 0) return null;
+  if (loading) {
+    return (
+      <Card className="!p-6" style={{ borderLeft: `4px solid ${ACCENT}` }}>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      </Card>
+    );
+  }
+
+  if (hours.length === 0) return null;
 
   const todayDow = new Date().getDay();
   const today = hours.find((h) => h.day_of_week === todayDow);
   const isOpenNow = !!(today?.is_working && today.start_time && today.end_time);
 
   return (
-    <div className="mb-4">
-      <button
-        onClick={() => setExpanded((e) => !e)}
-        className="flex items-center gap-2 text-sm font-medium text-[#0B162C] cursor-pointer"
-      >
-        <span className={`w-2 h-2 rounded-full ${isOpenNow ? "bg-emerald-500" : "bg-stone-400"}`} />
-        {isOpenNow
-          ? `Dispo jusqu'à ${to12h(timeFromDb(today!.end_time))}`
-          : "Fermé aujourd'hui"}
-        <span className="text-xs text-[#393D3A]">{expanded ? "▲" : "▼"}</span>
-      </button>
-
-      {expanded && (
-        <div className="mt-2 rounded-xl border border-[var(--color-border)] bg-white p-3 space-y-1.5">
-          {DISPLAY_ORDER.map((dow) => {
-            const d = hours.find((h) => h.day_of_week === dow);
-            const isToday = dow === todayDow;
-            return (
-              <div
-                key={dow}
-                className={`flex items-center justify-between text-xs ${isToday ? "font-semibold text-[#0B162C]" : "text-[#393D3A]"}`}
-              >
-                <span>{DAY_LABELS_FR[dow]}</span>
-                <span>
-                  {d?.is_working && d.start_time && d.end_time
-                    ? `${to12h(timeFromDb(d.start_time))} - ${to12h(timeFromDb(d.end_time))}`
-                    : "Closed"}
-                </span>
-              </div>
-            );
-          })}
+    <Card className="!p-6" style={{ borderLeft: `4px solid ${ACCENT}` }}>
+      <div className="mb-4 flex items-center gap-3">
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `${ACCENT}18`, color: ACCENT }}
+        >
+          <IcoClock />
+        </span>
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">Horaires</h3>
+          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: isOpenNow ? "var(--color-success)" : "var(--color-text-muted)" }}
+            />
+            {isOpenNow
+              ? `Ouvert aujourd'hui jusqu'à ${to12h(timeFromDb(today!.end_time))}`
+              : "Fermé aujourd'hui"}
+          </p>
         </div>
-      )}
-    </div>
+      </div>
+
+      <div className="space-y-1 rounded-xl border bg-background/60 p-4" style={{ borderColor: `${ACCENT}30` }}>
+        {DISPLAY_ORDER.map((dow) => {
+          const d = hours.find((h) => h.day_of_week === dow);
+          const isToday = dow === todayDow;
+          const isWorking = d?.is_working && d.start_time && d.end_time;
+          return (
+            <div
+              key={dow}
+              className={`flex items-center justify-between rounded-lg px-2 py-1.5 text-xs ${
+                isToday ? "bg-accent/10 font-semibold text-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <span>{DAY_LABELS_FR[dow]}</span>
+              <span className={isWorking ? "" : "text-muted-foreground/60"}>
+                {isWorking
+                  ? `${to12h(timeFromDb(d!.start_time))} - ${to12h(timeFromDb(d!.end_time))}`
+                  : "Fermé"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
   );
 }

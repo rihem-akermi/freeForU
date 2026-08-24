@@ -2,12 +2,21 @@
 import { useState } from "react";
 import { createReview } from "@/lib/api/reviews";
 import type { Review } from "@/lib/data";
+import { Button, Textarea } from "@/components/ui/UIComponents";
 
 type ReviewModalProps = {
   reservationId: number;
   onClose: () => void;
   onSuccess: (review: Review) => void;
 };
+
+function IcoStar({ className = "w-8 h-8", filled = true }: { className?: string; filled?: boolean }) {
+  return (
+    <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={filled ? 0 : 1.5} viewBox="0 0 24 24">
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.7z" />
+    </svg>
+  );
+}
 
 export function ReviewModal({ reservationId, onClose, onSuccess }: ReviewModalProps) {
   const [rating, setRating] = useState(0);
@@ -38,50 +47,44 @@ export function ReviewModal({ reservationId, onClose, onSuccess }: ReviewModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-      <div className="bg-[var(--color-card)] rounded-2xl shadow-2xl max-w-sm w-full p-6">
-        <h3 className="text-base font-semibold text-[var(--color-text-dark)] mb-4">
-          Your FeedBack 🍀 ?
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/60 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <h3 className="mb-4 text-base font-semibold text-foreground">
+          Votre avis nous intéresse
         </h3>
 
-        <div className="flex items-center justify-center gap-1.5 mb-4">
+        <div className="mb-4 flex items-center justify-center gap-1.5 text-[var(--color-warning)]">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
               onClick={() => setRating(star)}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
-              className="text-3xl transition cursor-pointer"
+              className="cursor-pointer transition hover:scale-110"
+              aria-label={`${star} étoile${star > 1 ? "s" : ""}`}
             >
-              {(hoverRating || rating) >= star ? "★" : "☆"}
+              <IcoStar className="h-8 w-8" filled={(hoverRating || rating) >= star} />
             </button>
           ))}
         </div>
 
-        {error && <p className="text-sm text-red-600 mb-3 text-center">{error}</p>}
+        {error && <p className="mb-3 text-center text-sm text-[var(--color-danger)]">{error}</p>}
 
-        <textarea
+        <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={3}
           placeholder="Un commentaire à ajouter ? (optionnel)"
-          className="w-full p-3 rounded-xl bg-white border border-stone-200 text-sm text-[var(--color-text-dark)] placeholder:text-stone-400 resize-none outline-none focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10 mb-4"
+          className="mb-4"
         />
 
         <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-lg text-[var(--color-text-body)] hover:bg-[var(--color-bg-alt)] transition cursor-pointer"
-          >
+          <Button variant="neutral" onClick={onClose}>
             Plus tard
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:scale-[1.02] active:scale-95 transition disabled:opacity-50"
-          >
-            {submitting ? "Envoi..." : "Envoyer l'avis"}
-          </button>
+          </Button>
+          <Button variant="primary" isLoading={submitting} onClick={handleSubmit}>
+            Envoyer l'avis
+          </Button>
         </div>
       </div>
     </div>

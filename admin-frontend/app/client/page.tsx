@@ -100,8 +100,7 @@ function AgentCard({ agent, onClick }: { agent: PublicAgentCard; onClick: () => 
   return (
     <Card
       onClick={onClick}
-      className="cursor-pointer !p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-    >
+className="cursor-pointer !p-4 border-2 border-border/70 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"    >
       <div className="flex items-center gap-3">
         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-muted">
           {agent.photo_url && (

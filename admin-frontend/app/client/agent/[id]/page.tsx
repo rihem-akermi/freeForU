@@ -8,7 +8,6 @@ import {
   getAgentRatingSummary,
   RatingSummary,
 } from "@/lib/api/reviews";
-import { formatDate } from "@/lib/utils/formatDate";
 import type { Agent, Review, Publication } from "@/lib/data";
 import { AvailabilityCalendar } from "@/components/AvailabilityCalendar";
 import { DayAvailabilityModal } from "@/components/DayAvailabilityModal";
@@ -16,9 +15,76 @@ import { ReservationForm } from "@/components/ReservationForm";
 import { Toast } from "@/components/Toast";
 import AgentServicesTab from "@/components/AgentServicesTab";
 import AgentWorkingHoursStatus from "@/components/AgentWorkingHoursStatus ";
+import { Card, Badge } from "@/components/ui/UIComponents";
 import { Service } from "@/lib/data";
 
 type Tab = "infos" | "services" | "portfolio" | "avis" | "disponibilites";
+const ABOUT_ACCENT = "#46607D";
+const PORTFOLIO_ACCENT = "#7D6E8C";
+const AVIS_ACCENT = "#9C5F63";
+
+function IcoCheck({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+function IcoStar({
+  className = "w-4 h-4",
+  filled = true,
+}: {
+  className?: string;
+  filled?: boolean;
+}) {
+  return (
+    <svg
+      className={className}
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 1.5}
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7-5.4-4.7 7.1-.7z" />
+    </svg>
+  );
+}
+function IcoInfo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
+    </svg>
+  );
+}
+
+function StarRating({
+  rating,
+  className = "h-3.5 w-3.5",
+}: {
+  rating: number;
+  className?: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-0.5 text-[var(--color-warning)]">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <IcoStar key={i} className={className} filled={i < rating} />
+      ))}
+    </span>
+  );
+}
 
 export default function AgentProfilePage() {
   const params = useParams();
@@ -36,13 +102,13 @@ export default function AgentProfilePage() {
     type: "success" | "error";
   } | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [calendarVersion, setCalendarVersion] = useState(0);
   const [reservationSlot, setReservationSlot] = useState<{
     date: string;
     startTime: string | null;
     endTime: string | null;
   } | null>(null);
+  const [servicesCount, setServicesCount] = useState(0);
 
   useEffect(() => {
     async function loadAll() {
@@ -67,59 +133,65 @@ export default function AgentProfilePage() {
     loadAll();
   }, [agentId]);
 
-  if (loading) {
+  if (loading)
+    return <p className="p-6 text-sm text-muted-foreground">Chargement...</p>;
+  if (!agent)
     return (
-      <p className="text-sm text-[var(--color-text-body)] p-6">Chargement...</p>
+      <p className="p-6 text-sm text-[var(--color-danger)]">
+        Profil introuvable.
+      </p>
     );
-  }
-
-  if (!agent) {
-    return <p className="text-sm text-red-600 p-6">Profil introuvable.</p>;
-  }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-5 mb-6">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--color-bg-alt)] shrink-0">
+    <div className="w-full">
+      <div className="mb-6 flex items-center gap-5">
+        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-muted">
           {agent.photo_url ? (
             <img
               src={agent.photo_url}
               alt={agent.name}
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl font-semibold text-[var(--color-text-body)]/40">
+            <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-muted-foreground/40">
               {agent.name?.[0]}
             </div>
           )}
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-[var(--color-text-dark)]">
+            <h1 className="text-xl font-semibold text-foreground">
               {agent.name}
             </h1>
             {agent.verification_status === "verifie" && (
-              <span className="text-emerald-600 text-sm" title="Agent vérifié">
-                ✅
+              <span
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-success)] text-white"
+                title="Agent vérifié"
+              >
+                <IcoCheck className="h-3 w-3" />
               </span>
             )}
           </div>
-          <p className="text-sm text-[var(--color-text-body)]">
+          <p className="text-sm text-muted-foreground">
             {agent.categories.name} · {agent.ville}
           </p>
           {summary && (
-            <p className="text-sm text-amber-600 mt-1">
-              ⭐ {summary.average.toFixed(1)} ({summary.count} avis)
+            <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-[var(--color-warning)]">
+              <StarRating rating={Math.round(summary.average)} />
+              {summary.average.toFixed(1)}
+              <span className="font-normal text-muted-foreground">
+                ({summary.count} avis)
+              </span>
             </p>
           )}
         </div>
       </div>
-      {/* Onglets */}
-      <div className="flex gap-1 border-b border-[var(--color-bg-alt)] mb-6">
+
+      <div className="mb-6 flex gap-1 border-b border-border">
         {(
           [
             { key: "infos", label: "Infos" },
-            { key: "services", label: "Services" },
+            { key: "services", label: `Services (${servicesCount})` },
             { key: "portfolio", label: `Portfolio (${publications.length})` },
             { key: "avis", label: `Avis (${reviews.length})` },
             { key: "disponibilites", label: "Disponibilités" },
@@ -128,17 +200,18 @@ export default function AgentProfilePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition cursor-pointer ${
+            className={`cursor-pointer border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
               activeTab === tab.key
-                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                : "border-transparent text-[var(--color-text-body)] hover:text-[var(--color-text-dark)]"
+                ? "border-accent text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      {activeTab === "infos" && <InfosTab agent={agent} agentId={agentId} />}{" "}
+
+      {activeTab === "infos" && <InfosTab agent={agent} agentId={agentId} />}
       {activeTab === "portfolio" && (
         <PortfolioTab publications={publications} />
       )}
@@ -146,6 +219,7 @@ export default function AgentProfilePage() {
       {activeTab === "services" && (
         <AgentServicesTab
           agentId={agentId}
+          onCountChange={setServicesCount}
           onReserve={(service) => {
             setSelectedService(service);
             setActiveTab("disponibilites");
@@ -155,17 +229,20 @@ export default function AgentProfilePage() {
       {activeTab === "disponibilites" && (
         <>
           {selectedService && (
-            <div className="mb-3 px-4 py-2 rounded-lg bg-[var(--color-bg-alt)] text-sm text-[var(--color-text-dark)]">
+            <div className="mb-3 rounded-lg bg-accent/10 px-4 py-2 text-sm text-foreground">
               Réservation pour : <strong>{selectedService.nom}</strong>
             </div>
           )}
-          <AvailabilityCalendar
-            agentId={agentId}
-            onSelectDay={(date) => setSelectedDate(date)}
-            mode="client"
-          />
+          <div className="max-w-sm">
+            <AvailabilityCalendar
+              agentId={agentId}
+              onSelectDay={(date) => setSelectedDate(date)}
+              mode="client"
+            />
+          </div>
         </>
       )}
+
       {selectedDate && (
         <DayAvailabilityModal
           agentId={agentId}
@@ -212,37 +289,54 @@ export default function AgentProfilePage() {
 
 function InfosTab({ agent, agentId }: { agent: Agent; agentId: number }) {
   return (
-    <div className="bg-[var(--color-card)] rounded-xl p-5 shadow-sm border border-[var(--color-bg-alt)] space-y-4">
-      <AgentWorkingHoursStatus agentId={agentId} />
-
-      {agent.bio && (
-        <div>
-          <h3 className="text-xs font-semibold text-[var(--color-text-body)] uppercase tracking-wide mb-1">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <Card
+        className="!p-6"
+        style={{ borderLeft: `4px solid ${ABOUT_ACCENT}` }}
+      >
+        <div className="mb-4 flex items-center gap-3">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            style={{ background: `${ABOUT_ACCENT}18`, color: ABOUT_ACCENT }}
+          >
+            <IcoInfo />
+          </span>
+          <h3 className="text-sm font-bold uppercase tracking-wide text-foreground">
             À propos
           </h3>
-          <p className="text-sm text-[var(--color-text-dark)]">{agent.bio}</p>
         </div>
-      )}
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <InfoItem label="Zone d'intervention" value={agent.zone} />
-        <InfoItem
-          label="Expérience"
-          value={
-            agent.experience_years ? `${agent.experience_years} ans` : undefined
-          }
-        />
-        <InfoItem
-          label="Mode de service"
-          value={
-            {
-              se_deplace: "Se déplace",
-              recoit: "Reçoit",
-              les_deux: "Les deux",
-            }[agent.service_mode ?? ""]
-          }
-        />
-        <InfoItem label="Téléphone" value={agent.phone} />
-      </div>
+
+        {agent.bio && (
+          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+            {agent.bio}
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <InfoItem label="Zone d'intervention" value={agent.zone} />
+          <InfoItem
+            label="Expérience"
+            value={
+              agent.experience_years
+                ? `${agent.experience_years} ans`
+                : undefined
+            }
+          />
+          <InfoItem
+            label="Mode de service"
+            value={
+              {
+                se_deplace: "Se déplace",
+                recoit: "Reçoit",
+                les_deux: "Les deux",
+              }[agent.service_mode ?? ""]
+            }
+          />
+          <InfoItem label="Téléphone" value={agent.phone} />
+        </div>
+      </Card>
+
+      <AgentWorkingHoursStatus agentId={agentId} />
     </div>
   );
 }
@@ -251,8 +345,8 @@ function InfoItem({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <p className="text-xs text-[var(--color-text-body)]">{label}</p>
-      <p className="text-[var(--color-text-dark)] font-medium">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="font-medium text-foreground">{value}</p>
     </div>
   );
 }
@@ -260,30 +354,36 @@ function InfoItem({ label, value }: { label: string; value?: string | null }) {
 function PortfolioTab({ publications }: { publications: Publication[] }) {
   if (publications.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-text-body)]">
+      <p className="text-sm text-muted-foreground">
         Aucune publication pour le moment.
       </p>
     );
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      {publications.map((pub) => (
-        <div
-          key={pub.id}
-          className="rounded-lg overflow-hidden bg-white border border-stone-200"
-        >
-          <img
-            src={pub.photo_url}
-            alt={pub.titre}
-            className="w-full h-28 object-cover"
-          />
-          <div className="p-2">
-            <p className="text-xs font-medium text-[var(--color-text-dark)] truncate">
-              {pub.titre}
-            </p>
+    <div>
+      <p className="mb-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        {publications.length} publication{publications.length > 1 ? "s" : ""}
+      </p>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+        {publications.map((pub) => (
+          <div
+            key={pub.id}
+            className="group overflow-hidden rounded-xl border-2 border-border/70 bg-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+            style={{ borderLeftColor: PORTFOLIO_ACCENT, borderLeftWidth: 4 }}
+          >
+            <img
+              src={pub.photo_url}
+              alt={pub.titre}
+              className="h-28 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="p-3">
+              <p className="truncate text-xs font-semibold text-foreground">
+                {pub.titre}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -291,33 +391,31 @@ function PortfolioTab({ publications }: { publications: Publication[] }) {
 function AvisTab({ reviews }: { reviews: Review[] }) {
   if (reviews.length === 0) {
     return (
-      <p className="text-sm text-[var(--color-text-body)]">
+      <p className="text-sm text-muted-foreground">
         Aucun avis pour le moment.
       </p>
     );
   }
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
       {reviews.map((review) => (
-        <div
+        <Card
           key={review.id}
-          className="bg-white border border-stone-200 rounded-lg p-4"
+          className="!p-4"
+          style={{ borderLeft: `3px solid ${AVIS_ACCENT}` }}
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-[var(--color-text-dark)]">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-foreground">
               {review.users?.name ?? "Client"}
             </span>
-            <span className="text-amber-600 text-sm">
-              {"⭐".repeat(review.rating)}
-              {"".repeat(5 - review.rating)}
-            </span>
+            <StarRating rating={review.rating} className="h-3 w-3" />
           </div>
           {review.comment && (
-            <p className="text-sm text-[var(--color-text-dark)]">
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               {review.comment}
             </p>
           )}
-        </div>
+        </Card>
       ))}
     </div>
   );
