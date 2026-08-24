@@ -24,13 +24,16 @@
 11. launch Antigravity in powerShell
    & "$env:LOCALAPPDATA\agy\bin\agy.exe"  
 ---------------------------------------------
+
+
 8. create a new branch and switch to it : 
    git switch -c ui-redesign-phase3
+   -c : create 
 
 9. check in what branch and how many branchs exists 
    git branch
 
-10. commit in a certain branch 
+10. commit in a the branch you are in 
    git add .
    git commit -m "Redesign UI foundation"
 
@@ -59,3 +62,22 @@
 4. Push the changes.
    git push -u origin main
 -----------------------------------------
+
+* delete a non merged branch : 
+   git branch -D new-vitrine
+
+* delete a merged branch 
+   git branch -d new-vitrine
+   git push origin --delete new-vitrine
+
+main = stable version
+       │
+       ├── feature branch → experiment
+       │                    │
+       │                    ├── like it → PR → merge → delete branch : git branch -D new-vitrine
+       │                    │
+       │                    └── hate it → delete branch :  git branch -d new-vitrine
+       │
+       └── remains untouched
+
+GitHub → Pull Request → review → merge → delete branch

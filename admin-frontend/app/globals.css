@@ -180,7 +180,7 @@ textarea {
 /* Fluid Container for Wide Viewports (1846px+) */
 .vitrine-container {
   width: 100%;
-  max-width: 1700px;
+  max-width: 1760px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
@@ -203,15 +203,16 @@ textarea {
 
 @media (min-width: 1440px) {
   .vitrine-container {
-    padding-left: 4.5rem;
-    padding-right: 4.5rem;
+    padding-left: 4rem;
+    padding-right: 4rem;
   }
 }
 
 @media (min-width: 1800px) {
   .vitrine-container {
-    padding-left: 5rem;
-    padding-right: 5rem;
+    max-width: 1820px;
+    padding-left: 4.5rem;
+    padding-right: 4.5rem;
   }
 }
 
