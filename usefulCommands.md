@@ -16,9 +16,14 @@
 6. deploy migrations in production :
    npx prisma migrate deploy
 
+---------------------------------------------
 7. it resumes the most recent conversation for that workspace with antigravity
    agy -c
 
+
+11. launch Antigravity in powerShell
+   & "$env:LOCALAPPDATA\agy\bin\agy.exe"  
+---------------------------------------------
 8. create a new branch and switch to it : 
    git switch -c ui-redesign-phase3
 
@@ -29,10 +34,6 @@
    git add .
    git commit -m "Redesign UI foundation"
 
-
-11. launch Antigravity in powerShell
-   & "$env:LOCALAPPDATA\agy\bin\agy.exe"   
-
 12. push in a newly created local branch 
    git push -u origin nameOfTheBranch
 
@@ -41,3 +42,20 @@
 
 14. This shows your local branches and their tracking information.
    git branch - vv
+
+
+
+-----------------------------------------
+*** Merging two branches *** or through the GitHub (easier)
+1. Clone the repository or update your local repository with the latest changes.
+   git pull origin main
+
+2. Switch to the base branch of the pull request.
+   git checkout main
+
+3. Merge the head branch into the base branch.
+   git merge ui-redesign-phase3
+
+4. Push the changes.
+   git push -u origin main
+-----------------------------------------
