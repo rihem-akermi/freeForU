@@ -1,36 +1,45 @@
-import {
-  IsString,
-  IsNumber,
-  IsIn,
-  IsOptional,
-  IsInt,
-  MinLength,
-  Min,
-} from "class-validator";
-import { Type } from "class-transformer";
+// avec documentation Swagger
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsIn, IsNumber, IsInt } from 'class-validator';
 
 export class CreateServiceDto {
+  @ApiProperty({
+    description: 'Nom du service proposé par l\'agent',
+    example: 'Installation électrique',
+  })
   @IsString()
-  @MinLength(2, { message: "Le nom du service est trop court" })
   nom!: string;
 
+  @ApiPropertyOptional({
+    description: 'Description courte du service',
+    example: 'Installation complète pour appartement neuf',
+  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @IsIn(["fixe", "a_partir_de"], {
-    message: "type_prix doit être 'fixe' ou 'a_partir_de'",
+  @ApiProperty({
+    description: 'Type de tarification',
+    enum: ['fixe', 'a_partir_de'],
+    example: 'fixe',
   })
+  @IsIn(["fixe", "a_partir_de"])
   typePrix!: "fixe" | "a_partir_de";
 
-  @Type(() => Number)
+  @ApiProperty({
+    description: 'Prix en DT',
+    example: 150,
+    minimum: 0,
+  })
   @IsNumber()
-  @Min(0)
   prix!: number;
 
+  @ApiPropertyOptional({
+    description: 'Durée estimée en minutes (optionnel)',
+    example: 120,
+    minimum: 1,
+  })
   @IsOptional()
-  @Type(() => Number)
   @IsInt()
-  @Min(1)
-  dureeEstimee?: number; // en minutes
+  dureeEstimee?: number;
 }

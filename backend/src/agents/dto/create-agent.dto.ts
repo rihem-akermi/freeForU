@@ -1,4 +1,6 @@
 import { IsEmail, IsInt, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
 
 export class CreateAgentDto {
 

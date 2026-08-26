@@ -16,12 +16,28 @@ import { UpdateServiceDto } from "./dto/update-service.dto";
 import { AuthGuard } from "src/auth/guards/auth.guard";
 import { RolesGuard } from "src/auth/guards/roles.guard";
 import { Roles } from "src/auth/decorators/roles.decorator";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from "@nestjs/swagger";
 
+@ApiTags("services") // ← groupe toutes les routes de ce controller sous "services" dans l'UI
 @Controller("services")
 export class ServicesController {
   constructor(private servicesService: ServicesService) {}
 
   // Route publique : utilisée sur la page profil agent (client-facing)
+  @ApiOperation({
+    summary: "Lister les services d'un agent",
+    description: "Route publique, accessible sans authentification.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Liste des services retournée avec succès.",
+  })
+  @ApiResponse({ status: 404, description: "Agent introuvable." })
   @Get("agent/:agentId")
   async getServicesByAgent(@Param("agentId", ParseIntPipe) agentId: number) {
     return this.servicesService.getServicesByAgent(agentId);
@@ -35,6 +51,11 @@ export class ServicesController {
     return this.servicesService.getMyServices(req.user.sub);
   }
 
+  @ApiCookieAuth("accessToken") // ← indique que cette route nécessite le cookie
+  @ApiOperation({ summary: "Créer un service (agent connecté)" })
+  @ApiResponse({ status: 201, description: "Service créé." })
+  @ApiResponse({ status: 401, description: "Non authentifié." })
+  @ApiResponse({ status: 403, description: "Rôle insuffisant." })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Post()
