@@ -12,14 +12,40 @@ import {
 import { AuthService } from "./auth.service";
 import type { Response, Request } from "express";
 import { AuthGuard } from "./guards/auth.guard";
+import { LoginDto } from "./dto/login.dto";
+import { SignupDto } from "./dto/signup.dto";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from "@nestjs/swagger";
 
+@ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @ApiOperation({
+    summary: "Connexion utilisateur ou agent",
+    description:
+      "Valide les identifiants et pose les cookies httpOnly `accessToken` et `refreshToken`.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Authentification réussie, cookies posés et profil utilisateur retourné.",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Email ou mot de passe manquant dans le corps de la requête.",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Identifiants incorrects.",
+  })
   @Post("login")
   async login(
-    @Body() body: { email: string; password: string },
+    @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response
   ) {
     if (!body.email || !body.password) {
@@ -50,6 +76,20 @@ export class AuthController {
     }
   }
 
+  @ApiCookieAuth("refreshToken")
+  @ApiOperation({
+    summary: "Rafraîchir l’access token",
+    description:
+      "Lit le cookie `refreshToken` pour générer et poser un nouveau cookie `accessToken`.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Access token renouvelé avec succès.",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Refresh token manquant, invalide ou expiré.",
+  })
   @Post("refresh")
   async refresh(
     @Req() req: Request,
@@ -75,23 +115,36 @@ export class AuthController {
     return { message: "Token renouvelé" }; // 👈 plus besoin de renvoyer le token dans le body
   }
 
+  @ApiOperation({
+    summary: "Inscription d’un client ou d’un agent",
+    description:
+      "Crée un nouveau compte selon le rôle (`CLIENT` ou `AGENT`). Pour un agent, `category_id` est obligatoire.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Compte créé avec succès.",
+  })
+  @ApiResponse({
+    status: 409,
+    description: "Email déjà existant ou catégorie manquante pour un agent.",
+  })
   @Post("signup")
   async signup(
     @Body()
-    body: {
-      name: string;
-      email: string;
-      password: string;
-      ville: string;
-      phone: string;
-      role: "CLIENT" | "AGENT";
-      category_id?: number;
-    }
+    body: SignupDto
   ) {
     const created = await this.authService.signup(body);
     return { message: "Compte créé avec succès", user: created };
   }
 
+  @ApiOperation({
+    summary: "Déconnexion",
+    description: "Supprime les cookies httpOnly `accessToken` et `refreshToken`.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Déconnexion réussie et cookies supprimés.",
+  })
   @Post("logout")
   async logout(@Res({ passthrough: true }) res: Response) {
     console.log("🌐 POST /auth/logout reçu");
@@ -101,6 +154,19 @@ export class AuthController {
     return { message: "Déconnexion réussie" };
   }
 
+  @ApiCookieAuth("accessToken")
+  @ApiOperation({
+    summary: "Récupérer la session courante de l’utilisateur connecté",
+    description: "Accessible avec un cookie `accessToken` valide.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Identifiant et rôle de l'utilisateur connecté.",
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Non authentifié ou token invalide.",
+  })
   @UseGuards(AuthGuard)
   @Get("me")
   async getMe(@Req() req: Request & { user: { sub: number; role: string } }) {
