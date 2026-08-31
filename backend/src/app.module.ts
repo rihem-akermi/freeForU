@@ -18,6 +18,7 @@ import { BlockedSlotsModule } from "./blocked-slots/blocked-slots.module";
 import { AvailabilityModule } from "./availability/availability.module";
 import { ServicesModule } from "./services/services.module";
 import { ScheduleModule } from "@nestjs/schedule";
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ScheduleModule } from "@nestjs/schedule";
     AvailabilityModule,
     ServicesModule,
     ScheduleModule.forRoot(),
+    MailModule,
   ],
   controllers: [],
   providers: [],

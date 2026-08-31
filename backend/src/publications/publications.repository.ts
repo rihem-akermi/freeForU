@@ -24,10 +24,9 @@ export class PublicationsRepository {
     });
   }
 
-
-  async findPendingPubsByAgentId (agentId: number) {
+  async findPendingPubsByAgentId(agentId: number) {
     return this.prisma.publications.findMany({
-      where: { agent_id: agentId ,status:"en_attente"},
+      where: { agent_id: agentId, status: "en_attente" },
       orderBy: { created_at: "desc" },
     });
   }
@@ -40,7 +39,12 @@ export class PublicationsRepository {
   }
 
   async findById(id: number) {
-    return this.prisma.publications.findUnique({ where: { id } });
+    return this.prisma.publications.findUnique({
+      where: { id },
+      include: {
+        agents: { select: { id: true, name: true, email: true } },
+      },
+    });
   }
 
   async findPending() {
