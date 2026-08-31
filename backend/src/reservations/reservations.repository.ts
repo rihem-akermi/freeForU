@@ -59,6 +59,32 @@ export class reservationsRepository {
   async findById(reservationId: number) {
     return this.prisma.reservations.findUnique({
       where: { id: reservationId },
+      include: {
+        users: { select: { id: true, name: true, email: true } },
+        agents: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
+
+  async findConfirmedForReminder(targetDate: Date) {
+    return this.prisma.reservations.findMany({
+      where: {
+        status: "confirmee",
+        date_reservation: targetDate,
+        reminder_sent: false,
+      },
+      include: {
+        users: { select: { name: true, email: true } },
+        agents: { select: { name: true, email: true } },
+      },
+    });
+  }
+
+  async markRemindersSent(ids: number[]) {
+    if (ids.length === 0) return;
+    return this.prisma.reservations.updateMany({
+      where: { id: { in: ids } },
+      data: { reminder_sent: true },
     });
   }
 
@@ -88,7 +114,6 @@ export class reservationsRepository {
       orderBy: { heure_reservation: "asc" },
     });
   }
-
 
   async findPendingReservationsByAgentId(agentId: number) {
     return this.prisma.reservations.findMany({
@@ -120,12 +145,12 @@ export class reservationsRepository {
   }
 
   async findToArchive() {
-    //le Cron pour l'appeler périodiquement pour chercher qui ont été updated depuis 1h  
+    //le Cron pour l'appeler périodiquement pour chercher qui ont été updated depuis 1h
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     return this.prisma.reservations.findMany({
       where: {
-        status: { in: ["rejetee", "annulee" , "expiree"] },
+        status: { in: ["rejetee", "annulee", "expiree"] },
         archived: false,
         updated_at: { lte: oneHourAgo },
       },
@@ -143,7 +168,7 @@ export class reservationsRepository {
         client_id: clientId,
         agent_id: agentId,
         date_reservation: { gte: from, lte: to },
-        status: { in: ["en_attente", "confirmee", "terminee"] }, 
+        status: { in: ["en_attente", "confirmee", "terminee"] },
         archived: false,
       },
       select: { date_reservation: true, status: true },

@@ -8,12 +8,14 @@ import { PublicationsRepository } from "./publications.repository";
 import { CreatePublicationDto } from "./dto/create-publication.dto";
 import { UpdatedPublicationDto } from "./dto/update-publication.dto";
 import { UploadsService } from "src/uploads/uploads.service";
+import { MailService } from "src/mail/mail.service";
 
 @Injectable()
 export class PublicationsService {
   constructor(
     private publicationsRepository: PublicationsRepository,
-    private uploadsService: UploadsService
+    private uploadsService: UploadsService,
+    private mailService: MailService
   ) {}
 
   async getAgentPortfolio(agentId: number) {
@@ -79,9 +81,19 @@ export class PublicationsService {
     if (!publication) {
       throw new NotFoundException("Publication introuvable");
     }
-    return await this.publicationsRepository.updateStatus(id, status);
-  }
 
+    const updated = await this.publicationsRepository.updateStatus(id, status);
+
+    // 📧 Notifier l'agent seulement en cas de rejet
+    if (status === "rejetee" && publication.agents?.email) {
+      this.mailService.sendPublicationRemovedToAgent(publication.agents.email, {
+        agentName: publication.agents.name,
+        publicationTitre: publication.titre ?? "No title 😕",
+      });
+    }
+
+    return updated;
+  }
   private async checkOwnership(id: number, agentId: number) {
     const publication = await this.publicationsRepository.findById(id);
     if (!publication) {
