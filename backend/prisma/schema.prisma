@@ -84,6 +84,7 @@ model reservations {
   service_nom           String?   @db.VarChar(150)
   service_prix          Float?
   updated_at            DateTime? @updatedAt @db.Timestamp(6)
+  reminder_sent         Boolean   @default(false)
   agents                agents    @relation(fields: [agent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                 users     @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   services              services? @relation(fields: [service_id], references: [id], onUpdate: NoAction)
