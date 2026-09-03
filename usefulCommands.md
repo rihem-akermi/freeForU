@@ -46,6 +46,8 @@
 14. This shows your local branches and their tracking information.
    git branch - vv
 
+15. restore deleted file before being commited 
+   git restore src/file.ts <- path 
 
 
 -----------------------------------------

@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { WorkingHoursRepository } from "src/working-hours/working-hours.repository";
 import { BlockedSlotsRepository } from "src/blocked-slots/blocked-slots.repository";
 import { reservationsRepository } from "src/reservations/reservations.repository";
+import { formatDbTime } from "src/common/utils/date.utils";
 
 type DayStatus = "ouvert" | "ferme" | "sans_info";
 type ClientDayStatus = "neutre" | "gris" | "jaune" | "violet" | "bleu";
@@ -14,10 +15,7 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function formatDbTime(raw: Date | null): string | null {
-  if (!raw) return null;
-  return `${String(raw.getHours()).padStart(2, "0")}:${String(raw.getMinutes()).padStart(2, "0")}`;
-}
+
 
 @Injectable()
 export class AvailabilityService {

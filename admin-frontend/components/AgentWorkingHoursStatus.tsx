@@ -3,17 +3,14 @@
 import { useEffect, useState } from "react";
 import { getAgentWorkingHours, DayHours } from "@/lib/api/working-hours";
 import { Card } from "@/components/ui/UIComponents";
+import { timeFromDb } from "@/lib/utils/timeFromDb";
+
 
 const DAY_LABELS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const ACCENT = "#C4956A"; // warm terracotta
 
-function timeFromDb(raw: string | null): string {
-  if (!raw) return "";
-  if (/^\d{2}:\d{2}/.test(raw)) return raw.slice(0, 5);
-  const match = raw.match(/T(\d{2}:\d{2})/);
-  return match ? match[1] : "";
-}
+
 
 function to12h(hhmm: string): string {
   if (!hhmm) return "";

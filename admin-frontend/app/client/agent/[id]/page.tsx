@@ -14,7 +14,7 @@ import { DayAvailabilityModal } from "@/components/DayAvailabilityModal";
 import { ReservationForm } from "@/components/ReservationForm";
 import { Toast } from "@/components/Toast";
 import AgentServicesTab from "@/components/AgentServicesTab";
-import AgentWorkingHoursStatus from "@/components/AgentWorkingHoursStatus ";
+import AgentWorkingHoursStatus from "@/components/AgentWorkingHoursStatus";
 import { Card, Badge } from "@/components/ui/UIComponents";
 import { Service } from "@/lib/data";
 

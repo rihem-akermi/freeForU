@@ -9,15 +9,16 @@ import { reservationsRepository } from "./reservations.repository";
 import { UpdateReservationDto } from "./dto/update-reservation.dto";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { ServicesRepository } from "src/services/services.repository";
-import { MailService } from "src/mail/mail.service"; // ← ajouté
+import { MailService } from "src/mail/mail.service"; 
 import { Cron, CronExpression } from "@nestjs/schedule";
+import { combineDateAndTime } from "src/common/utils/date.utils";
 
 @Injectable()
 export class ReservationsService {
   constructor(
     private reservationsRepository: reservationsRepository,
     private servicesRepository: ServicesRepository,
-    private mailService: MailService // ← ajouté
+    private mailService: MailService 
   ) {}
 
   private async resolveServiceForReservation(
@@ -30,6 +31,9 @@ export class ReservationsService {
       throw new BadRequestException("Ce service n'appartient pas à cet agent");
     return service;
   }
+
+ 
+
 
   async getAllReservations() {
     return await this.reservationsRepository.findAll();
@@ -212,13 +216,7 @@ export class ReservationsService {
     return updated;
   }
 
-  private combineDateAndTime(date: Date, time: Date | null): Date {
-    const combined = new Date(date);
-    if (time)
-      combined.setHours(time.getHours(), time.getMinutes(), time.getSeconds());
-    return combined;
-  }
-
+  
   async cancelByClient(reservationId: number, clientId: number) {
     const reservation =
       await this.reservationsRepository.findById(reservationId);
@@ -229,7 +227,7 @@ export class ReservationsService {
       throw new ConflictException("Cette réservation ne peut pas être annulée");
     }
 
-    const reservationDateTime = this.combineDateAndTime(
+    const reservationDateTime = combineDateAndTime(
       reservation.date_reservation,
       reservation.heure_reservation
     );

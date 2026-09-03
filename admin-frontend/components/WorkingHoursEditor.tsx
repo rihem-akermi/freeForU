@@ -3,15 +3,9 @@ import { useEffect, useState } from "react";
 import { getMyWorkingHours, updateMyWorkingHours, UpdateDayHours } from "@/lib/api/working-hours";
 import { Button, Card } from "@/components/ui/UIComponents";
 import { Toast } from "./Toast";
-
+import { timeFromDb } from "@/lib/utils/timeFromDb";
 const DAY_LABELS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
-function timeFromDb(raw: string | null): string {
-  if (!raw) return "";
-  if (/^\d{2}:\d{2}/.test(raw)) return raw.slice(0, 5);
-  const match = raw.match(/T(\d{2}:\d{2})/);
-  return match ? match[1] : "";
-}
 
 export default function WorkingHoursEditor() {
   const [days, setDays] = useState<UpdateDayHours[]>(
