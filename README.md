@@ -74,7 +74,7 @@
 
 | Technologie | Emplacement | Rôle & Utilité |
 | :--- | :--- | :--- |
-| **Next.js (v16 App Router)** | Frontend (`admin-frontend`) | Framework React pour le rendu hybride, le routage moderne et les composants clients/serveurs. |
+| **Next.js (v16 App Router)** | Frontend (`frontend`) | Framework React pour le rendu hybride, le routage moderne et les composants clients/serveurs. |
 | **React 19 & TypeScript** | Frontend | Bibliothèque UI déclarative et typage statique strict. |
 | **Tailwind CSS (v4)** | Frontend | Framework CSS utilitaire pour des interfaces modernes et réactives. |
 | **Axios & js-cookie** | Frontend | Client HTTP configuré avec intercepteur pour la gestion des cookies JWT et le rafraîchissement automatique de session. |
@@ -441,7 +441,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 
 ```text
 freeForU/
-├── admin-frontend/            # Application Frontend Next.js (App Router)
+├── frontend/            # Application Frontend Next.js (App Router)
 │   ├── app/                   # Routes Next.js (admin, agent, client, login, signup)
 │   ├── components/            # Composants UI modulaires et modales
 │   ├── lib/                   # Utilitaires & configuration client
@@ -517,8 +517,8 @@ npm run start:dev
 ### 2. Installation du Frontend
 
 ```bash
-# Ouvrir un second terminal et se placer dans admin-frontend
-cd admin-frontend
+# Ouvrir un second terminal et se placer dans frontend
+cd frontend
 
 # Installer les dépendances
 npm install
