@@ -67,8 +67,9 @@
    git branch -D new-vitrine
 
 * delete a merged branch 
+   git pull origin main <- so the merge happends locally 
    git branch -d new-vitrine
-   git push origin --delete new-vitrine
+   git push origin --delete new-vitrine : if deleted in github platform no need
 
 main = stable version
        │

@@ -306,33 +306,38 @@ function InfosTab({ agent, agentId }: { agent: Agent; agentId: number }) {
           </h3>
         </div>
 
-        {agent.bio && (
-          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-            {agent.bio}
-          </p>
-        )}
+        <div
+          className="rounded-xl border bg-background/60 p-5"
+          style={{ borderColor: `${ABOUT_ACCENT}30` }}
+        >
+          {agent.bio && (
+            <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+              {agent.bio}
+            </p>
+          )}
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <InfoItem label="Zone d'intervention" value={agent.zone} />
-          <InfoItem
-            label="Expérience"
-            value={
-              agent.experience_years
-                ? `${agent.experience_years} ans`
-                : undefined
-            }
-          />
-          <InfoItem
-            label="Mode de service"
-            value={
-              {
-                se_deplace: "Se déplace",
-                recoit: "Reçoit",
-                les_deux: "Les deux",
-              }[agent.service_mode ?? ""]
-            }
-          />
-          <InfoItem label="Téléphone" value={agent.phone} />
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <InfoItem label="Zone d'intervention" value={agent.zone} />
+            <InfoItem
+              label="Expérience"
+              value={
+                agent.experience_years
+                  ? `${agent.experience_years} ans`
+                  : undefined
+              }
+            />
+            <InfoItem
+              label="Mode de service"
+              value={
+                {
+                  se_deplace: "Se déplace",
+                  recoit: "Reçoit",
+                  les_deux: "Les deux",
+                }[agent.service_mode ?? ""]
+              }
+            />
+            <InfoItem label="Téléphone" value={agent.phone} />
+          </div>
         </div>
       </Card>
 
@@ -340,7 +345,6 @@ function InfosTab({ agent, agentId }: { agent: Agent; agentId: number }) {
     </div>
   );
 }
-
 function InfoItem({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
