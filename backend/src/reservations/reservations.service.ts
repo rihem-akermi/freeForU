@@ -20,10 +20,14 @@ export class ReservationsService {
     private mailService: MailService // ← ajouté
   ) {}
 
-  private async resolveServiceForReservation(agentId: number, serviceId: number) {
+  private async resolveServiceForReservation(
+    agentId: number,
+    serviceId: number
+  ) {
     const service = await this.servicesRepository.findById(serviceId);
     if (!service) throw new NotFoundException("Service introuvable");
-    if (service.agent_id !== agentId) throw new BadRequestException("Ce service n'appartient pas à cet agent");
+    if (service.agent_id !== agentId)
+      throw new BadRequestException("Ce service n'appartient pas à cet agent");
     return service;
   }
 
@@ -41,7 +45,9 @@ export class ReservationsService {
     return await this.reservationsRepository.findByAgentId(agentId);
   }
   async getMyPendingReservationsAsAgent(agentId: number) {
-    return await this.reservationsRepository.findPendingReservationsByAgentId(agentId);
+    return await this.reservationsRepository.findPendingReservationsByAgentId(
+      agentId
+    );
   }
 
   async createMyReservation(
@@ -58,13 +64,18 @@ export class ReservationsService {
     const hasService = !!dto.serviceId;
     const hasCustom = !!dto.customRequest;
     if (hasService === hasCustom) {
-      throw new BadRequestException("Choisissez un service, ou décrivez votre besoin — pas les deux, pas aucun des deux");
+      throw new BadRequestException(
+        "Choisissez un service, ou décrivez votre besoin — pas les deux, pas aucun des deux"
+      );
     }
 
     let serviceNom: string | undefined;
     let servicePrix: number | undefined;
     if (hasService) {
-      const service = await this.resolveServiceForReservation(dto.agentId, dto.serviceId!);
+      const service = await this.resolveServiceForReservation(
+        dto.agentId,
+        dto.serviceId!
+      );
       serviceNom = service.nom;
       servicePrix = service.prix;
     }
@@ -89,8 +100,10 @@ export class ReservationsService {
         serviceNom: created.service_nom,
         customRequest: created.custom_request,
         dateReservation: created.date_reservation.toLocaleDateString("fr-FR"),
-        heureReservation: created.heure_reservation?.toTimeString().slice(0, 5) ?? null,
-        heureFinReservation: created.heure_fin_reservation?.toTimeString().slice(0, 5) ?? null,
+        heureReservation:
+          created.heure_reservation?.toTimeString().slice(0, 5) ?? null,
+        heureFinReservation:
+          created.heure_fin_reservation?.toTimeString().slice(0, 5) ?? null,
       });
     }
 
@@ -101,40 +114,63 @@ export class ReservationsService {
     const hasService = !!dto.serviceId;
     const hasCustom = !!dto.customRequest;
     if (hasService === hasCustom) {
-      throw new BadRequestException("Choisissez un service, ou une demande personnalisée");
+      throw new BadRequestException(
+        "Choisissez un service, ou une demande personnalisée"
+      );
     }
 
     let serviceNom: string | undefined;
     let servicePrix: number | undefined;
     if (hasService) {
-      const service = await this.resolveServiceForReservation(dto.agentId, dto.serviceId!);
+      const service = await this.resolveServiceForReservation(
+        dto.agentId,
+        dto.serviceId!
+      );
       serviceNom = service.nom;
       servicePrix = service.prix;
     }
 
-    return this.reservationsRepository.create({ ...dto, serviceNom, servicePrix });
+    return this.reservationsRepository.create({
+      ...dto,
+      serviceNom,
+      servicePrix,
+    });
   }
 
   async updateReservation(id: number, part: UpdateReservationDto) {
-    const VALID_STATUSES = ["en_attente", "confirmee", "terminee", "rejetee", "annulee", "expiree"];
+    const VALID_STATUSES = [
+      "en_attente",
+      "confirmee",
+      "terminee",
+      "rejetee",
+      "annulee",
+      "expiree",
+    ];
     if (part.status && !VALID_STATUSES.includes(part.status)) {
       throw new BadRequestException(`Status invalide : ${part.status}`);
     }
     return await this.reservationsRepository.updateReservation(id, part);
   }
 
-  async updateAgentStatus(id: number, agentId: number, status: "confirmee" | "rejetee") {
+  async updateAgentStatus(
+    id: number,
+    agentId: number,
+    status: "confirmee" | "rejetee"
+  ) {
     const reservation = await this.reservationsRepository.findById(id);
     if (!reservation) throw new NotFoundException("Réservation introuvable");
-    if (reservation.agent_id !== agentId) throw new ForbiddenException("Cette réservation ne vous appartient pas");
-    if (reservation.status !== "en_attente") throw new ConflictException("Cette réservation a déjà été traitée");
+    if (reservation.agent_id !== agentId)
+      throw new ForbiddenException("Cette réservation ne vous appartient pas");
+    if (reservation.status !== "en_attente")
+      throw new ConflictException("Cette réservation a déjà été traitée");
 
     const updated = await this.reservationsRepository.setStatus(id, status);
 
     // 📧 Notifier le client (confirmée ou rejetée)
     if (reservation.users?.email) {
       const dateStr = reservation.date_reservation.toLocaleDateString("fr-FR");
-      const heureStr = reservation.heure_reservation?.toTimeString().slice(0, 5) ?? null;
+      const heureStr =
+        reservation.heure_reservation?.toTimeString().slice(0, 5) ?? null;
 
       if (status === "confirmee") {
         this.mailService.sendReservationConfirmed(reservation.users.email, {
@@ -155,12 +191,21 @@ export class ReservationsService {
     }
 
     if (status === "confirmee" && reservation.heure_reservation) {
-      const heureFin = reservation.heure_fin_reservation ?? new Date(reservation.heure_reservation.getTime() + 60 * 60 * 1000);
-      const overlapping = await this.reservationsRepository.findOverlappingPending(
-        agentId, reservation.date_reservation, reservation.heure_reservation, heureFin, id
-      );
+      const heureFin =
+        reservation.heure_fin_reservation ??
+        new Date(reservation.heure_reservation.getTime() + 60 * 60 * 1000);
+      const overlapping =
+        await this.reservationsRepository.findOverlappingPending(
+          agentId,
+          reservation.date_reservation,
+          reservation.heure_reservation,
+          heureFin,
+          id
+        );
       if (overlapping.length > 0) {
-        await this.reservationsRepository.markManyAsRejected(overlapping.map((r) => r.id));
+        await this.reservationsRepository.markManyAsRejected(
+          overlapping.map((r) => r.id)
+        );
       }
     }
 
@@ -169,35 +214,52 @@ export class ReservationsService {
 
   private combineDateAndTime(date: Date, time: Date | null): Date {
     const combined = new Date(date);
-    if (time) combined.setHours(time.getHours(), time.getMinutes(), time.getSeconds());
+    if (time)
+      combined.setHours(time.getHours(), time.getMinutes(), time.getSeconds());
     return combined;
   }
 
   async cancelByClient(reservationId: number, clientId: number) {
-    const reservation = await this.reservationsRepository.findById(reservationId);
+    const reservation =
+      await this.reservationsRepository.findById(reservationId);
     if (!reservation) throw new NotFoundException("Réservation introuvable");
-    if (reservation.client_id !== clientId) throw new ForbiddenException("Cette réservation ne vous appartient pas");
+    if (reservation.client_id !== clientId)
+      throw new ForbiddenException("Cette réservation ne vous appartient pas");
     if (!["en_attente", "confirmee"].includes(reservation.status)) {
       throw new ConflictException("Cette réservation ne peut pas être annulée");
     }
 
-    const reservationDateTime = this.combineDateAndTime(reservation.date_reservation, reservation.heure_reservation);
-    const hoursUntilReservation = (reservationDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+    const reservationDateTime = this.combineDateAndTime(
+      reservation.date_reservation,
+      reservation.heure_reservation
+    );
+    const hoursUntilReservation =
+      (reservationDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
     if (hoursUntilReservation < 24) {
-      throw new BadRequestException("Impossible d'annuler moins de 24h avant le rendez-vous");
+      throw new BadRequestException(
+        "Impossible d'annuler moins de 24h avant le rendez-vous"
+      );
     }
 
-    const updated = await this.reservationsRepository.setStatus(reservationId, "annulee");
+    const updated = await this.reservationsRepository.setStatus(
+      reservationId,
+      "annulee"
+    );
 
     // 📧 Notifier l'agent de l'annulation
     if (reservation.agents?.email) {
-      this.mailService.sendReservationCancelledToAgent(reservation.agents.email, {
-        agentName: reservation.agents.name,
-        clientName: reservation.users?.name ?? "Un client",
-        serviceNom: reservation.service_nom,
-        dateReservation: reservation.date_reservation.toLocaleDateString("fr-FR"),
-        heureReservation: reservation.heure_reservation?.toTimeString().slice(0, 5) ?? null,
-      });
+      this.mailService.sendReservationCancelledToAgent(
+        reservation.agents.email,
+        {
+          agentName: reservation.agents.name,
+          clientName: reservation.users?.name ?? "Un client",
+          serviceNom: reservation.service_nom,
+          dateReservation:
+            reservation.date_reservation.toLocaleDateString("fr-FR"),
+          heureReservation:
+            reservation.heure_reservation?.toTimeString().slice(0, 5) ?? null,
+        }
+      );
     }
 
     return updated;
@@ -208,22 +270,33 @@ export class ReservationsService {
   }
 
   async confirmCompletion(reservationId: number, userId: number, role: string) {
-    const reservation = await this.reservationsRepository.findById(reservationId);
+    const reservation =
+      await this.reservationsRepository.findById(reservationId);
     if (!reservation) throw new NotFoundException("Réservation introuvable");
     if (reservation.status !== "confirmee") {
-      throw new BadRequestException("La réservation doit être confirmée avant de pouvoir être marquée terminée");
+      throw new BadRequestException(
+        "La réservation doit être confirmée avant de pouvoir être marquée terminée"
+      );
     }
 
     if (role === "AGENT") {
-      if (reservation.agent_id !== userId) throw new ForbiddenException("Cette réservation ne vous appartient pas");
+      if (reservation.agent_id !== userId)
+        throw new ForbiddenException(
+          "Cette réservation ne vous appartient pas"
+        );
       await this.reservationsRepository.setAgentConfirmed(reservationId);
     } else if (role === "CLIENT") {
-      if (reservation.client_id !== userId) throw new ForbiddenException("Cette réservation ne vous appartient pas");
+      if (reservation.client_id !== userId)
+        throw new ForbiddenException(
+          "Cette réservation ne vous appartient pas"
+        );
       await this.reservationsRepository.setClientConfirmed(reservationId);
     }
 
-    const refreshedRes = await this.reservationsRepository.findById(reservationId);
-    if (!refreshedRes) throw new NotFoundException("Réservation introuvable après mise à jour");
+    const refreshedRes =
+      await this.reservationsRepository.findById(reservationId);
+    if (!refreshedRes)
+      throw new NotFoundException("Réservation introuvable après mise à jour");
 
     if (refreshedRes.agent_confirmed && refreshedRes.client_confirmed) {
       return await this.reservationsRepository.markAsTerminee(reservationId);
@@ -248,14 +321,17 @@ export class ReservationsService {
     }
   }
 
-  // 📧 Nouveau — rappel 24h avant le RDV, tourne 1x/jour
+  // 📧 rappel 24h avant le RDV, tourne 1x/jour
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async handleReminders24h() {
     const tomorrow = new Date();
+    //if 10h au lieu de 24h
+    // const in10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000);    
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    const toRemind = await this.reservationsRepository.findConfirmedForReminder(tomorrow);
+    const toRemind =
+      await this.reservationsRepository.findConfirmedForReminder(tomorrow);
     if (toRemind.length === 0) return;
 
     for (const r of toRemind) {
@@ -284,7 +360,9 @@ export class ReservationsService {
       }
     }
 
-    await this.reservationsRepository.markRemindersSent(toRemind.map((r) => r.id));
+    await this.reservationsRepository.markRemindersSent(
+      toRemind.map((r) => r.id)
+    );
     console.log(`${toRemind.length} rappel(s) 24h envoyé(s)`);
   }
 }
