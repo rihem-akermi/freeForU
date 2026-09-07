@@ -1,10 +1,11 @@
 import api from "./interceptor";
 
+export type ClientCalendarDay = { date: string; status: ClientDayStatus };
+export type AgentCalendarDay = { date: string; status: AgentDayStatus };
+
 export type DayStatus = "ouvert" | "ferme" | "sans_info";
 export type ClientDayStatus = "neutre" | "gris" | "jaune" | "violet" | "bleu";
-
-export type CalendarDay = { date: string; status: DayStatus };
-export type ClientCalendarDay = { date: string; status: ClientDayStatus };
+export type AgentDayStatus = "neutre" | "rouge" | "jaune" | "violet" | "bleu";
 
 export type DayAvailability = {
   date: string;
@@ -13,21 +14,9 @@ export type DayAvailability = {
   end_time: string | null;
 };
 
-export type AgentDayStatus = "neutre" | "rouge" | "jaune" | "violet" | "bleu";
-export type AgentCalendarDay = { date: string; status: AgentDayStatus };
 
-export async function getMonthCalendar(
-  agentId: number,
-  year: number,
-  month: number,
-): Promise<CalendarDay[]> {
-  const result = await api.get<CalendarDay[]>(
-    `/availability/agent/${agentId}?year=${year}&month=${month}`,
-  );
-  return result.data;
-}
 
-// nouveau, pour le calendrier client personnalisé
+//calendar client  
 export async function getClientMonthCalendar(
   agentId: number,
   year: number,
@@ -39,6 +28,7 @@ export async function getClientMonthCalendar(
   return result.data;
 }
 
+//calendar agent 
 export async function getAgentMonthCalendar(
   agentId: number,
   year: number,

@@ -9,7 +9,7 @@ import { reservationsRepository } from "./reservations.repository";
 import { UpdateReservationDto } from "./dto/update-reservation.dto";
 import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { ServicesRepository } from "src/services/services.repository";
-import { MailService } from "src/mail/mail.service"; 
+import { MailService } from "src/mail/mail.service";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { combineDateAndTime } from "src/common/utils/date.utils";
 
@@ -18,7 +18,7 @@ export class ReservationsService {
   constructor(
     private reservationsRepository: reservationsRepository,
     private servicesRepository: ServicesRepository,
-    private mailService: MailService 
+    private mailService: MailService
   ) {}
 
   private async resolveServiceForReservation(
@@ -31,9 +31,6 @@ export class ReservationsService {
       throw new BadRequestException("Ce service n'appartient pas à cet agent");
     return service;
   }
-
- 
-
 
   async getAllReservations() {
     return await this.reservationsRepository.findAll();
@@ -216,7 +213,6 @@ export class ReservationsService {
     return updated;
   }
 
-  
   async cancelByClient(reservationId: number, clientId: number) {
     const reservation =
       await this.reservationsRepository.findById(reservationId);
@@ -255,7 +251,7 @@ export class ReservationsService {
           dateReservation:
             reservation.date_reservation.toLocaleDateString("fr-FR"),
           heureReservation:
-            reservation.heure_reservation?.toTimeString().slice(0, 5) ?? null,
+            reservation.heure_reservation.toTimeString().slice(0, 5) ?? null,
         }
       );
     }
@@ -320,17 +316,49 @@ export class ReservationsService {
   }
 
   // 📧 rappel 24h avant le RDV, tourne 1x/jour
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @Cron(CronExpression.EVERY_HOUR)
   async handleReminders24h() {
-    const tomorrow = new Date();
-    //if 10h au lieu de 24h
-    // const in10Hours = new Date(now.getTime() + 10 * 60 * 60 * 1000);    
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
+    console.log("🔔 CRON REMINDER EXÉCUTÉ");
 
-    const toRemind =
-      await this.reservationsRepository.findConfirmedForReminder(tomorrow);
-    if (toRemind.length === 0) return;
+    const REMINDER_HOURS_BEFORE = 24;
+
+    const now = new Date();
+
+    console.log(`🕐 Maintenant : ${now.toString()}`);
+    const targetTime = new Date(
+      now.getTime() + REMINDER_HOURS_BEFORE * 60 * 60 * 1000
+    ); // demain
+
+    const reservations =
+      await this.reservationsRepository.findConfirmedForReminder();
+
+    console.log(
+      `Confirmed and not sent Reservations found : ${reservations.length} 🦋 `
+    );
+    const toRemind = reservations.filter((reservation) => {
+      const rendezvous = new Date(reservation.date_reservation);
+
+      rendezvous.setHours(
+        reservation.heure_reservation.getHours(),
+        reservation.heure_reservation.getMinutes(),
+        reservation.heure_reservation.getSeconds(),
+        0
+      );
+
+      console.log(
+        `Reservation ${reservation.id} → appointment: ${rendezvous.toString()}`
+      );
+
+      //comparer le rendez-vous avec now.
+      return rendezvous >= now && rendezvous <= targetTime;
+    });
+
+    if (toRemind.length === 0) {
+      console.log("no reservations to be reminded of 🤍");
+      return;
+    }
+
+    console.log(`Reseravtion that should be reminded of : ${toRemind}`);
 
     for (const r of toRemind) {
       const dateStr = r.date_reservation.toLocaleDateString("fr-FR");

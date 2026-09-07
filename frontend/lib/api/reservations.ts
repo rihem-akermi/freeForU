@@ -13,12 +13,12 @@ export type CreateMyReservationData = {
 export type AgentDayReservation = {
   id: number;
   date_reservation: string;
-  heure_reservation: string | null;
-  heure_fin_reservation: string | null; // ← ajouté
+  heure_reservation: string ;
+  heure_fin_reservation: string | null; 
   status: string;
   custom_request: string | null;
-  service_nom: string | null; // ← ajouté
-  service_prix: number | null; // ← ajouté
+  service_nom: string | null; 
+  service_prix: number | null; 
   users: { id: number; name: string; phone: string | null; email: string };
   agent_confirmed: boolean;
 };

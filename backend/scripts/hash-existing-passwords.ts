@@ -1,3 +1,7 @@
+//⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+// don't use it until you're sure you are modifying the db
+//⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
+
 import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 

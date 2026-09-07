@@ -1,34 +1,45 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
-  getMonthCalendar,
   getClientMonthCalendar,
-  ClientCalendarDay,
   getAgentMonthCalendar,
 } from "@/lib/api/availability";
 
-/* Same status keys and meaning as before — only the underlying colors
-   are remapped to the app's actual palette tokens instead of raw
-   Tailwind hues (amber/violet/sky/stone/red). */
 const CLIENT_STYLES: Record<string, string> = {
-  neutre: "bg-transparent border-border text-foreground cursor-pointer hover:bg-muted",
+  neutre:
+    "bg-transparent border-border text-foreground cursor-pointer hover:bg-muted",
   gris: "bg-muted text-muted-foreground/50 border-border cursor-not-allowed opacity-70",
-  jaune: "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-[var(--color-warning)]/25 cursor-default",
+  jaune:
+    "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-[var(--color-warning)]/25 cursor-default",
   violet: "bg-accent/15 text-accent-dark border-accent/25 cursor-default",
   bleu: "bg-[var(--color-info-soft)] text-[var(--color-info)] border-[var(--color-info)]/25 cursor-default",
 };
 
 const AGENT_STYLES: Record<string, string> = {
-  neutre: "bg-transparent border-border text-foreground cursor-pointer hover:bg-muted",
-  rouge: "bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-[var(--color-danger)]/25 cursor-pointer hover:opacity-75",
-  jaune: "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-[var(--color-warning)]/25 cursor-pointer hover:opacity-75",
-  violet: "bg-accent/15 text-accent-dark border-accent/25 cursor-pointer hover:opacity-75",
+  neutre:
+    "bg-transparent border-border text-foreground cursor-pointer hover:bg-muted",
+  rouge:
+    "bg-[var(--color-danger-soft)] text-[var(--color-danger)] border-[var(--color-danger)]/25 cursor-pointer hover:opacity-75",
+  jaune:
+    "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-[var(--color-warning)]/25 cursor-pointer hover:opacity-75",
+  violet:
+    "bg-accent/15 text-accent-dark border-accent/25 cursor-pointer hover:opacity-75",
   bleu: "bg-[var(--color-info-soft)] text-[var(--color-info)] border-[var(--color-info)]/25 cursor-pointer hover:opacity-75",
 };
 
 const MONTH_NAMES = [
-  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
 ];
 
 type AvailabilityCalendarProps = {
@@ -44,24 +55,11 @@ export function AvailabilityCalendar({
 }: AvailabilityCalendarProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1);
+  const [month, setMonth] = useState(today.getMonth() + 1); // january : 0
   const [days, setDays] = useState<{ date: string; status: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const styles = mode === "agent" ? AGENT_STYLES : CLIENT_STYLES;
-
-  useEffect(() => {
-    setLoading(true);
-    const fetcher =
-      mode === "client"
-        ? getClientMonthCalendar(agentId, year, month)
-        : getAgentMonthCalendar(agentId, year, month);
-
-    fetcher
-      .then(setDays)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [agentId, year, month, mode]);
 
   const goToPreviousMonth = () => {
     if (month === 1) {
@@ -84,6 +82,19 @@ export function AvailabilityCalendar({
 
   const isDisabled = (status: string) =>
     mode === "client" ? status === "gris" : false;
+
+  useEffect(() => {
+    setLoading(true);
+    const calendarDays =
+      mode === "client"
+        ? getClientMonthCalendar(agentId, year, month)
+        : getAgentMonthCalendar(agentId, year, month);
+
+    calendarDays
+      .then(setDays)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [agentId, year, month, mode]);
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -109,15 +120,21 @@ export function AvailabilityCalendar({
 
       <div className="mb-2 grid grid-cols-7 gap-1.5">
         {["D", "L", "M", "M", "J", "V", "S"].map((d, i) => (
-          <div key={i} className="text-center text-xs font-medium text-muted-foreground">
+          <div
+            key={i}
+            className="text-center text-xs font-medium text-muted-foreground"
+          >
             {d}
           </div>
         ))}
       </div>
 
       {loading ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Chargement...</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          Chargement...
+        </p>
       ) : (
+        // the calendar
         <div className="grid grid-cols-7 gap-1.5">
           {Array.from({ length: firstDayOffset }).map((_, i) => (
             <div key={`empty-${i}`} />
@@ -143,17 +160,32 @@ export function AvailabilityCalendar({
 
       {mode === "client" ? (
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-          <Legend color="bg-[var(--color-warning-soft)] border-[var(--color-warning)]/25" label="En attente" />
+          <Legend
+            color="bg-[var(--color-warning-soft)] border-[var(--color-warning)]/25"
+            label="En attente"
+          />
           <Legend color="bg-accent/15 border-accent/25" label="Confirmée" />
-          <Legend color="bg-[var(--color-info-soft)] border-[var(--color-info)]/25" label="Terminée" />
+          <Legend
+            color="bg-[var(--color-info-soft)] border-[var(--color-info)]/25"
+            label="Terminée"
+          />
           <Legend color="bg-muted border-border" label="Fermé" />
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-          <Legend color="bg-[var(--color-warning-soft)] border-[var(--color-warning)]/25" label="Demande(s) en attente" />
-          <Legend color="bg-[var(--color-info-soft)] border-[var(--color-info)]/25" label="Journée pleine" />
+          <Legend
+            color="bg-[var(--color-warning-soft)] border-[var(--color-warning)]/25"
+            label="Demande(s) en attente"
+          />
+          <Legend
+            color="bg-[var(--color-info-soft)] border-[var(--color-info)]/25"
+            label="Journée pleine"
+          />
           <Legend color="bg-accent/15 border-accent/25" label="Traité" />
-          <Legend color="bg-[var(--color-danger-soft)] border-[var(--color-danger)]/25" label="Repos" />
+          <Legend
+            color="bg-[var(--color-danger-soft)] border-[var(--color-danger)]/25"
+            label="Repos"
+          />
         </div>
       )}
     </div>

@@ -76,7 +76,7 @@ model reservations {
   created_at            DateTime? @default(now()) @db.Timestamp(6)
   agent_confirmed       Boolean   @default(false)
   client_confirmed      Boolean   @default(false)
-  heure_reservation     DateTime? @db.Time(6)
+  heure_reservation     DateTime  @db.Time(6)
   custom_request        String?
   heure_fin_reservation DateTime? @db.Time(6)
   archived              Boolean   @default(false)

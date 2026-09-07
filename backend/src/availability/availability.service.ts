@@ -25,36 +25,8 @@ export class AvailabilityService {
     private reservationsRepository: reservationsRepository
   ) {}
 
-  // Phase D — statut ouvert/fermé brut d'un agent (pas encore utilisé directement par le frontend, mais gardé)
-  async getMonthCalendar(agentId: number, year: number, month: number) {
-    const from = new Date(year, month - 1, 1);
-    const to = new Date(year, month, 0);
 
-    const [allWorkingHours, blockedDays] = await Promise.all([
-      this.workingHoursRepository.findByAgentId(agentId),
-      this.blockedSlotsRepository.findByAgentAndDateRange(agentId, from, to),
-    ]);
-
-    const blockedDateKeys = new Set(blockedDays.map((b) => toDateKey(b.date)));
-    const result: { date: string; status: DayStatus }[] = [];
-
-    for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-      const dateKey = toDateKey(d);
-      const dayOfWeek = d.getDay();
-      const workingHour = allWorkingHours.find((wh) => wh.day_of_week === dayOfWeek);
-
-      if (!workingHour) {
-        result.push({ date: dateKey, status: "sans_info" });
-      } else if (!workingHour.is_working || blockedDateKeys.has(dateKey)) {
-        result.push({ date: dateKey, status: "ferme" });
-      } else {
-        result.push({ date: dateKey, status: "ouvert" });
-      }
-    }
-    return result;
-  }
-
-  // Phase D — détail d'un jour (horaires) pour DayAvailabilityModal
+  // détail d'un jour (horaires) pour DayAvailabilityModal
   async getDayAvailability(agentId: number, dateStr: string) {
     const [y, m, d] = dateStr.split("-").map(Number);
     const date = new Date(y, m - 1, d);
@@ -81,7 +53,7 @@ export class AvailabilityService {
     };
   }
 
-  // Phase E — calendrier CLIENT (personnel)
+  // calendrier CLIENT (personnel)
   async getClientMonthCalendar(agentId: number, clientId: number, year: number, month: number) {
     const from = new Date(year, month - 1, 1);
     const to = new Date(year, month, 0);
@@ -120,7 +92,7 @@ export class AvailabilityService {
     return result;
   }
 
-  // Phase F — calendrier AGENT (agrégé), corrigé pour inclure les horaires hebdo
+  // calendrier AGENT (agrégé), corrigé pour inclure les horaires hebdo
   async getAgentMonthCalendar(agentId: number, year: number, month: number) {
     const from = new Date(year, month - 1, 1);
     const to = new Date(year, month, 0);

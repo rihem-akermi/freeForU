@@ -66,16 +66,25 @@ export class reservationsRepository {
     });
   }
 
-  async findConfirmedForReminder(targetDate: Date) {
+  async findConfirmedForReminder() {
     return this.prisma.reservations.findMany({
       where: {
         status: "confirmee",
-        date_reservation: targetDate,
         reminder_sent: false,
       },
       include: {
-        users: { select: { name: true, email: true } },
-        agents: { select: { name: true, email: true } },
+        users: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        agents: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
     });
   }
@@ -192,7 +201,6 @@ export class reservationsRepository {
     });
 
     return pending.filter((r) => {
-      if (!r.heure_reservation) return false;
       const rHeureFin =
         r.heure_fin_reservation ??
         new Date(r.heure_reservation.getTime() + 60 * 60 * 1000);

@@ -110,23 +110,4 @@ export class AvailabilityController {
     return this.availabilityService.getAgentMonthCalendar(agentId, year, month);
   }
 
-  @ApiOperation({
-    summary: "Consulter le calendrier mensuel public d’un agent",
-    description: "Route publique indiquant les jours disponibles, complets ou indisponibles sur un mois.",
-  })
-  @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
-  @ApiQuery({ name: "year", description: "Année (ex: 2026)", example: 2026 })
-  @ApiQuery({ name: "month", description: "Mois (1 à 12)", example: 9 })
-  @ApiResponse({
-    status: 200,
-    description: "Vue du mois publique retournée avec succès.",
-  })
-  @Get("agent/:agentId")
-  async getMonthCalendar(
-    @Param("agentId", ParseIntPipe) agentId: number,
-    @Query("year", ParseIntPipe) year: number,
-    @Query("month", ParseIntPipe) month: number
-  ) {
-    return this.availabilityService.getMonthCalendar(agentId, year, month);
-  }
 }

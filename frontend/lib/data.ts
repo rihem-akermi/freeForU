@@ -39,7 +39,7 @@ export type Reservation = {
   client_id: number;
   agent_id: number;
   custom_request: string;
-  heure_reservation: string | null;
+  heure_reservation: string ;
   heure_fin_reservation: string | null;
   date_reservation: string;
   status:
