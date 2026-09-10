@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { signup } from "@/lib/api/signup";
+import { signup } from "@/lib/api/auth";
 import { getCategories } from "@/lib/api/categories";
 import { Category } from "@/lib/data";
 import { Button, Input, Select } from "@/components/ui/UIComponents";
@@ -51,7 +51,7 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await signup(form);
-      router.push("/login");
+      router.push(`/otp?email=${encodeURIComponent(form.email)}`);
     } catch (err: any) {
       console.error("Erreur signup :", err);
       setError(err.response?.data?.message || "Une erreur est survenue");

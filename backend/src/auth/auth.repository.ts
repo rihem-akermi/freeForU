@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class AuthRepository {
@@ -13,8 +13,7 @@ export class AuthRepository {
     });
   }
 
-
-   async findAgentByEmail(email: string) {
+  async findAgentByEmail(email: string) {
     return this.prisma.agents.findFirst({
       where: {
         email,
@@ -22,8 +21,7 @@ export class AuthRepository {
     });
   }
 
-
-   async createUser(data: {
+  async createUser(data: {
     name: string;
     email: string;
     password: string;
@@ -42,8 +40,7 @@ export class AuthRepository {
     });
   }
 
-  
-   async createAgent(data: {
+  async createAgent(data: {
     name: string;
     email: string;
     password: string;
@@ -64,4 +61,17 @@ export class AuthRepository {
     });
   }
 
+  async markUserEmailVerified(id: number) {
+    return this.prisma.users.update({
+      where: { id },
+      data: { email_verified_at: new Date() },
+    });
+  }
+
+  async markAgentEmailVerified(id: number) {
+    return this.prisma.agents.update({
+      where: { id },
+      data: { email_verified_at: new Date() },
+    });
+  }
 }

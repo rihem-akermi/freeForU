@@ -7,11 +7,16 @@ import * as bcrypt from "bcrypt";
 import { AuthRepository } from "./auth.repository";
 import { JwtService } from "@nestjs/jwt";
 
+import { OtpService } from "../otp/otp.service";
+import { MailService } from "../mail/mail.service";
+
 @Injectable()
 export class AuthService {
   constructor(
     private authRepository: AuthRepository,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private otpService: OtpService,
+    private mailService: MailService
   ) {}
 
   async validateLogin(email: string, password: string) {
@@ -90,7 +95,7 @@ export class AuthService {
       );
     }
   }
-
+  // click signup-btn
   async signup(data: {
     name: string;
     email: string;
@@ -128,8 +133,70 @@ export class AuthService {
       });
     }
 
-    console.log("✅ Compte créé avec succès :", created.id);
+    const code = await this.otpService.haveOtp(
+      data.role === "AGENT" ? "AGENT" : "USER",
+      created.id,
+      "EMAIL_VERIFICATION"
+    );
+
+    await this.mailService.sendOtpEmail(created.email, code, created.name);
+    console.log("📧 OTP de vérification envoyé à :", created.email);
+
+    console.log(
+      "✅ Compte créé avec succès mais ⚠️ en train d'être verfié avec l'OTP ⚠️ :",
+      created.id
+    );
     const { password: _, ...safeCreated } = created;
-    return safeCreated;
+    return safeCreated;//has the email in it rahouma 
   }
+
+  // click verify-btn
+  async verifyEmail(email: string, code: string) {
+    const user = await this.authRepository.findUserByEmail(email);
+    const target = user ?? (await this.authRepository.findAgentByEmail(email));
+
+    if (!target) {
+      throw new UnauthorizedException("Compte introuvable");
+    }
+
+    const target_table = user ? "USER" : "AGENT";
+
+    await this.otpService.verifyCode(
+      target_table,
+      target.id,
+      "EMAIL_VERIFICATION",
+      code
+    );
+
+    if (user) {
+      await this.authRepository.markUserEmailVerified(target.id);
+    } else {
+      await this.authRepository.markAgentEmailVerified(target.id);
+    }
+
+    console.log(`✅ Email vérifié pour ${target_table} #${target.id}`);
+    return { message: "Email vérifié avec succès" };
+  }
+
+  //click resend-btn
+  async resendOtp(email: string, purpose: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET') {
+  const user = await this.authRepository.findUserByEmail(email);
+  const target = user ?? await this.authRepository.findAgentByEmail(email);
+
+  if (!target) {
+    throw new UnauthorizedException("Compte introuvable");
+  }
+
+  if (purpose === 'EMAIL_VERIFICATION' && target.email_verified_at) {
+    throw new ConflictException("Cet email est déjà vérifié");
+  }
+
+  const target_table = user ? 'USER' : 'AGENT';
+
+  const code = await this.otpService.haveOtp(target_table, target.id, purpose);
+  await this.mailService.sendOtpEmail(target.email, code, target.name);
+
+  console.log(`📧 OTP renvoyé (${purpose}) pour ${target_table} #${target.id}`);
+  return { message: "Nouveau code envoyé" };
+}
 }

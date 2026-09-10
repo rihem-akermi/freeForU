@@ -1,4 +1,4 @@
-﻿# 🚀 FreeForU — Plateforme de Réservation de Prestations de Services
+# 🚀 FreeForU — Plateforme de Réservation de Prestations de Services
 
 <p align="center">
   <strong>Mise en relation directe entre clients et prestataires de services indépendants avec gestion dynamique des disponibilités et réservation en temps réel.</strong>
@@ -17,6 +17,7 @@
 - [7. Système de Notifications Email](#7-système-de-notifications-email)
 - [8. Gestion des Fichiers & Uploads](#8-gestion-des-fichiers--uploads)
 - [9. Authentification & Sécurité](#9-authentification--sécurité)
+  - [Vérification d'Email (OTP)](#vérification-demail-otp)
 - [10. Base de Données & Modélisation](#10-base-de-données--modélisation)
 - [11. Documentation API & Swagger](#11-documentation-api--swagger)
 - [12. Structure du Projet](#12-structure-du-projet)
@@ -235,6 +236,7 @@ sequenceDiagram
 - ❌ **Réservation rejetée** : Informe le client du refus avec invitation à sélectionner un autre artisan disponible.
 - 🚫 **Réservation annulée par le client** : Notifie l'agent de la libération du créneau horaire.
 - 🔔 **Rappel 24h avant le rendez-vous** : Cron quotidien (`09:00 AM`) qui envoie un rappel simultané au client et à l'agent pour leur intervention du lendemain.
+- 🔐 **Code de vérification OTP** : Envoi immédiat du code numérique à 6 chiffres lors de l'inscription ou d'une demande de renvoi.
 - ⚠️ **Publication retirée** : Informe l'agent lorsque sa réalisation est dépubliée par un administrateur.
 
 ---
@@ -290,6 +292,85 @@ sequenceDiagram
 ### Gardes & Rôles
 - `AuthGuard` : Extrait et vérifie la signature et l'expiration du cookie `accessToken`.
 - `RolesGuard` : Inspecte les métadonnées décorées via `@Roles('CLIENT' | 'AGENT' | 'ADMIN')` et restreint l'accès aux utilisateurs autorisés.
+
+### Vérification d'Email (OTP)
+
+Afin de valider l'authenticité des adresses email dès l'inscription, FreeForU intègre un système robuste de vérification par code OTP (*One-Time Password*) à 6 chiffres. Initialement envisagée avec Twilio Verify, cette solution a été développée sur-mesure avec NestJS et Brevo suite aux restrictions de couverture régionale (Tunisie) sur les comptes d'essai Twilio.
+
+Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'identifiants indépendants, les codes OTP sont centralisés dans une table dédiée `otp_verifications` (`target_table`, `target_id`, `purpose`).
+
+#### 🔄 Flux de Vérification
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User as Utilisateur (Client / Agent)
+    participant UI as Frontend (/otp)
+    participant API as Backend (Auth / OtpService)
+    participant Mail as Brevo MailService
+    participant DB as PostgreSQL (otp_verifications)
+
+    User->>API: Inscription (POST /auth/signup)
+    API->>DB: Création du compte (email_verified_at = null)
+    API->>DB: Génération & stockage hashé de l'OTP (SHA-256)
+    API->>Mail: Envoi du code à 6 chiffres par email
+    API-->>UI: Compte créé & redirection vers /otp?email=...
+    User->>UI: Saisie du code à 6 chiffres
+    UI->>API: POST /auth/verify-email { email, code }
+    API->>DB: Contrôle du hash, expiration & nombre d'essais
+    API->>DB: Mise à jour email_verified_at & marquage CONSUMED
+    API-->>UI: 200 OK (Email vérifié avec succès)
+```
+
+#### 🔌 Endpoints Publics
+
+Ces routes sont publiques car la vérification de l'adresse email intervient avant la première connexion :
+
+##### 1. `POST /auth/verify-email`
+Valide le code OTP saisi par l'utilisateur et active l'adresse email du compte (`email_verified_at`).
+
+- **Requête :**
+  ```json
+  {
+    "email": "user@example.com",
+    "code": "123456"
+  }
+  ```
+- **Réponse (`200 OK`) :**
+  ```json
+  {
+    "message": "Email vérifié avec succès"
+  }
+  ```
+
+##### 2. `POST /auth/resend-otp`
+Génère et expédie un nouveau code de vérification par email, en invalidant l'ancien code en cours.
+
+- **Requête :**
+  ```json
+  {
+    "email": "user@example.com",
+    "purpose": "EMAIL_VERIFICATION"
+  }
+  ```
+- **Réponse (`200 OK`) :**
+  ```json
+  {
+    "message": "Nouveau code envoyé"
+  }
+  ```
+
+#### 🛡️ Mesures de Sécurité
+
+- **Hachage cryptographique SHA-256** : Le code à 6 chiffres (généré via Node.js `crypto.randomInt`) n'est jamais stocké en clair ; seul son hash SHA-256 est persisté en base de données.
+- **Expiration stricte (2 minutes)** : Tout code OTP expire après 120 secondes (`expires_at`).
+- **Limitation des tentatives (3 essais max)** : Après 3 échecs de validation, le code est immédiatement invalidé (`INVALIDATED`) pour bloquer les attaques par force brute.
+- **Délai d'attente / Cooldown (30 secondes)** : Un intervalle minimum de 30 secondes entre deux demandes de renvoi est contrôlé directement dans la logique métier (`OtpService`).
+- **Révocation des anciens codes** : L'émission d'un nouvel OTP invalide automatiquement tout code `PENDING` préexistant pour le même compte et motif.
+- **Purge automatique par Cron** : Une tâche planifiée chaque minute (`sweepExpiredOtps`) bascule les codes obsolètes au statut `EXPIRED` pour préserver l'intégrité des données (la sécurité reste autonome en vérifiant `expires_at` à chaque requête).
+
+> [!NOTE]
+> L'infrastructure OTP et le modèle de données sont d'ores et déjà extensibles au cas d'usage de réinitialisation de mot de passe (`purpose: PASSWORD_RESET`), dont l'intégration applicative est prévue dans les futures évolutions.
 
 ---
 
@@ -463,6 +544,7 @@ freeForU/
 │   │   ├── common/            # Utilitaires transversaux (formatage dates/heures)
 │   │   ├── contacts/          # Gestion des messages de contact
 │   │   ├── mail/              # Service d'envoi d'emails transactionnels (Brevo)
+│   │   ├── otp/               # Module de gestion, hachage et validation des codes OTP
 │   │   ├── prisma/            # Service d'instanciation de la base de données
 │   │   ├── publications/      # Gestion du portfolio et modération admin
 │   │   ├── reservations/      # Logique de réservation, workflow et tâches Cron
@@ -585,6 +667,8 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 - 📊 **Statistiques & Tableau de Bord Financier pour Agents** : Graphiques de revenus mensuels, taux d'occupation et métriques de performance.
 
 ---
+
+
 
 <p align="center">
   Développé avec passion pour simplifier la réservation de services indépendants.
