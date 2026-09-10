@@ -187,4 +187,21 @@ export class MailService {
     `;
     return this.sendMail(to, subject, html, data.agentName);
   }
+
+  // OTP 
+  async sendOtpEmail(to: string, code: string, toName?: string) {
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; text-align: center;">
+      <h2 style="color: #1a1a1a;">Vérifiez votre adresse email</h2>
+      <p style="color: #555;">Voici votre code de vérification :</p>
+      <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; background: #f4f4f4; padding: 16px 24px; border-radius: 8px; display: inline-block; color: #2563eb;">
+        ${code}
+      </div>
+      <p style="color: #888; margin-top: 16px;">Ce code expire dans <strong>2 minutes</strong>.</p>
+      <p style="color: #aaa; font-size: 12px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+    </div>
+  `;
+
+  return this.sendMail(to, 'Vérifiez votre adresse email', htmlContent, toName);
+}
 }

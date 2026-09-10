@@ -1,13 +1,24 @@
 import api from "./interceptor";
 
-export async function login(email: string, password: string) {
+type SignupData = {
+  name: string;
+  email: string;
+  password: string;
+  ville: string;
+  phone: string;
+  role: "CLIENT" | "AGENT";
+  category_id?: number;
+};
 
-    const response = await api.post("/auth/login", 
-    { email,
-      password 
-    })
-  const validUser =  response.data
-  return validUser
+export async function signup(data: SignupData) {
+  const response = await api.post("/auth/signup", data);
+  return response.data;
+}
+
+export async function login(email: string, password: string) {
+  const response = await api.post("/auth/login", { email, password });
+  const validUser = response.data;
+  return validUser;
 }
 
 export async function logout() {
@@ -18,5 +29,18 @@ export async function logout() {
 
 export async function getMe() {
   const response = await api.get("/auth/me");
+  return response.data;
+}
+
+export async function verifyEmail(email: string, code: string) {
+  const response = await api.post("/auth/verify-email", { email, code });
+  return response.data;
+}
+
+export async function resendOtp(
+  email: string,
+  purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET",
+) {
+  const response = await api.post("/auth/resend-otp", { email, purpose });
   return response.data;
 }

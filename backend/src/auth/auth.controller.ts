@@ -20,6 +20,8 @@ import {
   ApiResponse,
   ApiCookieAuth,
 } from "@nestjs/swagger";
+import { VerifyEmailDto } from "./dto/verify-email.dto";
+import { ResendOtpDto } from "./dto/resend-email.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -33,7 +35,8 @@ export class AuthController {
   })
   @ApiResponse({
     status: 201,
-    description: "Authentification réussie, cookies posés et profil utilisateur retourné.",
+    description:
+      "Authentification réussie, cookies posés et profil utilisateur retourné.",
   })
   @ApiResponse({
     status: 400,
@@ -139,7 +142,8 @@ export class AuthController {
 
   @ApiOperation({
     summary: "Déconnexion",
-    description: "Supprime les cookies httpOnly `accessToken` et `refreshToken`.",
+    description:
+      "Supprime les cookies httpOnly `accessToken` et `refreshToken`.",
   })
   @ApiResponse({
     status: 201,
@@ -171,5 +175,37 @@ export class AuthController {
   @Get("me")
   async getMe(@Req() req: Request & { user: { sub: number; role: string } }) {
     return { id: req.user.sub, role: req.user.role };
+  }
+
+  @ApiOperation({
+    summary: "Vérification de l'email via OTP",
+    description:
+      "Valide le code OTP envoyé par email et marque le compte comme vérifié.",
+  })
+  @ApiResponse({ status: 200, description: "Email vérifié avec succès." })
+  @ApiResponse({
+    status: 400,
+    description: "Code invalide, expiré, ou tentatives épuisées.",
+  })
+  @ApiResponse({ status: 401, description: "Compte introuvable." })
+  @Post("verify-email")
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    return this.authService.verifyEmail(body.email, body.code);
+  }
+
+  @ApiOperation({
+    summary: "Renvoyer un code OTP",
+    description:
+      "Génère un nouveau code OTP pour le but spécifié et l'envoie par email, invalidant l'ancien.",
+  })
+  @ApiResponse({ status: 200, description: "Nouveau code envoyé." })
+  @ApiResponse({ status: 401, description: "Compte introuvable." })
+  @ApiResponse({
+    status: 409,
+    description: "Email déjà vérifié (uniquement pour EMAIL_VERIFICATION).",
+  })
+  @Post("resend-otp")
+  async resendOtp(@Body() body: ResendOtpDto) {
+    return this.authService.resendOtp(body.email, body.purpose);
   }
 }

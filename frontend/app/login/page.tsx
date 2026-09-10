@@ -42,6 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg sm:p-10"
@@ -91,7 +92,10 @@ export default function LoginPage() {
 
         <p className="mt-5 text-center text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
-          <Link href="/signup" className="font-semibold text-accent-dark hover:underline">
+          <Link
+            href="/signup"
+            className="font-semibold text-accent-dark hover:underline"
+          >
             Créer un compte
           </Link>
         </p>

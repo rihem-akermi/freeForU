@@ -1,10 +1,16 @@
-import { IsEmail, IsInt, IsNotEmpty, IsString, MinLength } from "class-validator";
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+} from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateAgentDto {
   @ApiProperty({
     description: "Nom complet de l'agent",
-    example: 'Karim Ben Salem',
+    example: "Karim Ben Salem",
   })
   @IsString()
   @IsNotEmpty()
@@ -12,14 +18,15 @@ export class CreateAgentDto {
 
   @ApiProperty({
     description: "Adresse email de l'agent",
-    example: 'karim.bensalem@example.com',
+    example: "karim.bensalem@example.com",
   })
+  @IsNotEmpty()
   @IsEmail()
   email!: string;
 
   @ApiProperty({
     description: "Mot de passe (minimum 6 caractères)",
-    example: 'password123',
+    example: "password123",
     minLength: 6,
   })
   @IsString()
@@ -27,15 +34,15 @@ export class CreateAgentDto {
   password!: string;
 
   @ApiProperty({
-    description: 'Numéro de téléphone',
-    example: '21698123456',
+    description: "Numéro de téléphone",
+    example: "21698123456",
   })
   @IsString()
   phone!: string;
 
   @ApiProperty({
-    description: 'Ville de résidence ou exercice',
-    example: 'Tunis',
+    description: "Ville de résidence ou exercice",
+    example: "Tunis",
   })
   @IsString()
   ville!: string;
