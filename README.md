@@ -17,7 +17,7 @@
 - [7. Système de Notifications Email](#7-système-de-notifications-email)
 - [8. Gestion des Fichiers & Uploads](#8-gestion-des-fichiers--uploads)
 - [9. Authentification & Sécurité](#9-authentification--sécurité)
-  - [Vérification d'Email (OTP)](#vérification-demail-otp)
+- [9.1. Vérification d'Email (OTP)](#vérification-demail-otp)
 - [10. Base de Données & Modélisation](#10-base-de-données--modélisation)
 - [11. Documentation API & Swagger](#11-documentation-api--swagger)
 - [12. Structure du Projet](#12-structure-du-projet)
@@ -34,11 +34,13 @@
 **FreeForU** est une plateforme web moderne permettant à des clients de découvrir des prestataires indépendants qualifiés (**Agents**), de consulter leur portfolio de réalisations, leurs tarifs et leurs avis vérifiés, puis de réserver des créneaux d'intervention en toute transparence.
 
 ### 🎯 Problématiques résolues
+
 - **Gestion des disponibilités en temps réel** : Résolution des conflits de réservation et synchronisation des plannings hebdomadaires et des jours d'indisponibilité.
 - **Sécurisation des échanges et des réservations** : Double validation des interventions terminées, alertes automatiques et gestion des délais d'annulation (règle des 24h).
 - **Visibilité pour les artisans/professionnels** : Vitrine personnalisée, portfolio de publications avec modération et gestion de prestations personnalisées ou tarifées.
 
 ### 👥 Rôles Utilisateurs
+
 1. **Client (`CLIENT`)** : Recherche des professionnels par nom ou catégorie, consulte les calendriers de disponibilité, soumet des demandes (service au forfait ou besoin sur-mesure), gère ses rendez-vous et dépose des avis.
 2. **Agent (`AGENT`)** : Configure ses horaires de travail hebdomadaires et jours de repos/congés, gère son catalogue de services et son portfolio, accepte/refuse les demandes de rendez-vous et confirme la fin des prestations.
 3. **Administrateur (`ADMIN`)** : Supervise la plateforme, gère les utilisateurs et les agents, modère les publications (validation/rejet) et administre le référentiel des catégories.
@@ -48,6 +50,7 @@
 ## 2. Fonctionnalités Principales
 
 ### 👤 Espace Client
+
 - **Catalogue & Recherche** : Filtrage des agents par catégorie de métier et recherche par nom.
 - **Consultation de Profil & Portfolio** : Accès aux détails du profil, bio, zone d'intervention, mode de déplacement (`se_deplace`, `recoit`, `les_deux`), avis clients et galerie de travaux réalisés.
 - **Réservation Flexible** : Choix entre un service prédéfini au catalogue (avec tarif et durée) ou formulation d'une demande personnalisée (`custom_request`).
@@ -56,6 +59,7 @@
 - **Évaluation & Avis** : Notation (1 à 5 étoiles) et commentaire après réalisation conjointe de la prestation.
 
 ### 🛠️ Espace Agent (Prestataire)
+
 - **Gestion du Planning Hebdomadaire** : Configuration des plages horaires de travail par jour de la semaine (`start_time`, `end_time`, `is_working`).
 - **Créneaux & Jours Bloqués** : Déclaration de jours de repos ponctuels (`off`) ou de journées complètes indisponibles (`full`).
 - **Traitement des Demandes** : Acceptation ou refus des réservations reçues. L'acceptation d'un créneau rejette automatiquement les demandes concurrentes sur le même créneau.
@@ -64,6 +68,7 @@
 - **Double Clôture de Prestation** : Validation de la réalisation pour marquer la réservation comme `terminee`.
 
 ### 🛡️ Espace Administration
+
 - **Modération des Publications** : Validation ou rejet des publications soumises par les prestataires avant diffusion publique, avec notification automatique en cas de retrait.
 - **Gestion des Utilisateurs & Agents** : Création manuelle, mise à jour des coordonnées et suppression de comptes.
 - **Gestion des Catégories** : Administration des catégories de métiers disponibles sur la plateforme.
@@ -73,20 +78,20 @@
 
 ## 3. Stack Technique
 
-| Technologie | Emplacement | Rôle & Utilité |
-| :--- | :--- | :--- |
-| **Next.js (v16 App Router)** | Frontend (`frontend`) | Framework React pour le rendu hybride, le routage moderne et les composants clients/serveurs. |
-| **React 19 & TypeScript** | Frontend | Bibliothèque UI déclarative et typage statique strict. |
-| **Tailwind CSS (v4)** | Frontend | Framework CSS utilitaire pour des interfaces modernes et réactives. |
-| **Axios & js-cookie** | Frontend | Client HTTP configuré avec intercepteur pour la gestion des cookies JWT et le rafraîchissement automatique de session. |
-| **NestJS (v11)** | Backend (`backend`) | Framework Node.js modulaire, typé et scalable basé sur Express. |
-| **Prisma ORM (v7)** | Backend | Gestion du schéma de base de données, migrations et client de requêtes typées PostgreSQL. |
-| **PostgreSQL** | Base de données | Système de gestion de base de données relationnelle robuste avec contraintes d'intégrité et types temporels (`DATE`, `TIME`). |
-| **JWT (`@nestjs/jwt`) & bcrypt** | Backend | Chiffrement des mots de passe et sécurisation des routes par tokens d'accès et de rafraîchissement via cookies `httpOnly`. |
-| **Brevo (`@getbrevo/brevo`)** | Backend | Service d'envoi d'emails transactionnels (notifications et rappels de rendez-vous). |
-| **Cloudinary & Multer** | Backend | Téléversement direct en flux mémoire (`Buffer` / `streamifier`) et hébergement optimisé des médias. |
-| **NestJS Schedule (Cron)** | Backend | Tâches d'arrière-plan automatisées (archivage, expiration des réservations et rappels 24h). |
-| **Swagger / OpenAPI** | Backend | Documentation interactive et test des endpoints de l'API REST via `/api/docs`. |
+| Technologie                      | Emplacement           | Rôle & Utilité                                                                                                                |
+| :------------------------------- | :-------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Next.js (v16 App Router)**     | Frontend (`frontend`) | Framework React pour le rendu hybride, le routage moderne et les composants clients/serveurs.                                 |
+| **React 19 & TypeScript**        | Frontend              | Bibliothèque UI déclarative et typage statique strict.                                                                        |
+| **Tailwind CSS (v4)**            | Frontend              | Framework CSS utilitaire pour des interfaces modernes et réactives.                                                           |
+| **Axios & js-cookie**            | Frontend              | Client HTTP configuré avec intercepteur pour la gestion des cookies JWT et le rafraîchissement automatique de session.        |
+| **NestJS (v11)**                 | Backend (`backend`)   | Framework Node.js modulaire, typé et scalable basé sur Express.                                                               |
+| **Prisma ORM (v7)**              | Backend               | Gestion du schéma de base de données, migrations et client de requêtes typées PostgreSQL.                                     |
+| **PostgreSQL**                   | Base de données       | Système de gestion de base de données relationnelle robuste avec contraintes d'intégrité et types temporels (`DATE`, `TIME`). |
+| **JWT (`@nestjs/jwt`) & bcrypt** | Backend               | Chiffrement des mots de passe et sécurisation des routes par tokens d'accès et de rafraîchissement via cookies `httpOnly`.    |
+| **Brevo (`@getbrevo/brevo`)**    | Backend               | Service d'envoi d'emails transactionnels (notifications et rappels de rendez-vous).                                           |
+| **Cloudinary & Multer**          | Backend               | Téléversement direct en flux mémoire (`Buffer` / `streamifier`) et hébergement optimisé des médias.                           |
+| **NestJS Schedule (Cron)**       | Backend               | Tâches d'arrière-plan automatisées (archivage, expiration des réservations et rappels 24h).                                   |
+| **Swagger / OpenAPI**            | Backend               | Documentation interactive et test des endpoints de l'API REST via `/api/docs`.                                                |
 
 ---
 
@@ -108,7 +113,7 @@ flowchart TD
         Service["Services Métier"]
         Repo["Repositories Dédiés"]
         CronTask["ScheduleModule (Tâches Cron)"]
-        
+
         AxiosClient -->|"HTTP Requests + Cookies"| Guard
         Guard --> Controller
         Controller --> Service
@@ -140,15 +145,15 @@ Les réservations suivent un cycle d'état strict géré dans la table `reservat
 ```mermaid
 stateDiagram-v2
     [*] --> en_attente: Le client soumet une réservation
-    
+
     en_attente --> confirmee: L'agent accepte la demande
     en_attente --> rejetee: L'agent refuse la demande
     en_attente --> rejetee: Rejet auto (conflit de créneau validé)
     en_attente --> expiree: Cron horaire (date/heure dépassée sans réponse)
     en_attente --> annulee: Le client annule (> 24h avant RDV)
-    
+
     confirmee --> annulee: Le client annule (> 24h avant RDV)
-    
+
     state confirmee {
         [*] --> EnAttenteValidation
         EnAttenteValidation --> AgentValide: Agent confirme l'exécution
@@ -156,9 +161,9 @@ stateDiagram-v2
         AgentValide --> Termine: Client confirme aussi
         ClientValide --> Termine: Agent confirme aussi
     }
-    
+
     confirmee --> terminee: Validation conjointe (agent_confirmed & client_confirmed)
-    
+
     terminee --> [*]: Déblocage du dépôt d'avis (Reviews)
     rejetee --> [*]
     annulee --> [*]
@@ -166,6 +171,7 @@ stateDiagram-v2
 ```
 
 ### Détail des statuts :
+
 - `en_attente` : Demande créée par le client, en attente de réponse de l'artisan/agent.
 - `confirmee` : Réservation acceptée par l'agent.
 - `rejetee` : Demande refusée explicitement par l'agent ou rejetée automatiquement car un autre créneau en conflit a été validé.
@@ -178,6 +184,7 @@ stateDiagram-v2
 ## 6. Calendrier & Gestion des Disponibilités
 
 Le moteur de calcul des disponibilités (`AvailabilityService`) consolide trois sources de données pour alimenter le calendrier interactif :
+
 1. **Horaires réguliers (`agent_working_hours`)** : Définit les jours ouvrés de la semaine (`day_of_week` de 0 à 6) et les plages `start_time` / `end_time`.
 2. **Exceptions de planning (`agent_blocked_slots`)** : Jours marqués comme indisponibles (`off`) ou journées complètes (`full`).
 3. **Réservations actives (`reservations`)** : Analyse des rendez-vous existants sur la période demandée.
@@ -185,27 +192,27 @@ Le moteur de calcul des disponibilités (`AvailabilityService`) consolide trois 
 ```mermaid
 flowchart TD
     Req["Frontend demande le calendrier du mois (Année/Mois)"] --> Service["AvailabilityService.getClientMonthCalendar() / getAgentMonthCalendar()"]
-    
+
     subgraph DataFetch["Récupération Parallèle (Promise.all)"]
         WH["WorkingHoursRepository (Jours & Horaires d'ouverture)"]
         BS["BlockedSlotsRepository (Jours bloqués off/full)"]
         Res["ReservationsRepository (Réservations sur le mois)"]
     end
-    
+
     Service --> WH
     Service --> BS
     Service --> Res
-    
+
     WH --> Engine["Moteur d'Agrégation & Priorité"]
     BS --> Engine
     Res --> Engine
-    
+
     subgraph Calculation["Logique de Couleur & Statut"]
         direction TB
         C1["Client : Jaune (en attente) > Violet (confirmée) > Bleu (terminée) > Gris (fermé) > Neutre (ouvert)"]
         C2["Agent : Jaune (en attente) > Bleu (exception full) > Violet (réservé) > Rouge (fermé/off) > Neutre"]
     end
-    
+
     Engine --> Calculation
     Calculation --> Resp["Réponse JSON structurée { date, status }"]
 ```
@@ -231,6 +238,7 @@ sequenceDiagram
 ```
 
 ### Événements de notification implémentés :
+
 - 📬 **Nouvelle réservation reçue** : Envoyé à l'agent avec les détails du client, le service demandé ou la description personnalisée, ainsi que la plage horaire.
 - ✅ **Réservation confirmée** : Notifie le client que l'agent a accepté sa demande.
 - ❌ **Réservation rejetée** : Informe le client du refus avec invitation à sélectionner un autre artisan disponible.
@@ -290,12 +298,14 @@ sequenceDiagram
 ```
 
 ### Gardes & Rôles
+
 - `AuthGuard` : Extrait et vérifie la signature et l'expiration du cookie `accessToken`.
 - `RolesGuard` : Inspecte les métadonnées décorées via `@Roles('CLIENT' | 'AGENT' | 'ADMIN')` et restreint l'accès aux utilisateurs autorisés.
 
 ### Vérification d'Email (OTP)
 
-Afin de valider l'authenticité des adresses email dès l'inscription, FreeForU intègre un système robuste de vérification par code OTP (*One-Time Password*) à 6 chiffres. Initialement envisagée avec Twilio Verify, cette solution a été développée sur-mesure avec NestJS et Brevo suite aux restrictions de couverture régionale (Tunisie) sur les comptes d'essai Twilio.
+Afin de valider l'authenticité des adresses email dès l'inscription, FreeForU intègre un système robuste de vérification par code OTP (_One-Time Password_) à 6 chiffres.
+Cette solution a été développée sur-mesure avec NestJS et Brevo.
 
 Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'identifiants indépendants, les codes OTP sont centralisés dans une table dédiée `otp_verifications` (`target_table`, `target_id`, `purpose`).
 
@@ -327,6 +337,7 @@ sequenceDiagram
 Ces routes sont publiques car la vérification de l'adresse email intervient avant la première connexion :
 
 ##### 1. `POST /auth/verify-email`
+
 Valide le code OTP saisi par l'utilisateur et active l'adresse email du compte (`email_verified_at`).
 
 - **Requête :**
@@ -344,6 +355,7 @@ Valide le code OTP saisi par l'utilisateur et active l'adresse email du compte (
   ```
 
 ##### 2. `POST /auth/resend-otp`
+
 Génère et expédie un nouveau code de vérification par email, en invalidant l'ancien code en cours.
 
 - **Requête :**
@@ -544,7 +556,7 @@ freeForU/
 │   │   ├── common/            # Utilitaires transversaux (formatage dates/heures)
 │   │   ├── contacts/          # Gestion des messages de contact
 │   │   ├── mail/              # Service d'envoi d'emails transactionnels (Brevo)
-│   │   ├── otp/               # Module de gestion, hachage et validation des codes OTP
+│   │   ├── otp/               # Module de gestion, hashage et validation des codes OTP
 │   │   ├── prisma/            # Service d'instanciation de la base de données
 │   │   ├── publications/      # Gestion du portfolio et modération admin
 │   │   ├── reservations/      # Logique de réservation, workflow et tâches Cron
@@ -566,6 +578,7 @@ freeForU/
 ## 13. Installation & Configuration Locale
 
 ### Prérequis
+
 - **Node.js** (v20+ recommandé)
 - **PostgreSQL** (en local ou distant)
 - Gestionnaire de paquets **npm**
@@ -592,6 +605,7 @@ npx prisma generate
 # Lancer le serveur backend en mode développement
 npm run start:dev
 ```
+
 > Le backend démarre sur `http://localhost:3001` et Swagger est accessible sur `http://localhost:3001/api/docs`.
 
 ---
@@ -608,6 +622,7 @@ npm install
 # Lancer le serveur de développement Next.js
 npm run dev
 ```
+
 > L'application frontend est accessible sur `http://localhost:3000`.
 
 ---
@@ -616,16 +631,16 @@ npm run dev
 
 Créez un fichier `.env` à la racine du dossier `backend/` avec les variables suivantes :
 
-| Variable | Description | Exemple / Format |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | Chaîne de connexion PostgreSQL | `postgresql://user:password@localhost:5432/freeforu` |
-| `JWT_ACCESS_SECRET` | Clé secrète pour signer les Access Tokens (15 min) | `votre_cle_secrete_jwt_access` |
-| `JWT_REFRESH_SECRET` | Clé secrète pour signer les Refresh Tokens (7 jours) | `votre_cle_secrete_jwt_refresh` |
-| `CLOUDINARY_CLOUD_NAME` | Nom du compte Cloudinary pour le stockage des photos | `votre_cloud_name` |
-| `CLOUDINARY_API_KEY` | Clé d'API publique Cloudinary | `123456789012345` |
-| `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary | `votre_api_secret_cloudinary` |
-| `BREVO_API_KEY` | Clé d'API pour le service d'emails Brevo | `xkeysib-...` |
-| `MAIL_FROM_BY_BREVO` | Adresse email d'expéditeur validée dans Brevo | `contact@votre-domaine.com` |
+| Variable                | Description                                          | Exemple / Format                                     |
+| :---------------------- | :--------------------------------------------------- | :--------------------------------------------------- |
+| `DATABASE_URL`          | Chaîne de connexion PostgreSQL                       | `postgresql://user:password@localhost:5432/freeforu` |
+| `JWT_ACCESS_SECRET`     | Clé secrète pour signer les Access Tokens (15 min)   | `votre_cle_secrete_jwt_access`                       |
+| `JWT_REFRESH_SECRET`    | Clé secrète pour signer les Refresh Tokens (7 jours) | `votre_cle_secrete_jwt_refresh`                      |
+| `CLOUDINARY_CLOUD_NAME` | Nom du compte Cloudinary pour le stockage des photos | `votre_cloud_name`                                   |
+| `CLOUDINARY_API_KEY`    | Clé d'API publique Cloudinary                        | `123456789012345`                                    |
+| `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary                         | `votre_api_secret_cloudinary`                        |
+| `BREVO_API_KEY`         | Clé d'API pour le service d'emails Brevo             | `xkeysib-...`                                        |
+| `MAIL_FROM_BY_BREVO`    | Adresse email d'expéditeur validée dans Brevo        | `contact@votre-domaine.com`                          |
 
 ---
 
@@ -643,22 +658,26 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 ## 16. Captures d'Écran
 
 ### 🖥️ Vitrine & Espace Client
+
 <!-- Add screenshot here: Page d'accueil, recherche d'agents et catalogue des prestations -->
 
 ### 📅 Calendrier & Prise de Rendez-vous
+
 <!-- Add screenshot here: Modal de réservation et calendrier interactif des disponibilités -->
 
 ### 🛠️ Espace Prestataire (Agent)
+
 <!-- Add screenshot here: Tableau de bord agent, gestion des demandes et configuration des horaires -->
 
 ### 🛡️ Panneau d'Administration
+
 <!-- Add screenshot here: Modération des publications et supervision des utilisateurs -->
 
 ---
 
 ## 17. Perspectives d'Évolution
 
-*Fonctionnalités futures envisagées pour enrichir la plateforme :*
+_Fonctionnalités futures envisagées pour enrichir la plateforme :_
 
 - 💳 **Passerelle de Paiement Intégrée** : Intégration d'un système d'acompte ou de paiement en ligne (ex: Stripe, Konnect ou Flouci) lors de la confirmation d'une réservation.
 - 💬 **Messagerie Instantanée en Temps Réel** : Intégration de WebSockets (Socket.io / NestJS Gateways) pour permettre un chat direct entre le client et l'artisan avant intervention.
@@ -667,8 +686,6 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 - 📊 **Statistiques & Tableau de Bord Financier pour Agents** : Graphiques de revenus mensuels, taux d'occupation et métriques de performance.
 
 ---
-
-
 
 <p align="center">
   Développé avec passion pour simplifier la réservation de services indépendants.
