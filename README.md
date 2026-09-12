@@ -17,7 +17,7 @@
 - [7. Système de Notifications Email](#7-système-de-notifications-email)
 - [8. Gestion des Fichiers & Uploads](#8-gestion-des-fichiers--uploads)
 - [9. Authentification & Sécurité](#9-authentification--sécurité)
-- [9.1. Vérification d'Email (OTP)](#vérification-demail-otp)
+  - [9.1. Système OTP (Vérification & Réinitialisation)](#système-otp-vérification-demail--réinitialisation-de-mot-de-passe)
 - [10. Base de Données & Modélisation](#10-base-de-données--modélisation)
 - [11. Documentation API & Swagger](#11-documentation-api--swagger)
 - [12. Structure du Projet](#12-structure-du-projet)
@@ -244,7 +244,7 @@ sequenceDiagram
 - ❌ **Réservation rejetée** : Informe le client du refus avec invitation à sélectionner un autre artisan disponible.
 - 🚫 **Réservation annulée par le client** : Notifie l'agent de la libération du créneau horaire.
 - 🔔 **Rappel 24h avant le rendez-vous** : Cron quotidien (`09:00 AM`) qui envoie un rappel simultané au client et à l'agent pour leur intervention du lendemain.
-- 🔐 **Code de vérification OTP** : Envoi immédiat du code numérique à 6 chiffres lors de l'inscription ou d'une demande de renvoi.
+- 🔐 **Codes de vérification OTP** : Envoi immédiat du code à 6 chiffres pour la validation d'inscription (`EMAIL_VERIFICATION`) ou la réinitialisation de mot de passe (`PASSWORD_RESET`).
 - ⚠️ **Publication retirée** : Informe l'agent lorsque sa réalisation est dépubliée par un administrateur.
 
 ---
@@ -302,15 +302,19 @@ sequenceDiagram
 - `AuthGuard` : Extrait et vérifie la signature et l'expiration du cookie `accessToken`.
 - `RolesGuard` : Inspecte les métadonnées décorées via `@Roles('CLIENT' | 'AGENT' | 'ADMIN')` et restreint l'accès aux utilisateurs autorisés.
 
-### Vérification d'Email (OTP)
+### Système OTP (Vérification d'Email & Réinitialisation de Mot de Passe)
 
-Afin de valider l'authenticité des adresses email dès l'inscription, FreeForU intègre un système robuste de vérification par code OTP (_One-Time Password_) à 6 chiffres.
-Cette solution a été développée sur-mesure avec NestJS et Brevo.
+FreeForU intègre un système robuste et unifié de vérification par code OTP (*One-Time Password*) à 6 chiffres pour sécuriser deux actions critiques :
+1. **La validation d'adresse email** à l'inscription (`purpose: EMAIL_VERIFICATION`).
+2. **La réinitialisation de mot de passe oublié** (`purpose: PASSWORD_RESET`).
 
-Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'identifiants indépendants, les codes OTP sont centralisés dans une table dédiée `otp_verifications` (`target_table`, `target_id`, `purpose`).
+Cette solution a été développée sur-mesure avec NestJS et Brevo (`MailService.sendOtpEmail()` générique adaptant l'objet et le modèle d'email selon le motif).
 
-#### 🔄 Flux de Vérification
+Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'identifiants indépendants, tous les codes OTP sont centralisés dans la table dédiée `otp_verifications` (`target_table`, `target_id`, `purpose`).
 
+#### 🔄 Flux Métier
+
+##### 1. Inscription & Vérification d'Email
 ```mermaid
 sequenceDiagram
     autonumber
@@ -332,12 +336,33 @@ sequenceDiagram
     API-->>UI: 200 OK (Email vérifié avec succès)
 ```
 
+##### 2. Réinitialisation de Mot de Passe Oublié
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User as Utilisateur (Client / Agent)
+    participant UI as Frontend (/reset-password)
+    participant API as Backend (Auth / OtpService)
+    participant Mail as Brevo MailService
+    participant DB as PostgreSQL (users / agents / otp_verifications)
+
+    User->>API: POST /auth/forgot-password { email }
+    Note over API: Réponse générique (Anti-énumération)
+    API->>DB: Recherche du compte & génération OTP
+    API->>Mail: Envoi de l'email de réinitialisation avec code OTP
+    API-->>UI: Message générique & redirection vers /reset-password?email=...
+    User->>UI: Saisie du code OTP, nouveau mot de passe et confirmation
+    UI->>API: POST /auth/reset-password { email, code, newPassword }
+    API->>DB: Validation du code OTP (OtpService.verifyCode)
+    API->>DB: Hachage bcrypt & mise à jour du mot de passe (updateUserPassword / updateAgentPassword)
+    API-->>UI: 200 OK (Mot de passe réinitialisé avec succès)
+```
+
 #### 🔌 Endpoints Publics
 
-Ces routes sont publiques car la vérification de l'adresse email intervient avant la première connexion :
+Ces routes sont publiques car elles interviennent avant ou en dehors de la session authentifiée :
 
 ##### 1. `POST /auth/verify-email`
-
 Valide le code OTP saisi par l'utilisateur et active l'adresse email du compte (`email_verified_at`).
 
 - **Requête :**
@@ -355,20 +380,54 @@ Valide le code OTP saisi par l'utilisateur et active l'adresse email du compte (
   ```
 
 ##### 2. `POST /auth/resend-otp`
-
-Génère et expédie un nouveau code de vérification par email, en invalidant l'ancien code en cours.
+Génère et expédie un nouveau code de vérification par email, en invalidant l'ancien code en cours. Accepte l'objectif (`purpose`) souhaité.
 
 - **Requête :**
   ```json
   {
     "email": "user@example.com",
-    "purpose": "EMAIL_VERIFICATION"
+    "purpose": "EMAIL_VERIFICATION" // ou "PASSWORD_RESET"
   }
   ```
 - **Réponse (`200 OK`) :**
   ```json
   {
     "message": "Nouveau code envoyé"
+  }
+  ```
+
+##### 3. `POST /auth/forgot-password`
+Initie la demande de réinitialisation en envoyant un code OTP par email si le compte existe.
+
+- **Requête :**
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **Réponse (`200 OK`) :**
+  ```json
+  {
+    "message": "Si ce compte existe, un code a été envoyé"
+  }
+  ```
+  *(Message générique neutre évitant la fuite d'informations sur l'existence d'une adresse email).*
+
+##### 4. `POST /auth/reset-password`
+Opération atomique combinée : valide le code OTP fourni et applique immédiatement le nouveau mot de passe haché avec `bcrypt`. Si le code est invalide, expiré ou si les tentatives sont épuisées, le mot de passe reste inchangé.
+
+- **Requête :**
+  ```json
+  {
+    "email": "user@example.com",
+    "code": "123456",
+    "newPassword": "MonNouveauMotDePasse123!"
+  }
+  ```
+- **Réponse (`200 OK`) :**
+  ```json
+  {
+    "message": "Mot de passe réinitialisé avec succès"
   }
   ```
 
@@ -379,10 +438,9 @@ Génère et expédie un nouveau code de vérification par email, en invalidant l
 - **Limitation des tentatives (3 essais max)** : Après 3 échecs de validation, le code est immédiatement invalidé (`INVALIDATED`) pour bloquer les attaques par force brute.
 - **Délai d'attente / Cooldown (30 secondes)** : Un intervalle minimum de 30 secondes entre deux demandes de renvoi est contrôlé directement dans la logique métier (`OtpService`).
 - **Révocation des anciens codes** : L'émission d'un nouvel OTP invalide automatiquement tout code `PENDING` préexistant pour le même compte et motif.
+- **Protection anti-énumération de comptes** : L'endpoint `/auth/forgot-password` retourne systématiquement un message neutre pour empêcher la détection d'adresses enregistrées.
+- **Mise à jour atomique du mot de passe** : Le mot de passe n'est haché et sauvegardé qu'après validation stricte et consommation du code OTP.
 - **Purge automatique par Cron** : Une tâche planifiée chaque minute (`sweepExpiredOtps`) bascule les codes obsolètes au statut `EXPIRED` pour préserver l'intégrité des données (la sécurité reste autonome en vérifiant `expires_at` à chaque requête).
-
-> [!NOTE]
-> L'infrastructure OTP et le modèle de données sont d'ores et déjà extensibles au cas d'usage de réinitialisation de mot de passe (`purpose: PASSWORD_RESET`), dont l'intégration applicative est prévue dans les futures évolutions.
 
 ---
 
@@ -517,7 +575,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 - **URL de l'interface Swagger** : `http://localhost:3001/api/docs`
 - **Authentification intégrée** : Compatible avec l'authentification par cookie `accessToken`.
 - **Modules documentés** :
-  - `Auth` : Inscription, connexion, rafraîchissement de token, profil session et déconnexion.
+  - `Auth` : Inscription, connexion, validation OTP email, réinitialisation de mot de passe, rafraîchissement de token, profil session et déconnexion.
   - `Agents` : Recherche publique, profils détaillés, mise à jour portfolio et CRUD d'administration.
   - `Users` : Gestion des profils clients.
   - `Reservations` : Création client/admin, workflow d'acceptation, annulation et clôture.
@@ -535,7 +593,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 ```text
 freeForU/
 ├── frontend/            # Application Frontend Next.js (App Router)
-│   ├── app/                   # Routes Next.js (admin, agent, client, login, signup)
+│   ├── app/                   # Routes Next.js (admin, agent, client, login, signup, otp, forget-password, reset-password)
 │   ├── components/            # Composants UI modulaires et modales
 │   ├── lib/                   # Utilitaires & configuration client
 │   │   ├── api/               # Modules d'appels API typés (Axios)

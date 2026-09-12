@@ -22,6 +22,8 @@ import {
 } from "@nestjs/swagger";
 import { VerifyEmailDto } from "./dto/verify-email.dto";
 import { ResendOtpDto } from "./dto/resend-email.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ForgotPasswordDto } from "./dto/forget-password.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -207,5 +209,31 @@ export class AuthController {
   @Post("resend-otp")
   async resendOtp(@Body() body: ResendOtpDto) {
     return this.authService.resendOtp(body.email, body.purpose);
+  }
+
+  @ApiOperation({ summary: "Demander une réinitialisation de mot de passe" })
+  @ApiResponse({ status: 200, description: "Code envoyé si le compte existe." })
+  @Post("forgot-password")
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @ApiOperation({ summary: "Réinitialiser le mot de passe avec un code OTP" })
+  @ApiResponse({
+    status: 200,
+    description: "Mot de passe réinitialisé avec succès.",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Code invalide, expiré, ou tentatives épuisées.",
+  })
+  @ApiResponse({ status: 401, description: "Compte introuvable." })
+  @Post("reset-password")
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(
+      body.email,
+      body.code,
+      body.newPassword
+    );
   }
 }
