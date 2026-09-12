@@ -20,10 +20,8 @@ export default function LoginPage() {
     setSubmitting(true);
 
     try {
-      const { user, accessToken, refreshToken } = await login(email, password);
+      const { user } = await login(email, password);
 
-      Cookies.set("accessToken", accessToken, { expires: 1 / 96 }); // ≈ 15 min
-      Cookies.set("refreshToken", refreshToken, { expires: 7 }); // 7 jours
 
       if (user.role === "ADMIN") {
         router.push("/admin");
@@ -42,7 +40,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg sm:p-10"
@@ -78,6 +75,14 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <div className="text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-accent-dark hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
         </div>
 
         <Button

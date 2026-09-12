@@ -74,4 +74,12 @@ export class AuthRepository {
       data: { email_verified_at: new Date() },
     });
   }
+
+  async updateUserPassword(id: number, password: string) {
+    return this.prisma.users.update({ where: { id }, data: { password } });
+  }
+
+  async updateAgentPassword(id: number, password: string) {
+    return this.prisma.agents.update({ where: { id }, data: { password } });
+  }
 }

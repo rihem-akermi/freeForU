@@ -139,7 +139,12 @@ export class AuthService {
       "EMAIL_VERIFICATION"
     );
 
-    await this.mailService.sendOtpEmail(created.email, code, created.name);
+    await this.mailService.sendOtpEmail(
+      created.email,
+      code,
+      "EMAIL_VERIFICATION",
+      created.name
+    );
     console.log("📧 OTP de vérification envoyé à :", created.email);
 
     console.log(
@@ -147,7 +152,7 @@ export class AuthService {
       created.id
     );
     const { password: _, ...safeCreated } = created;
-    return safeCreated;//has the email in it rahouma 
+    return safeCreated; //has the email in it rahouma
   }
 
   // click verify-btn
@@ -179,24 +184,94 @@ export class AuthService {
   }
 
   //click resend-btn
-  async resendOtp(email: string, purpose: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET') {
-  const user = await this.authRepository.findUserByEmail(email);
-  const target = user ?? await this.authRepository.findAgentByEmail(email);
+  async resendOtp(
+    email: string,
+    purpose: "EMAIL_VERIFICATION" | "PASSWORD_RESET"
+  ) {
+    const user = await this.authRepository.findUserByEmail(email);
+    const target = user ?? (await this.authRepository.findAgentByEmail(email));
 
-  if (!target) {
-    throw new UnauthorizedException("Compte introuvable");
+    if (!target) {
+      throw new UnauthorizedException("Compte introuvable");
+    }
+
+    if (purpose === "EMAIL_VERIFICATION" && target.email_verified_at) {
+      throw new ConflictException("Cet email est déjà vérifié");
+    }
+
+    const target_table = user ? "USER" : "AGENT";
+
+    const code = await this.otpService.haveOtp(
+      target_table,
+      target.id,
+      purpose
+    );
+    await this.mailService.sendOtpEmail(
+      target.email,
+      code,
+      purpose,
+      target.name
+    );
+    console.log(
+      `📧 OTP renvoyé (${purpose}) pour ${target_table} #${target.id}`
+    );
+    return { message: "Nouveau code envoyé" };
   }
 
-  if (purpose === 'EMAIL_VERIFICATION' && target.email_verified_at) {
-    throw new ConflictException("Cet email est déjà vérifié");
+  async forgotPassword(email: string) {
+    const user = await this.authRepository.findUserByEmail(email);
+    const target = user ?? (await this.authRepository.findAgentByEmail(email));
+
+    if (!target) {
+      // Deliberately vague — don't reveal whether an email exists in the system
+      return { message: "Si ce compte existe, un code a été envoyé" };
+    }
+
+    const target_table = user ? "USER" : "AGENT";
+    const code = await this.otpService.haveOtp(
+      target_table,
+      target.id,
+      "PASSWORD_RESET"
+    );
+    await this.mailService.sendOtpEmail(
+      target.email,
+      code,
+      "PASSWORD_RESET",
+      target.name
+    );
+
+    console.log(
+      `📧 Code de réinitialisation envoyé pour ${target_table} #${target.id}`
+    );
+    return { message: "Si ce compte existe, un code a été envoyé" };
   }
 
-  const target_table = user ? 'USER' : 'AGENT';
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await this.authRepository.findUserByEmail(email);
+    const target = user ?? (await this.authRepository.findAgentByEmail(email));
 
-  const code = await this.otpService.haveOtp(target_table, target.id, purpose);
-  await this.mailService.sendOtpEmail(target.email, code, target.name);
+    if (!target) {
+      throw new UnauthorizedException("Compte introuvable");
+    }
 
-  console.log(`📧 OTP renvoyé (${purpose}) pour ${target_table} #${target.id}`);
-  return { message: "Nouveau code envoyé" };
-}
+    const target_table = user ? "USER" : "AGENT";
+    await this.otpService.verifyCode(
+      target_table,
+      target.id,
+      "PASSWORD_RESET",
+      code
+    );
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    if (user) {
+      await this.authRepository.updateUserPassword(target.id, hashedPassword);
+    } else {
+      await this.authRepository.updateAgentPassword(target.id, hashedPassword);
+    }
+
+    console.log(
+      `✅ Mot de passe réinitialisé pour ${target_table} #${target.id}`
+    );
+    return { message: "Mot de passe réinitialisé avec succès" };
+  }
 }

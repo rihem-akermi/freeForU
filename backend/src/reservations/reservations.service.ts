@@ -300,18 +300,23 @@ export class ReservationsService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async handleExpiredReservations() {
+    // en attente mais date-reservation est passés
     const expired = await this.reservationsRepository.findExpiredPending();
     if (expired.length > 0) {
       const ids = expired.map((r) => r.id);
       await this.reservationsRepository.markManyAsExpired(ids);
       console.log(`${ids.length} réservation(s) passée(s) en "expiree"`);
+    } else {
+      console.log(`No réservation(s) to be set as expired ☠️`);
     }
-
+    // rejetée - annuléé
     const toArchive = await this.reservationsRepository.findToArchive();
     if (toArchive.length > 0) {
       const ids = toArchive.map((r) => r.id);
       await this.reservationsRepository.archiveMany(ids);
       console.log(`${ids.length} réservation(s) archivée(s)`);
+    } else {
+      console.log(`No réservation(s) to be set as archived 📦`);
     }
   }
 
