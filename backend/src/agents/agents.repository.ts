@@ -3,6 +3,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 
+const DEFAULT_AVATAR_URL =
+  'https://res.cloudinary.com/cva509hz/image/upload/v1789212034/pdp.png';
+
 @Injectable()
 export class AgentsRepository {
   constructor(private prisma: PrismaService) {}
@@ -39,6 +42,7 @@ export class AgentsRepository {
         password: agent.password,
         category_id: agent.category_id,
         role: "AGENT",
+        photo_url : DEFAULT_AVATAR_URL,
       },
       include: {
         categories: true,

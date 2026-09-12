@@ -28,7 +28,7 @@ export default function Hero() {
             <a href="#services" className={styles.primaryBtn}>
               Découvrir les services <span>↓</span>
             </a>
-            <Link href="/signup" className={styles.secondaryBtn}>
+            <Link href="/auth/signup" className={styles.secondaryBtn}>
               Rejoindre la plateforme
             </Link>
           </div>

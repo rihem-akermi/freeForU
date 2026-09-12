@@ -45,22 +45,22 @@ export default function Footer() {
             <h4 className={styles.colHeading}>Espaces Utilisateurs</h4>
             <ul className={styles.linksList}>
               <li>
-                <Link href="/login" className={styles.linkItem}>
+                <Link href="/auth/login" className={styles.linkItem}>
                   Se connecter
                 </Link>
               </li>
               <li>
-                <Link href="/signup" className={styles.linkItem}>
+                <Link href="/auth/signup" className={styles.linkItem}>
                   Espace Client
                 </Link>
               </li>
               <li>
-                <Link href="/signup" className={styles.linkItem}>
+                <Link href="/auth/signup" className={styles.linkItem}>
                   Devenir un Agent
                 </Link>
               </li>
               <li>
-                <Link href="/login" className={styles.linkItem}>
+                <Link href="/auth/login" className={styles.linkItem}>
                   Administration
                 </Link>
               </li>

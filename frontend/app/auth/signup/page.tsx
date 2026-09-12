@@ -51,7 +51,7 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await signup(form);
-      router.push(`/otp?email=${encodeURIComponent(form.email)}`);
+      router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (err: any) {
       console.error("Erreur signup :", err);
       setError(err.response?.data?.message || "Une erreur est survenue");
@@ -61,7 +61,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-lg rounded-2xl border border-border bg-card p-8 shadow-lg sm:p-10"
@@ -172,7 +172,7 @@ export default function SignupPage() {
         <p className="mt-5 text-center text-sm text-muted-foreground">
           Déjà un compte ?{" "}
           <Link
-            href="/login"
+            href="/auth/login"
             className="font-semibold text-accent-dark hover:underline"
           >
             Se connecter

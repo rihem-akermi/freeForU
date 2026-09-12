@@ -33,10 +33,10 @@ export default function Navbar() {
         </nav>
 
         <div className={styles.actions}>
-          <Link href="/login" className={styles.loginBtn}>
+          <Link href="/auth/login" className={styles.loginBtn}>
             Connexion
           </Link>
-          <Link href="/signup" className={styles.ctaBtn}>
+          <Link href="/auth/signup" className={styles.ctaBtn}>
             Espace Client <span>→</span>
           </Link>
           <button
@@ -81,14 +81,14 @@ export default function Navbar() {
           </Link>
           <div className={styles.mobileActions}>
             <Link
-              href="/login"
+              href="/auth/login"
               className={styles.loginBtn}
               onClick={() => setMobileMenuOpen(false)}
             >
               Connexion
             </Link>
             <Link
-              href="/signup"
+              href="/auth/signup"
               className={styles.ctaBtn}
               onClick={() => setMobileMenuOpen(false)}
             >

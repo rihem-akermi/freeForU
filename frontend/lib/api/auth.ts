@@ -24,7 +24,7 @@ export async function login(email: string, password: string) {
 export async function logout() {
   console.log("👋 Déconnexion...");
   await api.post("/auth/logout", {}, { withCredentials: true });
-  window.location.href = "/login";
+  window.location.href = "/auth/login";
 }
 
 export async function getMe() {

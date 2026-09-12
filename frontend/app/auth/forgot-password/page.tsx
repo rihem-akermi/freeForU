@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setSubmitting(true);
     try {
       await forgotPassword(email);
-      router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       console.error("Erreur forgot-password :", err);
       setError(err.response?.data?.message || "Une erreur est survenue");
@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg sm:p-10"

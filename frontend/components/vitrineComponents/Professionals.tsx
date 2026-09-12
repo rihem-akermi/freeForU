@@ -25,7 +25,7 @@ const defaultDemoProfessionals: Professional[] = [
     description:
       "Spécialiste en installation sanitaire, détection de fuites complexes et dépannage rapide d'urgence.",
     photoUrl:
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=600&q=80",
+      "https://res.cloudinary.com/cva509hz/image/upload/v1789213675/photo-1621905251189-08b45d6a269e.avif",
     imagePosition: "center 25%",
   },
   {
@@ -37,7 +37,7 @@ const defaultDemoProfessionals: Professional[] = [
     description:
       "Coiffure événementielle, colorations végétales et soins capillaires personnalisés à domicile ou au cabinet.",
     photoUrl:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
+      "https://res.cloudinary.com/cva509hz/image/upload/v1789213674/photo-1573496359142-b8d87734a5a2.avif",
     imagePosition: "top center",
   },
   {
@@ -49,7 +49,7 @@ const defaultDemoProfessionals: Professional[] = [
     description:
       "Mise aux normes électriques, tableaux généraux, domotique et installations solaires pour particuliers.",
     photoUrl:
-      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=600&q=80",
+      "https://res.cloudinary.com/cva509hz/image/upload/v1789213673/photo-1560250097-0b93528c311a.avif",
     imagePosition: "top center",
   },
   {
@@ -61,7 +61,7 @@ const defaultDemoProfessionals: Professional[] = [
     description:
       "Design d'espace, optimisation d'agencement, conseil en mobilier et modélisation 3D sur-mesure.",
     photoUrl:
-      "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80",
+      "https://res.cloudinary.com/cva509hz/image/upload/v1789213676/portrait-anne-cecile-869x1024.webp",
     imagePosition: "top center",
   },
 ];
@@ -115,7 +115,7 @@ export function ProfessionalCard({
           style={{ objectPosition: professional.imagePosition || "center 20%" }}
           onError={(e) => {
             (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+              "https://res.cloudinary.com/cva509hz/image/upload/v1789213674/photo-1534528741775-53994a69daeb.avif";
           }}
         />
         <div className={styles.ratingBadge}>
@@ -135,7 +135,7 @@ export function ProfessionalCard({
         <p className={styles.description}>{professional.description}</p>
 
         <div className={styles.cardFooter}>
-          <Link href="/login" className={styles.ctaBtn}>
+          <Link href="/auth/login" className={styles.ctaBtn}>
             Voir le profil <span>→</span>
           </Link>
         </div>

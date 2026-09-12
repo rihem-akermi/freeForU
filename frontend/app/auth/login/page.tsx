@@ -39,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg sm:p-10"
@@ -77,7 +77,7 @@ export default function LoginPage() {
           />
           <div className="text-right">
             <Link
-              href="/forgot-password"
+              href="/auth/forgot-password"
               className="text-sm font-medium text-accent-dark hover:underline"
             >
               Mot de passe oublié ?
@@ -98,7 +98,7 @@ export default function LoginPage() {
         <p className="mt-5 text-center text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="font-semibold text-accent-dark hover:underline"
           >
             Créer un compte

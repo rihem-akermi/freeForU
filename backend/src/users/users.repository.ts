@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdatedUserDto, UpdateMyProfileDto } from "./dto/update-user.dto";
+const DEFAULT_AVATAR_URL =
+  "https://res.cloudinary.com/cva509hz/image/upload/v1789212034/pdp.png";
 
 @Injectable()
 export class UsersRepository {
@@ -20,6 +22,7 @@ export class UsersRepository {
         password: newUser.password,
         role: newUser.role,
         ville: newUser.ville,
+        photo_url: DEFAULT_AVATAR_URL,
       },
     });
   }

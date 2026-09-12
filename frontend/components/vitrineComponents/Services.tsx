@@ -116,7 +116,7 @@ export default function Services() {
 
               <div className={styles.cardFooter}>
                 <span className={styles.detailHint}>📍 {cat.hint}</span>
-                <Link href="/login" className={styles.cardActionLink}>
+                <Link href="/auth/login" className={styles.cardActionLink}>
                   Explorer <span>→</span>
                 </Link>
               </div>

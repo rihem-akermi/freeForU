@@ -1,3 +1,4 @@
+import Navbar from "@/components/vitrineComponents/Navbar";
 import "./globals.css";
 
 export const metadata = {

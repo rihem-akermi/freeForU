@@ -2,20 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { resetPassword, resendOtp } from "@/lib/api/auth";
-import { Button, Input } from "@/components/ui/UIComponents";
+import { verifyEmail, resendOtp } from "@/lib/api/auth";
+import { Button } from "@/components/ui/UIComponents";
 
-const OTP_DURATION = 120;
+const OTP_DURATION = 120; // 2-minute expiry
 const OTP_LENGTH = 6;
 
-export default function ResetPasswordPage() {
+export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
 
   const [code, setCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
@@ -24,7 +22,9 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
-    const interval = setInterval(() => setSecondsLeft((prev) => prev - 1), 1000);
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => prev - 1);
+    }, 1000);
     return () => clearInterval(interval);
   }, [secondsLeft]);
 
@@ -62,18 +62,12 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-
-    if (newPassword !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return;
-    }
-
     setSubmitting(true);
     try {
-      await resetPassword(email, code, newPassword);
-      router.push("/login");
+      await verifyEmail(email, code);
+      router.push("/auth/login");
     } catch (err: any) {
-      console.error("Erreur reset-password :", err);
+      console.error("Erreur vérification :", err);
       setError(err.response?.data?.message || "Une erreur est survenue");
     } finally {
       setSubmitting(false);
@@ -84,11 +78,12 @@ export default function ResetPasswordPage() {
     setError("");
     setResending(true);
     try {
-      await resendOtp(email, "PASSWORD_RESET");
+      await resendOtp(email, "EMAIL_VERIFICATION");
       setCode("");
       setSecondsLeft(OTP_DURATION);
       inputRefs.current[0]?.focus();
     } catch (err: any) {
+      console.error("Erreur renvoi :", err);
       setError(err.response?.data?.message || "Une erreur est survenue");
     } finally {
       setResending(false);
@@ -96,11 +91,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-background px-4 py-10">
       <form
         onSubmit={handleSubmit}
         className="relative w-full max-w-md overflow-hidden rounded-2xl bg-primary p-8 shadow-2xl sm:p-10"
       >
+        {/* decorative grid + glow, matching the admin dashboard hero treatment */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[.06]"
           style={{
@@ -118,14 +114,14 @@ export default function ResetPasswordPage() {
 
         <div className="relative">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-accent ring-1 ring-primary-foreground/10">
-            Sécurité du compte
+            Vérification
           </div>
           <h1 className="mb-1 font-serif text-2xl font-bold text-primary-foreground">
-            Réinitialiser le mot de passe
+            Vérifiez votre email
           </h1>
           <p className="mb-7 text-sm text-primary-foreground/60">
-            Entrez le code envoyé à{" "}
-            <strong className="text-primary-foreground/85">{email}</strong> et votre nouveau mot de passe.
+            Un code à 6 chiffres a été envoyé à{" "}
+            <strong className="text-primary-foreground/85">{email}</strong>.
           </p>
 
           {error && (
@@ -137,7 +133,7 @@ export default function ResetPasswordPage() {
           <label className="mb-3 block text-xs font-bold uppercase tracking-wider text-primary-foreground/70">
             Code de vérification
           </label>
-          <div className="mb-6 flex justify-between gap-2 sm:gap-3">
+          <div className="flex justify-between gap-2 sm:gap-3">
             {digits.map((digit, i) => (
               <input
                 key={i}
@@ -153,33 +149,6 @@ export default function ResetPasswordPage() {
                 className="h-14 w-full max-w-14 rounded-xl border border-primary-foreground/20 bg-primary-foreground/10 text-center font-serif text-2xl font-bold text-primary-foreground outline-none transition focus:border-accent focus:bg-primary-foreground/15 focus:ring-4 focus:ring-accent/25 disabled:opacity-40"
               />
             ))}
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-primary-foreground/70">
-                Nouveau mot de passe
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                className="w-full rounded-xl border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm text-primary-foreground outline-none transition placeholder:text-primary-foreground/40 focus:border-accent focus:bg-primary-foreground/15 focus:ring-4 focus:ring-accent/25"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-primary-foreground/70">
-                Confirmer le mot de passe
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full rounded-xl border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-3 text-sm text-primary-foreground outline-none transition placeholder:text-primary-foreground/40 focus:border-accent focus:bg-primary-foreground/15 focus:ring-4 focus:ring-accent/25"
-              />
-            </div>
           </div>
 
           <p className="mt-4 text-sm text-primary-foreground/60">
@@ -200,7 +169,7 @@ export default function ResetPasswordPage() {
             disabled={isExpired || code.length < OTP_LENGTH}
             className="mt-6 w-full"
           >
-            Réinitialiser
+            Vérifier
           </Button>
 
           <Button

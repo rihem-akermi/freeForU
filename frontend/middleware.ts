@@ -5,8 +5,8 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken");
 
   if (!token) {
-    console.log("❌ Pas de token, redirection vers /login");
-    return NextResponse.redirect(new URL("/login", request.url));//a complete URL not just a path
+    console.log("❌ Pas de token, redirection vers /auth/login");
+    return NextResponse.redirect(new URL("/auth/login", request.url));//a complete URL not just a path
   }
 
 

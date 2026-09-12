@@ -319,7 +319,7 @@ Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'i
 sequenceDiagram
     autonumber
     participant User as Utilisateur (Client / Agent)
-    participant UI as Frontend (/otp)
+    participant UI as Frontend (/verify-email)
     participant API as Backend (Auth / OtpService)
     participant Mail as Brevo MailService
     participant DB as PostgreSQL (otp_verifications)
@@ -328,7 +328,7 @@ sequenceDiagram
     API->>DB: Création du compte (email_verified_at = null)
     API->>DB: Génération & stockage hashé de l'OTP (SHA-256)
     API->>Mail: Envoi du code à 6 chiffres par email
-    API-->>UI: Compte créé & redirection vers /otp?email=...
+    API-->>UI: Compte créé & redirection vers /verify-email?email=...
     User->>UI: Saisie du code à 6 chiffres
     UI->>API: POST /auth/verify-email { email, code }
     API->>DB: Contrôle du hash, expiration & nombre d'essais
@@ -593,7 +593,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 ```text
 freeForU/
 ├── frontend/            # Application Frontend Next.js (App Router)
-│   ├── app/                   # Routes Next.js (admin, agent, client, login, signup, otp, forget-password, reset-password)
+│   ├── app/                   # Routes Next.js (admin, agent, client, auth: login, signup, verify-email, forgot-password, reset-password)
 │   ├── components/            # Composants UI modulaires et modales
 │   ├── lib/                   # Utilitaires & configuration client
 │   │   ├── api/               # Modules d'appels API typés (Axios)

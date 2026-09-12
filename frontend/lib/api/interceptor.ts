@@ -42,7 +42,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.log("❌ Refresh échoué, redirection login");
         if (typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = "/auth/login";
         }
         return Promise.reject(refreshError);
       }
