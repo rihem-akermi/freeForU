@@ -51,7 +51,7 @@
 
 ### 👤 Espace Client
 
-- **Catalogue & Recherche** : Filtrage des agents par catégorie de métier et recherche par nom.
+- **Catalogue & Recherche** : Consultation paginée du catalogue avec filtrage par catégorie de métier, navigation précédente/suivante et recherche par nom.
 - **Consultation de Profil & Portfolio** : Accès aux détails du profil, bio, zone d'intervention, mode de déplacement (`se_deplace`, `recoit`, `les_deux`), avis clients et galerie de travaux réalisés.
 - **Réservation Flexible** : Choix entre un service prédéfini au catalogue (avec tarif et durée) ou formulation d'une demande personnalisée (`custom_request`).
 - **Calendrier Visuel Interactif** : Visualisation en direct des statuts de chaque jour (créneaux ouverts, fermés, demandes en attente, confirmées ou terminées).
@@ -87,6 +87,7 @@
 | **NestJS (v11)**                 | Backend (`backend`)   | Framework Node.js modulaire, typé et scalable basé sur Express.                                                               |
 | **Prisma ORM (v7)**              | Backend               | Gestion du schéma de base de données, migrations et client de requêtes typées PostgreSQL.                                     |
 | **PostgreSQL**                   | Base de données       | Système de gestion de base de données relationnelle robuste avec contraintes d'intégrité et types temporels (`DATE`, `TIME`). |
+| **Redis (`ioredis`)**            | Cache en mémoire      | Cache haute performance (*Cache-Aside*) pour optimiser la consultation paginée des agents et soulager PostgreSQL.             |
 | **JWT (`@nestjs/jwt`) & bcrypt** | Backend               | Chiffrement des mots de passe et sécurisation des routes par tokens d'accès et de rafraîchissement via cookies `httpOnly`.    |
 | **Brevo (`@getbrevo/brevo`)**    | Backend               | Service d'envoi d'emails transactionnels (notifications et rappels de rendez-vous).                                           |
 | **Cloudinary & Multer**          | Backend               | Téléversement direct en flux mémoire (`Buffer` / `streamifier`) et hébergement optimisé des médias.                           |
@@ -111,6 +112,7 @@ flowchart TD
         Guard["AuthGuard & RolesGuard"]
         Controller["NestJS Controllers"]
         Service["Services Métier"]
+        RedisServ["RedisService (Cache-Aside)"]
         Repo["Repositories Dédiés"]
         CronTask["ScheduleModule (Tâches Cron)"]
 
@@ -118,12 +120,15 @@ flowchart TD
         Guard --> Controller
         Controller --> Service
         CronTask -.-> Service
-        Service --> Repo
+        Service -->|"1. Vérification Cache HIT/MISS"| RedisServ
+        Service -->|"2. Requête en cas de MISS"| Repo
     end
 
-    subgraph Data["Persistance & ORM"]
+    subgraph Data["Persistance & Cache"]
+        Redis[(Redis Cache)]
         Prisma["Prisma ORM Client"]
         Postgres[(PostgreSQL DB)]
+        RedisServ --> Redis
         Repo --> Prisma
         Prisma --> Postgres
     end
@@ -481,7 +486,7 @@ erDiagram
         string phone
         string password
         string role
-        int category_id FK
+        int category_id FK "Indexé (idx_agents_category_id)"
         string ville
         string zone
         string service_mode
@@ -576,7 +581,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 - **Authentification intégrée** : Compatible avec l'authentification par cookie `accessToken`.
 - **Modules documentés** :
   - `Auth` : Inscription, connexion, validation OTP email, réinitialisation de mot de passe, rafraîchissement de token, profil session et déconnexion.
-  - `Agents` : Recherche publique, profils détaillés, mise à jour portfolio et CRUD d'administration.
+  - `Agents` : Recherche publique, catalogue public paginé (paramètres `page`, `limit` max 20, `category_id` retournant `{ data, meta }`), profils détaillés, mise à jour portfolio et CRUD d'administration.
   - `Users` : Gestion des profils clients.
   - `Reservations` : Création client/admin, workflow d'acceptation, annulation et clôture.
   - `Availability` : Calcul des calendriers agents et clients.
@@ -617,6 +622,7 @@ freeForU/
 │   │   ├── otp/               # Module de gestion, hashage et validation des codes OTP
 │   │   ├── prisma/            # Service d'instanciation de la base de données
 │   │   ├── publications/      # Gestion du portfolio et modération admin
+│   │   ├── redis/             # Module Redis (cache en mémoire, stratégie Cache-Aside avec ioredis)
 │   │   ├── reservations/      # Logique de réservation, workflow et tâches Cron
 │   │   ├── reviews/           # Gestion des avis et notations
 │   │   ├── services/          # Catalogue de prestations des agents
@@ -639,6 +645,7 @@ freeForU/
 
 - **Node.js** (v20+ recommandé)
 - **PostgreSQL** (en local ou distant)
+- **Redis** (serveur local ou hébergement managé type Upstash)
 - Gestionnaire de paquets **npm**
 
 ---
@@ -689,16 +696,20 @@ npm run dev
 
 Créez un fichier `.env` à la racine du dossier `backend/` avec les variables suivantes :
 
-| Variable                | Description                                          | Exemple / Format                                     |
-| :---------------------- | :--------------------------------------------------- | :--------------------------------------------------- |
-| `DATABASE_URL`          | Chaîne de connexion PostgreSQL                       | `postgresql://user:password@localhost:5432/freeforu` |
-| `JWT_ACCESS_SECRET`     | Clé secrète pour signer les Access Tokens (15 min)   | `votre_cle_secrete_jwt_access`                       |
-| `JWT_REFRESH_SECRET`    | Clé secrète pour signer les Refresh Tokens (7 jours) | `votre_cle_secrete_jwt_refresh`                      |
-| `CLOUDINARY_CLOUD_NAME` | Nom du compte Cloudinary pour le stockage des photos | `votre_cloud_name`                                   |
-| `CLOUDINARY_API_KEY`    | Clé d'API publique Cloudinary                        | `123456789012345`                                    |
-| `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary                         | `votre_api_secret_cloudinary`                        |
-| `BREVO_API_KEY`         | Clé d'API pour le service d'emails Brevo             | `xkeysib-...`                                        |
-| `MAIL_FROM_BY_BREVO`    | Adresse email d'expéditeur validée dans Brevo        | `contact@votre-domaine.com`                          |
+| Variable                | Description                                                          | Exemple / Format                                     |
+| :---------------------- | :------------------------------------------------------------------- | :--------------------------------------------------- |
+| `DATABASE_URL`          | Chaîne de connexion PostgreSQL                                       | `postgresql://user:password@localhost:5432/freeforu` |
+| `REDIS_URL`             | URL de connexion Redis complète (Upstash ou cloud managé)            | `redis://default:token@host:6379`                    |
+| `REDIS_HOST`            | Hôte du serveur Redis local (si `REDIS_URL` n'est pas défini)        | `localhost`                                          |
+| `REDIS_PORT`            | Port d'écoute Redis local                                            | `6379`                                               |
+| `REDIS_PASSWORD`        | Mot de passe Redis (optionnel pour Redis local)                      | `votre_mot_de_passe_redis`                           |
+| `JWT_ACCESS_SECRET`     | Clé secrète pour signer les Access Tokens (15 min)                   | `votre_cle_secrete_jwt_access`                       |
+| `JWT_REFRESH_SECRET`    | Clé secrète pour signer les Refresh Tokens (7 jours)                 | `votre_cle_secrete_jwt_refresh`                      |
+| `CLOUDINARY_CLOUD_NAME` | Nom du compte Cloudinary pour le stockage des photos                 | `votre_cloud_name`                                   |
+| `CLOUDINARY_API_KEY`    | Clé d'API publique Cloudinary                                        | `123456789012345`                                    |
+| `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary                                         | `votre_api_secret_cloudinary`                        |
+| `BREVO_API_KEY`         | Clé d'API pour le service d'emails Brevo                             | `xkeysib-...`                                        |
+| `MAIL_FROM_BY_BREVO`    | Adresse email d'expéditeur validée dans Brevo                        | `contact@votre-domaine.com`                          |
 
 ---
 
@@ -706,6 +717,11 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 
 - **NestJS** : Fournit une architecture d'entreprise modulaire et structurée (Controllers, Services, Repositories, DTOs et Pipes de validation) facilitant l'isolation du domaine métier et la maintenabilité à long terme.
 - **Prisma & PostgreSQL** : Prisma garantit une sécurité de type de bout en bout (Type-Safe queries) avec PostgreSQL, simplifiant la manipulation des types SQL précis tels que `DATE` et `TIME(6)` indispensables pour un calendrier de réservation.
+- **Pagination & Cache-Aside Redis (Catalogue des Agents)** :
+  - *Pagination native SQL* : La route publique `GET /agents` implémente `GetPublicAgentsDto` (`page`, `limit` plafonné à 20, `category_id`) avec `skip`/`take` et tri déterministe (`orderBy: { id: 'asc' }`) directement dans PostgreSQL, indexé sur `category_id`.
+  - *Stratégie Cache-Aside* : La réponse complète `{ data, meta }` est mise en cache dans Redis sous la clé `agents:category:{categoryId|all}:page:{page}:limit:{limit}` pour une durée (TTL) de 5 minutes (300 secondes).
+  - *Résilience (Graceful Fallback)* : En cas d'erreur ou d'indisponibilité de Redis, l'application bascule automatiquement sur PostgreSQL sans interruption de service.
+  - *Compromis assumés* : La fraîcheur repose sur l'expiration TTL (sans invalidation active à ce stade), et la pagination limite l'impact du calcul des notes agrégées au strict nombre d'agents affichés par page.
 - **Brevo** : Sélectionné pour sa fiabilité dans la distribution d'emails transactionnels, son SDK TypeScript officiel et sa gestion robuste des templates transactionnels.
 - **Cloudinary** : Permet de décharger le serveur backend de la gestion du système de fichiers en offrant un CDN global, une transformation d'image à la volée et une sécurisation des médias.
 - **Axios avec Intercepteurs de Réponse** : Permet de gérer le cycle de vie du rafraîchissement des tokens de manière transparente pour l'utilisateur sans exposer les JWT dans le LocalStorage.
