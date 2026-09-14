@@ -130,12 +130,38 @@ export default function SignupPage() {
               onChange={(e) => updateField("phone", e.target.value)}
               required
             />
-            <Input
-              label="Ville"
+            <Select
+              label="📍Ville"
               value={form.ville}
               onChange={(e) => updateField("ville", e.target.value)}
               required
-            />
+            >
+              <option value=""></option>
+              <option value="Ariana">Ariana</option>
+              <option value="Béja">Béja</option>
+              <option value="Ben Arous">Ben Arous</option>
+              <option value="Bizerte">Bizerte</option>
+              <option value="Gabès">Gabès</option>
+              <option value="Gafsa">Gafsa</option>
+              <option value="Jendouba">Jendouba</option>
+              <option value="Kairouan">Kairouan</option>
+              <option value="Kasserine">Kasserine</option>
+              <option value="Kebili">Kebili</option>
+              <option value="Le Kef">Le Kef</option>
+              <option value="Mahdia">Mahdia</option>
+              <option value="Manouba">Manouba</option>
+              <option value="Medenine">Medenine</option>
+              <option value="Monastir">Monastir</option>
+              <option value="Nabeul">Nabeul</option>
+              <option value="Sfax">Sfax</option>
+              <option value="Sidi Bouzid">Sidi Bouzid</option>
+              <option value="Siliana">Siliana</option>
+              <option value="Sousse">Sousse</option>
+              <option value="Tataouine">Tataouine</option>
+              <option value="Tozeur">Tozeur</option>
+              <option value="Tunis">Tunis</option>
+              <option value="Zaghouan">Zaghouan</option>
+            </Select>
           </div>
 
           {form.role === "AGENT" && (

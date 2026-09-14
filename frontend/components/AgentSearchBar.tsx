@@ -1,10 +1,14 @@
-// components/AgentSearchBar.tsx
 'use client'
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { searchAgents, AgentSearchResult } from "@/lib/api/agents";
 
-export function AgentSearchBar() {
+interface AgentSearchBarProps {
+  label?: string;
+  className?: string;
+}
+
+export function AgentSearchBar({ label, className = "" }: AgentSearchBarProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<AgentSearchResult[]>([]);
@@ -37,10 +41,16 @@ export function AgentSearchBar() {
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative w-full max-w-md">
+    <div ref={wrapperRef} className={`relative w-full ${className}`}>
+      {label && (
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+      )}
+
       <div className="relative">
         <svg
-          className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/50"
+          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/50"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -61,7 +71,7 @@ export function AgentSearchBar() {
           }}
           onFocus={() => setShowResults(true)}
           placeholder="Rechercher un professionnel..."
-          className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-accent-dark focus:ring-4 focus:ring-accent/15"
+          className="w-full rounded-xl border border-border bg-card py-3.5 pl-11 pr-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-accent-dark focus:ring-4 focus:ring-accent/15 sm:text-base"
         />
       </div>
 
@@ -71,11 +81,11 @@ export function AgentSearchBar() {
             <button
               key={agent.id}
               onClick={() => {
-                router.push(`/agent/${agent.id}`);
+                router.push(`/client/agent/${agent.id}`);
                 setShowResults(false);
                 setQuery("");
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-accent/[0.08]"
+              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition hover:bg-accent/[0.08]"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
                 {agent.name?.[0]?.toUpperCase()}

@@ -32,6 +32,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from "@nestjs/swagger";
+import { GetPublicAgentsDto } from "./dto/get-public-agents.dto";
 
 @ApiTags("Agents")
 @Controller("agents")
@@ -40,16 +41,19 @@ export class AgentsController {
 
   @ApiOperation({
     summary: "Rechercher des agents par nom",
-    description: "Route publique permettant de chercher des professionnels par leur nom.",
+    description:
+      "Route publique permettant de chercher des professionnels par leur nom.",
   })
-  @ApiQuery({ name: "name", description: "Nom ou partie du nom de l'agent", example: "Karim" })
+  @ApiQuery({
+    name: "name",
+    description: "Nom ou partie du nom de l'agent",
+    example: "Karim",
+  })
   @ApiResponse({ status: 200, description: "Résultats de recherche d'agents." })
   @Get("search")
   async searchAgents(@Query("name") name: string) {
     return this.agentsService.searchAgents(name);
   }
-
-  
 
   @ApiCookieAuth("accessToken")
   @ApiOperation({
@@ -78,26 +82,46 @@ export class AgentsController {
   }
 
   @ApiOperation({
-    summary: "Lister les agents publics (filtrage par catégorie possible)",
-    description: "Route publique pour la vitrine et l'espace client avec option de filtre.",
+    summary:
+      "Lister les agents publics (paginé, filtrage par catégorie possible)",
+    description:
+      "Route publique pour la vitrine et l'espace client, avec pagination et filtre optionnel par catégorie.",
+  })
+  @ApiQuery({
+    name: "page",
+    required: false,
+    description: "Numéro de page (défaut : 1)",
+    example: 1,
+  })
+  @ApiQuery({
+    name: "limit",
+    required: false,
+    description: "Nombre d'agents par page (max 20, défaut : 12)",
+    example: 12,
   })
   @ApiQuery({
     name: "category_id",
     required: false,
     description: "Filtrer par identifiant de catégorie",
-    example: "1",
+    example: 1,
   })
-  @ApiResponse({ status: 200, description: "Liste des agents publics." })
+  @ApiResponse({
+    status: 200,
+    description: "Liste paginée des agents publics avec métadonnées.",
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Paramètres de pagination invalides.",
+  })
   @Get()
-  async getPublicAgents(@Query("category_id") categoryId?: string) {
-    return this.agentsService.getPublicAgents(
-      categoryId ? Number(categoryId) : undefined
-    );
+  async getPublicAgents(@Query() query: GetPublicAgentsDto) {
+    return this.agentsService.getPublicAgents(query);
   }
 
   @ApiOperation({
     summary: "Consulter le profil d'un agent par ID",
-    description: "Route publique retournant les informations d'un agent spécifique.",
+    description:
+      "Route publique retournant les informations d'un agent spécifique.",
   })
   @ApiParam({ name: "id", description: "ID de l'agent", example: 1 })
   @ApiResponse({ status: 200, description: "Informations de l'agent." })
@@ -126,7 +150,8 @@ export class AgentsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Mettre à jour mon profil avec photo (Agent connecté)",
-    description: "Permet à l'agent connecté de modifier ses informations et d'uploader sa photo.",
+    description:
+      "Permet à l'agent connecté de modifier ses informations et d'uploader sa photo.",
   })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -139,7 +164,10 @@ export class AgentsController {
         ville: { type: "string", example: "Tunis" },
         bio: { type: "string", example: "Électricien d'expérience" },
         zone: { type: "string", example: "Grand Tunis" },
-        service_mode: { type: "string", enum: ["se_deplace", "recoit", "les_deux"] },
+        service_mode: {
+          type: "string",
+          enum: ["se_deplace", "recoit", "les_deux"],
+        },
         photo: { type: "string", format: "binary" },
       },
     },
@@ -162,7 +190,8 @@ export class AgentsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Modifier les informations d'un agent (Admin)",
-    description: "Permet aux administrateurs de mettre à jour le profil d'un agent.",
+    description:
+      "Permet aux administrateurs de mettre à jour le profil d'un agent.",
   })
   @ApiParam({ name: "id", description: "ID de l'agent", example: 1 })
   @ApiResponse({ status: 200, description: "Agent mis à jour avec succès." })

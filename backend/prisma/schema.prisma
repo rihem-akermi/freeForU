@@ -37,6 +37,8 @@ model agents {
   reservations         reservations[]
   reviews              reviews[]
   services             services[]
+
+  @@index([category_id], map: "idx_agents_category_id")
 }
 
 model categories {

@@ -4,7 +4,7 @@ import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 
 const DEFAULT_AVATAR_URL =
-  'https://res.cloudinary.com/cva509hz/image/upload/v1789212034/pdp.png';
+  "https://res.cloudinary.com/cva509hz/image/upload/v1789212034/pdp.png";
 
 @Injectable()
 export class AgentsRepository {
@@ -42,7 +42,7 @@ export class AgentsRepository {
         password: agent.password,
         category_id: agent.category_id,
         role: "AGENT",
-        photo_url : DEFAULT_AVATAR_URL,
+        photo_url: DEFAULT_AVATAR_URL,
       },
       include: {
         categories: true,
@@ -99,8 +99,9 @@ export class AgentsRepository {
       take: 10,
     });
   }
-
-  async findAllPublic(categoryId?: number) {
+  
+  // pagination dans l'accueil 
+  async findAllPublic(page: number, limit: number, categoryId?: number) {
     return this.prisma.agents.findMany({
       where: { ...(categoryId && { category_id: categoryId }) },
       select: {
@@ -111,7 +112,16 @@ export class AgentsRepository {
         bio: true,
         category_id: true,
         categories: { select: { name: true } },
-      }
+      },
+      orderBy: { id: "asc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
+  async countPublic(categoryId?: number) {
+    return this.prisma.agents.count({
+      where: { ...(categoryId && { category_id: categoryId }) },
     });
   }
 

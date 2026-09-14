@@ -4,6 +4,7 @@ import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdatedAgentDto } from "./dto/update-agent.dto";
 import { UploadsService } from "src/uploads/uploads.service";
 import { Prisma } from "../../generated/prisma/client";
+import { GetPublicAgentsDto } from "./dto/get-public-agents.dto";
 
 @Injectable()
 export class AgentsService {
@@ -66,18 +67,37 @@ export class AgentsService {
     return await this.agentsRepository.searchAgents(name);
   }
 
-  async getPublicAgents(categoryId?: number) {
-    const agents = await this.agentsRepository.findAllPublic(categoryId);
+  async getPublicAgents(query: GetPublicAgentsDto) {
+  const { page = 1, limit = 10, category_id } = query;
 
-    return await Promise.all(
-      agents.map(async (agent) => {
-        const rating = await this.agentsRepository.getRatingSummary(agent.id);
-        return {
-          ...agent,
-          rating_average: rating.average,
-          rating_count: rating.count,
-        };
-      })
-    );
-  }
+  const [agents, total] = await Promise.all([
+    this.agentsRepository.findAllPublic(page, limit, category_id),
+    this.agentsRepository.countPublic(category_id),
+  ]);
+
+  const data = await Promise.all(
+    agents.map(async (agent) => {
+      const rating = await this.agentsRepository.getRatingSummary(agent.id);
+      return {
+        ...agent,
+        rating_average: rating.average,
+        rating_count: rating.count,
+      };
+    })
+  );
+
+  const totalPages = Math.ceil(total / limit); // arrondit vers le haut
+
+  return {
+    data, // infos des agents 
+    meta: { // infos des pages 
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+  };
+}
 }

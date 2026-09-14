@@ -59,16 +59,45 @@ export type PublicAgentCard = {
   rating_count: number;
 };
 
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+export type PaginatedAgents = {
+  data: PublicAgentCard[];
+  meta: PaginationMeta;
+};
+
 export async function getPublicAgents(
-  categoryId?: number,
-): Promise<PublicAgentCard[]> {
-  const query = categoryId ? `?category_id=${categoryId}` : "";
-  const result = await api.get<PublicAgentCard[]>(`/agents${query}`);
+  params: {
+    categoryId?: number;
+    page?: number;
+    limit?: number;
+  } = {},
+): Promise<PaginatedAgents> {
+  const { categoryId, page = 1, limit = 10 } = params;
+
+  const searchParams = new URLSearchParams();
+  if (categoryId) {
+    searchParams.set("category_id", String(categoryId));
+  }
+  //searchParams gère la param
+  searchParams.set("page", String(page));
+  searchParams.set("limit", String(limit));
+
+  const result = await api.get<PaginatedAgents>(
+    `/agents?${searchParams.toString()}`,
+  );
   return result.data;
 }
 
 export async function getAgents(): Promise<Agent[]> {
-  const res = await api.get<Agent[]>("/agents/all"); 
+  const res = await api.get<Agent[]>("/agents/all");
   return res.data;
 }
 
