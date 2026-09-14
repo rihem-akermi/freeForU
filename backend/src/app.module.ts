@@ -19,6 +19,7 @@ import { ServicesModule } from "./services/services.module";
 import { ScheduleModule } from "@nestjs/schedule";
 import { MailModule } from './mail/mail.module';
 import { OtpModule } from './otp/otp.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { OtpModule } from './otp/otp.module';
     ScheduleModule.forRoot(),
     MailModule,
     OtpModule,
+    RedisModule,
   ],
   controllers: [],
   providers: [],

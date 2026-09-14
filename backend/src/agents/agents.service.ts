@@ -5,12 +5,15 @@ import { UpdatedAgentDto } from "./dto/update-agent.dto";
 import { UploadsService } from "src/uploads/uploads.service";
 import { Prisma } from "../../generated/prisma/client";
 import { GetPublicAgentsDto } from "./dto/get-public-agents.dto";
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class AgentsService {
   constructor(
     private agentsRepository: AgentsRepository,
-    private uploadsService: UploadsService
+    private uploadsService: UploadsService,
+        private redisService: RedisService,
+
   ) {}
 
   async getAllAgents() {
@@ -68,36 +71,44 @@ export class AgentsService {
   }
 
   async getPublicAgents(query: GetPublicAgentsDto) {
-  const { page = 1, limit = 10, category_id } = query;
+    const { page = 1, limit = 10, category_id } = query;
 
-  const [agents, total] = await Promise.all([
-    this.agentsRepository.findAllPublic(page, limit, category_id),
-    this.agentsRepository.countPublic(category_id),
-  ]);
+    // Étape 1 : construire la clé de cache
+    const cacheKey = `agents:category:${category_id ?? 'all'}:page:${page}:limit:${limit}`;
 
-  const data = await Promise.all(
-    agents.map(async (agent) => {
-      const rating = await this.agentsRepository.getRatingSummary(agent.id);
-      return {
-        ...agent,
-        rating_average: rating.average,
-        rating_count: rating.count,
-      };
-    })
-  );
+    // Étape 2 : Redis GET
+    const cached = await this.redisService.get(cacheKey);
+    if (cached) {
+      console.log("Redis a repond à cette requete 🙉")
+      return JSON.parse(cached); // HIT 🟢
+    }
 
-  const totalPages = Math.ceil(total / limit); // arrondit vers le haut
+    // MISS 🔴 → flux normal avec postgres 
+    const [agents, total] = await Promise.all([
+      this.agentsRepository.findAllPublic(page, limit, category_id),
+      this.agentsRepository.countPublic(category_id),
+    ]);
 
-  return {
-    data, // infos des agents 
-    meta: { // infos des pages 
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    },
-  };
-}
+    const data = await Promise.all(
+      agents.map(async (agent) => {
+        const rating = await this.agentsRepository.getRatingSummary(agent.id);
+        return { ...agent, rating_average: rating.average, rating_count: rating.count };
+      }),
+    );
+
+    const totalPages = Math.ceil(total / limit);
+    const result = {
+      data,
+      meta: {
+        page, limit, total, totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
+
+    // Étape 3 : Redis SET avec TTL = 5 min (300s)
+    await this.redisService.set(cacheKey, JSON.stringify(result), 300);
+
+    return result;
+  }
 }

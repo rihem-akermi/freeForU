@@ -102,6 +102,7 @@ export class AgentsRepository {
   
   // pagination dans l'accueil 
   async findAllPublic(page: number, limit: number, categoryId?: number) {
+    console.log("Postgres a répond à cette requette 🏢")
     return this.prisma.agents.findMany({
       where: { ...(categoryId && { category_id: categoryId }) },
       select: {
