@@ -12,6 +12,7 @@
 - [2. Fonctionnalités Principales](#2-fonctionnalités-principales)
 - [3. Tech Stack](#3-stack-technique)
 - [4. Architecture Globale](#4-architecture-globale)
+  - [4.1. Mise en Cache Redis (Catalogue Public)](#mise-en-cache-redis-catalogue-public)
 - [5. Cycle de Vie des Réservations](#5-cycle-de-vie-des-réservations)
 - [6. Calendrier & Gestion des Disponibilités](#6-calendrier--gestion-des-disponibilités)
 - [7. Système de Notifications Email](#7-système-de-notifications-email)
@@ -140,6 +141,17 @@ flowchart TD
         Service -->|"Upload buffer (Stream)"| CloudinaryAPI
     end
 ```
+
+### Mise en Cache Redis (Catalogue Public)
+
+La consultation du catalogue d'agents (`GET /agents`) intègre une couche de cache en mémoire Redis pour optimiser les performances de lecture :
+
+- **Stratégie Cache-Aside** : Le serveur interroge Redis en priorité (*Cache HIT*) ; en cas d'absence (*Cache MISS*), les données sont récupérées depuis PostgreSQL puis stockées dans Redis.
+- **Clés de cache granulaires** : Les clés dépendent du filtre de catégorie et de la pagination :
+  `agents:category:{categoryId|all}:page:{page}:limit:{limit}`
+- **Durée de rétention (TTL)** : Les réponses complètes paginées `{ data, meta }` sont conservées pendant **5 minutes (300 secondes)**.
+- **Gestion de la fraîcheur** : La synchronisation repose sur l'expiration automatique (TTL) sans invalidation active lors des mutations.
+- **Résilience (*Graceful Fallback*)** : En cas d'erreur ou d'indisponibilité de Redis, la requête bascule automatiquement et de manière transparente sur PostgreSQL.
 
 ---
 
