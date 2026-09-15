@@ -727,17 +727,17 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 
 ## 15. Choix Techniques & Rationale
 
-- **NestJS** : Fournit une architecture d'entreprise modulaire et structurée (Controllers, Services, Repositories, DTOs et Pipes de validation) facilitant l'isolation du domaine métier et la maintenabilité à long terme.
-- **Prisma & PostgreSQL** : Prisma garantit une sécurité de type de bout en bout (Type-Safe queries) avec PostgreSQL, simplifiant la manipulation des types SQL précis tels que `DATE` et `TIME(6)` indispensables pour un calendrier de réservation.
-- **Pagination & Cache-Aside Redis (Catalogue des Agents)** :
-  - *Pagination native SQL* : La route publique `GET /agents` implémente `GetPublicAgentsDto` (`page`, `limit` plafonné à 20, `category_id`) avec `skip`/`take` et tri déterministe (`orderBy: { id: 'asc' }`) directement dans PostgreSQL, indexé sur `category_id`.
-  - *Stratégie Cache-Aside* : La réponse complète `{ data, meta }` est mise en cache dans Redis sous la clé `agents:category:{categoryId|all}:page:{page}:limit:{limit}` pour une durée (TTL) de 5 minutes (300 secondes).
-  - *Résilience (Graceful Fallback)* : En cas d'erreur ou d'indisponibilité de Redis, l'application bascule automatiquement sur PostgreSQL sans interruption de service.
-  - *Compromis assumés* : La fraîcheur repose sur l'expiration TTL (sans invalidation active à ce stade), et la pagination limite l'impact du calcul des notes agrégées au strict nombre d'agents affichés par page.
-- **Brevo** : Sélectionné pour sa fiabilité dans la distribution d'emails transactionnels, son SDK TypeScript officiel et sa gestion robuste des templates transactionnels.
-- **Cloudinary** : Permet de décharger le serveur backend de la gestion du système de fichiers en offrant un CDN global, une transformation d'image à la volée et une sécurisation des médias.
-- **Axios avec Intercepteurs de Réponse** : Permet de gérer le cycle de vie du rafraîchissement des tokens de manière transparente pour l'utilisateur sans exposer les JWT dans le LocalStorage.
-- **NestJS Schedule (@Cron)** : Automatise sans infrastructure externe complexe les règles de gestion temporelle (expiration des demandes non traitées, archivage et rappels automatiques 24h avant RDV).
+- 🏗️ **NestJS** : Fournit une architecture d'entreprise modulaire et structurée (Controllers, Services, Repositories, DTOs et Pipes de validation) facilitant l'isolation du domaine métier et la maintenabilité à long terme.
+- 🗄️ **Prisma & PostgreSQL** : Prisma garantit une sécurité de type de bout en bout (Type-Safe queries) avec PostgreSQL, simplifiant la manipulation des types SQL précis tels que `DATE` et `TIME(6)` indispensables pour un calendrier de réservation.
+- ⚡ **Pagination & Cache-Aside Redis (Catalogue des Agents)** :
+  - 📄 *Pagination native SQL* : La route publique `GET /agents` implémente `GetPublicAgentsDto` (`page`, `limit` plafonné à 20, `category_id`) avec `skip`/`take` et tri déterministe (`orderBy: { id: 'asc' }`) directement dans PostgreSQL, indexé sur `category_id`.
+  - 🧠 *Stratégie Cache-Aside* : La réponse complète `{ data, meta }` est mise en cache dans Redis sous la clé `agents:category:{categoryId|all}:page:{page}:limit:{limit}` pour une durée (TTL) de 5 minutes (300 secondes).
+  - 🛡️ *Résilience (Graceful Fallback)* : En cas d'erreur ou d'indisponibilité de Redis, l'application bascule automatiquement sur PostgreSQL sans interruption de service.
+  - ⚖️ *Compromis assumés* : La fraîcheur repose sur l'expiration TTL (sans invalidation active à ce stade), et la pagination limite l'impact du calcul des notes agrégées au strict nombre d'agents affichés par page.
+- 📬 **Brevo** : Sélectionné pour sa fiabilité dans la distribution d'emails transactionnels, son SDK TypeScript officiel et sa gestion robuste des templates transactionnels.
+- ☁️ **Cloudinary** : Permet de décharger le serveur backend de la gestion du système de fichiers en offrant un CDN global, une transformation d'image à la volée et une sécurisation des médias.
+- 🔄 **Axios avec Intercepteurs de Réponse** : Permet de gérer le cycle de vie du rafraîchissement des tokens de manière transparente pour l'utilisateur sans exposer les JWT dans le LocalStorage.
+- ⏰ **NestJS Schedule (@Cron)** : Automatise sans infrastructure externe complexe les règles de gestion temporelle (expiration des demandes non traitées, archivage et rappels automatiques 24h avant RDV).
 
 ---
 
