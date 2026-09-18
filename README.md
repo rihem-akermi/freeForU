@@ -4,6 +4,21 @@
   <strong>Mise en relation directe entre clients et prestataires de services indépendants avec gestion dynamique des disponibilités et réservation en temps réel.</strong>
 </p>
 
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,ts,tailwind,nodejs,nestjs,postgres,prisma,redis,cloudinary" alt="Tech Stack Icons" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/NestJS_11-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/badge/Prisma_7-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis_Cache-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+</p>
+
 ---
 
 ## 📑 Table des Matières
@@ -103,13 +118,13 @@ Le projet repose sur une architecture découplée frontend/backend communicant v
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Frontend (Next.js 16)"]
+    subgraph Frontend["🖥️ Frontend (Next.js 16)"]
         UI["Composants React / Pages App Router"]
         AxiosClient["Client Axios + Response Interceptor"]
         UI --> AxiosClient
     end
 
-    subgraph Backend["Backend (NestJS 11)"]
+    subgraph Backend["⚙️ Backend (NestJS 11)"]
         Guard["AuthGuard & RolesGuard"]
         Controller["NestJS Controllers"]
         Service["Services Métier"]
@@ -125,7 +140,7 @@ flowchart TD
         Service -->|"2. Requête en cas de MISS"| Repo
     end
 
-    subgraph Data["Persistance & Cache"]
+    subgraph Data["💾 Persistance & Cache"]
         Redis[(Redis Cache)]
         Prisma["Prisma ORM Client"]
         Postgres[(PostgreSQL DB)]
@@ -134,12 +149,31 @@ flowchart TD
         Prisma --> Postgres
     end
 
-    subgraph External["Services Tiers"]
+    subgraph External["🌐 Services Tiers"]
         BrevoAPI["Brevo Transactional API"]
         CloudinaryAPI["Cloudinary CDN"]
         Service -->|"Envoi d'emails"| BrevoAPI
         Service -->|"Upload buffer (Stream)"| CloudinaryAPI
     end
+
+    style Frontend fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    style Backend fill:#fdf2f8,stroke:#ec4899,stroke-width:2px,color:#9d174d
+    style Data fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#166534
+    style External fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#854d0e
+
+    style UI fill:#ffffff,stroke:#3b82f6,color:#1e3a8a
+    style AxiosClient fill:#ffffff,stroke:#3b82f6,color:#1e3a8a
+    style Guard fill:#ffffff,stroke:#ec4899,color:#831843
+    style Controller fill:#ffffff,stroke:#ec4899,color:#831843
+    style Service fill:#ffffff,stroke:#ec4899,color:#831843
+    style RedisServ fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b
+    style Repo fill:#ffffff,stroke:#ec4899,color:#831843
+    style CronTask fill:#ffffff,stroke:#a855f7,color:#6b21a8
+    style Redis fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b
+    style Prisma fill:#ffffff,stroke:#22c55e,color:#14532d
+    style Postgres fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    style BrevoAPI fill:#ffffff,stroke:#eab308,color:#713f12
+    style CloudinaryAPI fill:#ffffff,stroke:#6366f1,color:#3730a3
 ```
 
 ### Mise en Cache Redis (Catalogue Public)
@@ -210,7 +244,7 @@ Le moteur de calcul des disponibilités (`AvailabilityService`) consolide trois 
 flowchart TD
     Req["Frontend demande le calendrier du mois (Année/Mois)"] --> Service["AvailabilityService.getClientMonthCalendar() / getAgentMonthCalendar()"]
 
-    subgraph DataFetch["Récupération Parallèle (Promise.all)"]
+    subgraph DataFetch["📥 Récupération Parallèle (Promise.all)"]
         WH["WorkingHoursRepository (Jours & Horaires d'ouverture)"]
         BS["BlockedSlotsRepository (Jours bloqués off/full)"]
         Res["ReservationsRepository (Réservations sur le mois)"]
@@ -220,18 +254,30 @@ flowchart TD
     Service --> BS
     Service --> Res
 
-    WH --> Engine["Moteur d'Agrégation & Priorité"]
+    WH --> Engine["⚙️ Moteur d'Agrégation & Priorité"]
     BS --> Engine
     Res --> Engine
 
-    subgraph Calculation["Logique de Couleur & Statut"]
+    subgraph Calculation["🎨 Logique de Couleur & Statut"]
         direction TB
         C1["Client : Jaune (en attente) > Violet (confirmée) > Bleu (terminée) > Gris (fermé) > Neutre (ouvert)"]
         C2["Agent : Jaune (en attente) > Bleu (exception full) > Violet (réservé) > Rouge (fermé/off) > Neutre"]
     end
 
     Engine --> Calculation
-    Calculation --> Resp["Réponse JSON structurée { date, status }"]
+    Calculation --> Resp["📤 Réponse JSON structurée { date, status }"]
+
+    style Req fill:#eff6ff,stroke:#3b82f6,color:#1e40af
+    style Service fill:#fdf2f8,stroke:#ec4899,color:#9d174d
+    style DataFetch fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#166534
+    style WH fill:#ffffff,stroke:#22c55e,color:#14532d
+    style BS fill:#ffffff,stroke:#22c55e,color:#14532d
+    style Res fill:#ffffff,stroke:#22c55e,color:#14532d
+    style Engine fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#854d0e
+    style Calculation fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#5b21b6
+    style C1 fill:#ffffff,stroke:#8b5cf6,color:#4c1d95
+    style C2 fill:#ffffff,stroke:#8b5cf6,color:#4c1d95
+    style Resp fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46
 ```
 
 ---
@@ -272,12 +318,19 @@ Le téléversement de photographies (avatars de profil, portfolio de réalisatio
 
 ```mermaid
 flowchart LR
-    Client["Client / Frontend (FormData)"] -->|"POST multipart/form-data"| Interceptor["FileInterceptor (Multer)"]
+    Client["📱 Client / Frontend (FormData)"] -->|"POST multipart/form-data"| Interceptor["FileInterceptor (Multer)"]
     Interceptor -->|"Fichier en mémoire (file.buffer)"| UploadService["UploadsService"]
     UploadService -->|"Streamifier (pipe)"| CloudinarySDK["Cloudinary upload_stream"]
-    CloudinarySDK -->|"Stockage média"| CDN["Cloudinary CDN"]
+    CloudinarySDK -->|"Stockage média"| CDN["☁️ Cloudinary CDN"]
     CDN -->|"secure_url"| UploadService
-    UploadService -->|"Enregistrement URL"| PrismaDB[(PostgreSQL)]
+    UploadService -->|"Enregistrement URL"| PrismaDB[(💾 PostgreSQL)]
+
+    style Client fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    style Interceptor fill:#fdf2f8,stroke:#ec4899,color:#9d174d
+    style UploadService fill:#fdf2f8,stroke:#ec4899,stroke-width:2px,color:#9d174d
+    style CloudinarySDK fill:#fefce8,stroke:#eab308,color:#854d0e
+    style CDN fill:#e0e7ff,stroke:#6366f1,stroke-width:2px,color:#3730a3
+    style PrismaDB fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#166534
 ```
 
 ---
