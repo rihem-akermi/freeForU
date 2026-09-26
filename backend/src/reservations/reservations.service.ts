@@ -350,9 +350,6 @@ export class ReservationsService {
         0
       );
 
-      console.log(
-        `Reservation ${reservation.id} → appointment: ${rendezvous.toString()}`
-      );
 
       //comparer le rendez-vous avec now.
       return rendezvous >= now && rendezvous <= targetTime;
