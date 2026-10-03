@@ -5,6 +5,9 @@ import { getMyProfile, updateMyProfile } from "@/lib/api/agents";
 import { getCategories } from "@/lib/api/categories";
 import type { Agent, Category } from "@/lib/data";
 
+import { generateAgentBio } from "@/lib/api/ai";
+import { AiSuggestionModal } from "@/components/AiSuggestionModal";
+
 import { Toast } from "@/components/Toast";
 import WorkingHoursEditor from "@/components/WorkingHoursEditor";
 import {
@@ -20,50 +23,116 @@ import {
 /* ── section icons ─────────────────────────────────────────────── */
 function IcoUser({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0115 0"
+      />
     </svg>
   );
 }
 function IcoBriefcase({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zM16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"
+      />
     </svg>
   );
 }
 function IcoIdCard({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4zM8 10h.01M8 14h4M14 10h2M14 14h2" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 6h16v12H4zM8 10h.01M8 14h4M14 10h2M14 14h2"
+      />
       <circle cx="8" cy="12" r="1.5" />
     </svg>
   );
 }
 function IcoClock({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     </svg>
   );
 }
 function IcoShield({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v6c0 4.5-3 8.25-7 9-4-.75-7-4.5-7-9V6l7-3z" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 3l7 3v6c0 4.5-3 8.25-7 9-4-.75-7-4.5-7-9V6l7-3z"
+      />
     </svg>
   );
 }
 function IcoPencil({ className = "w-3.5 h-3.5" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+      />
     </svg>
   );
 }
 function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
       <circle cx="12" cy="12" r="9" />
       <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
     </svg>
@@ -71,8 +140,18 @@ function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
 }
 function IcoUpload({ className = "w-6 h-6" }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+      />
     </svg>
   );
 }
@@ -141,6 +220,8 @@ export default function MesInfosPage() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [generatingBio, setGeneratingBio] = useState(false);
+  const [bioSuggestion, setBioSuggestion] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -179,6 +260,25 @@ export default function MesInfosPage() {
         ? { ...prev, social_links: { ...prev.social_links, [platform]: value } }
         : prev,
     );
+  };
+
+  const handleGenerateBio = async () => {
+    if (!profile?.bio?.trim()) {
+      setToast({
+        message: "Écrivez d'abord une courte description de vous-même.",
+        type: "error",
+      });
+      return;
+    }
+    try {
+      setGeneratingBio(true);
+      const result = await generateAgentBio(profile.bio);
+      setBioSuggestion(result);
+    } catch (err) {
+      setToast({ message: "La génération a échoué.", type: "error" });
+    } finally {
+      setGeneratingBio(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -221,13 +321,21 @@ export default function MesInfosPage() {
   }
 
   if (!profile) {
-    return <p className="text-sm text-[var(--color-danger)]">{error || "Profil introuvable."}</p>;
+    return (
+      <p className="text-sm text-[var(--color-danger)]">
+        {error || "Profil introuvable."}
+      </p>
+    );
   }
 
   return (
     <div className="w-full">
       {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
       <PageHeader
@@ -236,7 +344,9 @@ export default function MesInfosPage() {
         badge="Espace agent"
       />
 
-      {error && <p className="mb-4 text-sm text-[var(--color-danger)]">{error}</p>}
+      {error && (
+        <p className="mb-4 text-sm text-[var(--color-danger)]">{error}</p>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* ── 1. Infos de base ──────────────────────────────────── */}
@@ -251,13 +361,20 @@ export default function MesInfosPage() {
           <InnerPanel accent={SECTION_ACCENT.base}>
             <div className="flex flex-col items-start gap-6 sm:flex-row">
               <div className="flex shrink-0 flex-col items-center gap-2">
-                <label htmlFor="photo-upload" className="group relative block cursor-pointer">
+                <label
+                  htmlFor="photo-upload"
+                  className="group relative block cursor-pointer"
+                >
                   <div
                     className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed bg-muted transition"
                     style={{ borderColor: `${SECTION_ACCENT.base}55` }}
                   >
                     {photoPreview ? (
-                      <img src={photoPreview} alt="Photo de profil" className="h-full w-full object-cover" />
+                      <img
+                        src={photoPreview}
+                        alt="Photo de profil"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <IcoUser className="h-9 w-9 text-muted-foreground/40" />
                     )}
@@ -269,15 +386,35 @@ export default function MesInfosPage() {
                     <IcoPencil />
                   </div>
                 </label>
-                <input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                <span className="text-xs text-muted-foreground">Photo de profil</span>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+                <span className="text-xs text-muted-foreground">
+                  Photo de profil
+                </span>
               </div>
 
               <div className="grid w-full flex-1 grid-cols-1 gap-4">
-                <Input label="Nom complet" value={profile.name ?? ""} onChange={(e) => handleChange("name", e.target.value)} />
-                <Input label="Téléphone" value={profile.phone ?? ""} onChange={(e) => handleChange("phone", e.target.value)} />
+                <Input
+                  label="Nom complet"
+                  value={profile.name ?? ""}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                />
+                <Input
+                  label="Téléphone"
+                  value={profile.phone ?? ""}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                />
                 <Input label="Email" value={profile.email ?? ""} disabled />
-                <Input label="Ville" value={profile.ville ?? ""} onChange={(e) => handleChange("ville", e.target.value)} />
+                <Input
+                  label="Ville"
+                  value={profile.ville ?? ""}
+                  onChange={(e) => handleChange("ville", e.target.value)}
+                />
               </div>
             </div>
           </InnerPanel>
@@ -297,10 +434,14 @@ export default function MesInfosPage() {
               <Select
                 label="Catégorie"
                 value={profile.categories.id ?? ""}
-                onChange={(e) => handleChange("category_id", Number(e.target.value))}
+                onChange={(e) =>
+                  handleChange("category_id", Number(e.target.value))
+                }
               >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
               <Input
@@ -314,10 +455,14 @@ export default function MesInfosPage() {
                 type="number"
                 min="0"
                 value={profile.experience_years ?? ""}
-                onChange={(e) => handleChange("experience_years", e.target.value)}
+                onChange={(e) =>
+                  handleChange("experience_years", e.target.value)
+                }
               />
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Mode de service</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Mode de service
+                </label>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {[
                     { value: "se_deplace", label: "Je me déplace" },
@@ -328,7 +473,11 @@ export default function MesInfosPage() {
                       key={opt.value}
                       type="button"
                       size="sm"
-                      variant={profile.service_mode === opt.value ? "primary" : "outline"}
+                      variant={
+                        profile.service_mode === opt.value
+                          ? "primary"
+                          : "outline"
+                      }
                       onClick={() => handleChange("service_mode", opt.value)}
                     >
                       {opt.label}
@@ -343,6 +492,17 @@ export default function MesInfosPage() {
                 rows={3}
                 placeholder="Présentez-vous en quelques mots..."
               />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  isLoading={generatingBio}
+                  onClick={handleGenerateBio}
+                >
+                  ✨ Bio avec l'IA
+                </Button>
+              </div>
             </div>
           </InnerPanel>
         </Card>
@@ -365,7 +525,11 @@ export default function MesInfosPage() {
                 value={profile.age ?? ""}
                 onChange={(e) => handleChange("age", e.target.value)}
               />
-              <Select label="Sexe" value={profile.sexe ?? ""} onChange={(e) => handleChange("sexe", e.target.value)}>
+              <Select
+                label="Sexe"
+                value={profile.sexe ?? ""}
+                onChange={(e) => handleChange("sexe", e.target.value)}
+              >
                 <option value="">Préférer ne pas dire</option>
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
@@ -379,7 +543,9 @@ export default function MesInfosPage() {
               <Input
                 label="Instagram"
                 value={profile.social_links?.instagram ?? ""}
-                onChange={(e) => handleSocialChange("instagram", e.target.value)}
+                onChange={(e) =>
+                  handleSocialChange("instagram", e.target.value)
+                }
                 placeholder="https://instagram.com/..."
               />
             </div>
@@ -408,23 +574,54 @@ export default function MesInfosPage() {
 
           <InnerPanel accent={SECTION_ACCENT.verif}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FileDropZone label="Carte d'identité" disabled accent={SECTION_ACCENT.verif} />
-              <FileDropZone label="Certificat / attestation" disabled accept="image/*,.pdf" accent={SECTION_ACCENT.verif} />
+              <FileDropZone
+                label="Carte d'identité"
+                disabled
+                accent={SECTION_ACCENT.verif}
+              />
+              <FileDropZone
+                label="Certificat / attestation"
+                disabled
+                accept="image/*,.pdf"
+                accent={SECTION_ACCENT.verif}
+              />
             </div>
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <IcoInfo className="h-3.5 w-3.5 shrink-0" />
                 L'upload de ces documents sera activé prochainement.
               </p>
-              <StatusBadge status={profile.verification_status ?? "non_verifie"} />
+              <StatusBadge
+                status={profile.verification_status ?? "non_verifie"}
+              />
             </div>
           </InnerPanel>
         </Card>
       </div>
 
-      <Button variant="primary" size="lg" isLoading={saving} onClick={handleSubmit} className="mt-6">
+      <Button
+        variant="primary"
+        size="lg"
+        isLoading={saving}
+        onClick={handleSubmit}
+        className="mt-6"
+      >
         Enregistrer les modifications
       </Button>
+
+      {bioSuggestion && (
+        <AiSuggestionModal
+          title="Bio améliorée par l'IA"
+          fields={[
+            { key: "bio", label: "Bio", value: bioSuggestion, multiline: true },
+          ]}
+          onCancel={() => setBioSuggestion(null)}
+          onAccept={(values) => {
+            handleChange("bio", values.bio);
+            setBioSuggestion(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -444,15 +641,23 @@ function FileDropZone({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-bold uppercase tracking-wider text-foreground">{label}</label>
+      <label className="text-xs font-bold uppercase tracking-wider text-foreground">
+        {label}
+      </label>
       <label
         className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
-          disabled ? "cursor-not-allowed bg-muted/40 opacity-60" : "cursor-pointer"
+          disabled
+            ? "cursor-not-allowed bg-muted/40 opacity-60"
+            : "cursor-pointer"
         }`}
-        style={{ borderColor: disabled ? "var(--color-border)" : `${accent}55` }}
+        style={{
+          borderColor: disabled ? "var(--color-border)" : `${accent}55`,
+        }}
       >
         <IcoUpload className="h-6 w-6 text-muted-foreground/50" />
-        <span className="text-xs text-muted-foreground">{fileName ?? "Cliquez pour choisir un fichier"}</span>
+        <span className="text-xs text-muted-foreground">
+          {fileName ?? "Cliquez pour choisir un fichier"}
+        </span>
         <input
           type="file"
           accept={accept}
@@ -466,7 +671,10 @@ function FileDropZone({
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; variant: "neutral" | "warning" | "success" | "danger" }> = {
+  const map: Record<
+    string,
+    { label: string; variant: "neutral" | "warning" | "success" | "danger" }
+  > = {
     non_verifie: { label: "Non vérifié", variant: "neutral" },
     en_attente: { label: "En attente", variant: "warning" },
     verifie: { label: "Vérifié", variant: "success" },

@@ -21,8 +21,11 @@ import {
   IconEdit,
   IconDelete,
 } from "@/components/ui/UIComponents";
+import { generateService } from "@/lib/api/ai";
+import { AiSuggestionModal } from "./AiSuggestionModal";
 
 import { Service } from "@/lib/data";
+import { AiRawInputModal } from "./AiRawInputModal";
 
 const FORM_ACCENT = "#7D6E8C"; // soft violet, matching "Profil professionnel" on the Infos page
 const SERVICE_ACCENT = "#46607D"; // soft navy
@@ -45,6 +48,12 @@ export default function ServicesManager() {
     dureeEstimee: "",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showAiInput, setShowAiInput] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    nom: string;
+    description: string;
+  } | null>(null);
 
   const loadServices = async () => {
     try {
@@ -58,6 +67,22 @@ export default function ServicesManager() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateFromRaw = async (rawInput: string) => {
+    try {
+      setGenerating(true);
+      const result = await generateService(rawInput);
+      setAiSuggestion(result);
+      setShowAiInput(false);
+    } catch (err: any) {
+      setToast({
+        message: err?.response?.data?.message || "La génération a échoué.",
+        type: "error",
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -148,9 +173,19 @@ export default function ServicesManager() {
         className="!p-6 sm:!p-8"
         style={{ borderLeft: `4px solid ${FORM_ACCENT}` }}
       >
-        <h3 className="mb-5 font-serif text-lg font-bold text-foreground">
-          {editingId ? "Modifier le service" : "Ajouter un service"}
-        </h3>
+        <div className="mb-5 flex items-center justify-between">
+          <h3 className="font-serif text-lg font-bold text-foreground">
+            {editingId ? "Modifier le service" : "Ajouter un service"}
+          </h3>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAiInput(true)}
+          >
+            ✨ Nom et Description avec l'IA
+          </Button>
+        </div>
 
         <div
           className="rounded-xl border bg-background/60 p-5 sm:p-6"
@@ -289,6 +324,40 @@ export default function ServicesManager() {
           confirmLabel="Supprimer"
           onConfirm={() => handleDelete(confirmDeleteId)}
           onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
+
+      {showAiInput && (
+        <AiRawInputModal
+          title="Générer un service avec l'IA"
+          placeholder="Ex : je fais des brushings et colorations à domicile, environ 1h"
+          loading={generating}
+          onSubmit={handleGenerateFromRaw}
+          onCancel={() => setShowAiInput(false)}
+        />
+      )}
+
+      {aiSuggestion && (
+        <AiSuggestionModal
+          title="Suggestion IA pour votre service"
+          fields={[
+            { key: "nom", label: "Nom du service", value: aiSuggestion.nom },
+            {
+              key: "description",
+              label: "Description",
+              value: aiSuggestion.description,
+              multiline: true,
+            },
+          ]}
+          onCancel={() => setAiSuggestion(null)}
+          onAccept={(values) => {
+            setForm((f) => ({
+              ...f,
+              nom: values.nom,
+              description: values.description,
+            }));
+            setAiSuggestion(null);
+          }}
         />
       )}
     </div>

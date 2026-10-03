@@ -3,9 +3,11 @@ import Sidebar from "@/components/Sidebar";
 const agentLinks = [
   { href: "/agent", label: "Vue d'ensemble" },
   { href: "/agent/infos", label: "Mes Infos" },
+  { href: "/agent/services", label: "Mes Services" },
+
   { href: "/agent/publications", label: "Mes publications" },
   { href: "/agent/reservations", label: "Clients et réservations" },
-  { href: "/agent/services", label: "Mes Services" },
+
   { href: "/agent/avis", label: "Avis Des Clients" },
   { href: "/agent/disponibilites", label: "Mon Agenda" },
 ];

@@ -23,6 +23,10 @@ import {
   IconClose,
 } from "@/components/ui/UIComponents";
 
+import { generatePublication } from "@/lib/api/ai";
+import { AiRawInputModal } from "@/components/AiRawInputModal";
+import { AiSuggestionModal } from "@/components/AiSuggestionModal";
+
 type PublicationFormState = { titre: string; description: string };
 const emptyForm: PublicationFormState = { titre: "", description: "" };
 
@@ -31,24 +35,6 @@ const STATUS_ACCENT: Record<Publication["status"], string> = {
   approuvee: "#2f6f58", // success token color
   rejetee: "#b24b4b", // danger token color
 };
-
-function IcoImage({ className = "w-6 h-6" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <circle cx="8.5" cy="9.5" r="1.5" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 16l-5.5-5.5L9 17" />
-    </svg>
-  );
-}
-function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9" />
-      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
-    </svg>
-  );
-}
 
 export default function MesPublicationsPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
@@ -63,6 +49,12 @@ export default function MesPublicationsPage() {
     type: "success" | "error";
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Publication | null>(null);
+  const [showAiInput, setShowAiInput] = useState(false);
+  const [generatingPub, setGeneratingPub] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{
+    titre: string;
+    description: string;
+  } | null>(null);
 
   useEffect(() => {
     loadPublications();
@@ -155,6 +147,22 @@ export default function MesPublicationsPage() {
     }
   };
 
+  const handleGenerateFromRaw = async (rawInput: string) => {
+    try {
+      setGeneratingPub(true);
+      const result = await generatePublication(rawInput);
+      setAiSuggestion(result);
+      setShowAiInput(false);
+    } catch (err: any) {
+      setToast({
+        message: err?.response?.data?.message || "La génération a échoué.",
+        type: "error",
+      });
+    } finally {
+      setGeneratingPub(false);
+    }
+  };
+
   return (
     <div className="w-full">
       {toast && (
@@ -174,12 +182,49 @@ export default function MesPublicationsPage() {
         />
       )}
 
+      {showAiInput && (
+        <AiRawInputModal
+          title="Générer une publication avec l'IA"
+          placeholder="Ex : j'ai refait la peinture du salon d'un client, résultat impeccable en 2 jours"
+          loading={generatingPub}
+          onSubmit={handleGenerateFromRaw}
+          onCancel={() => setShowAiInput(false)}
+        />
+      )}
+
+      {aiSuggestion && (
+        <AiSuggestionModal
+          title="Suggestion IA pour votre publication"
+          fields={[
+            { key: "titre", label: "Titre", value: aiSuggestion.titre },
+            {
+              key: "description",
+              label: "Description",
+              value: aiSuggestion.description,
+              multiline: true,
+            },
+          ]}
+          onCancel={() => setAiSuggestion(null)}
+          onAccept={(values) => {
+            setForm((f) => ({
+              ...f,
+              titre: values.titre,
+              description: values.description,
+            }));
+            setAiSuggestion(null);
+          }}
+        />
+      )}
+
       <PageHeader
         title="Mes publications"
         subtitle="Mettez en avant vos réalisations pour attirer de nouveaux clients."
         badge="Espace agent"
         actionSlot={
-          <Button variant={showForm ? "neutral" : "primary"} onClick={showForm ? closeForm : openCreateForm}>
+          <Button
+            variant={showForm ? "neutral" : "primary"}
+            onClick={showForm ? closeForm : openCreateForm}
+          >
             {showForm ? <IconClose /> : <IconAdd />}
             {showForm ? "Annuler" : "Ajouter une publication"}
           </Button>
@@ -191,9 +236,19 @@ export default function MesPublicationsPage() {
           className="mb-8 !p-6 sm:!p-8"
           style={{ borderLeft: "4px solid #7D6E8C" }}
         >
-          <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-foreground">
-            {editingId ? "Modifier la publication" : "Nouvelle publication"}
-          </h2>
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">
+              {editingId ? "Modifier la publication" : "Nouvelle publication"}
+            </h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAiInput(true)}
+            >
+              ✨ Générer avec l'IA
+            </Button>
+          </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div className="flex flex-col gap-4">
@@ -204,7 +259,9 @@ export default function MesPublicationsPage() {
                 <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-accent/40 px-4 py-6 text-center transition hover:border-accent">
                   <IcoImage className="h-6 w-6 text-muted-foreground/50" />
                   <span className="text-xs text-muted-foreground">
-                    {photoFile ? photoFile.name : "Cliquez pour choisir une photo"}
+                    {photoFile
+                      ? photoFile.name
+                      : "Cliquez pour choisir une photo"}
                   </span>
                   <input
                     type="file"
@@ -234,7 +291,9 @@ export default function MesPublicationsPage() {
               <Textarea
                 label="Description"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 rows={4}
                 placeholder="Décrivez le service ou le chantier que vous voulez mettre en avant..."
               />
@@ -267,10 +326,18 @@ export default function MesPublicationsPage() {
                 style={{ borderLeft: `4px solid ${accent}` }}
               >
                 <div className="absolute right-4 top-4 flex gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                  <Button size="sm" variant="outline" onClick={() => openEditForm(pub)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openEditForm(pub)}
+                  >
                     <IconEdit />
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setDeleteTarget(pub)}>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => setDeleteTarget(pub)}
+                  >
                     <IconDelete />
                   </Button>
                 </div>
@@ -283,7 +350,9 @@ export default function MesPublicationsPage() {
                 <div className="flex flex-1 flex-col justify-between gap-2 pr-16">
                   <div>
                     <p className="font-semibold text-foreground">{pub.titre}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{pub.description}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {pub.description}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <PublicationStatusBadge status={pub.status} />
@@ -301,8 +370,45 @@ export default function MesPublicationsPage() {
   );
 }
 
+function IcoImage({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      viewBox="0 0 24 24"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 16l-5.5-5.5L9 17"
+      />
+    </svg>
+  );
+}
+function IcoInfo({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      viewBox="0 0 24 24"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 11v5m0-8h.01" />
+    </svg>
+  );
+}
+
 function PublicationStatusBadge({ status }: { status: Publication["status"] }) {
-  const map: Record<Publication["status"], { label: string; variant: "warning" | "success" | "danger" }> = {
+  const map: Record<
+    Publication["status"],
+    { label: string; variant: "warning" | "success" | "danger" }
+  > = {
     en_attente: { label: "En attente", variant: "warning" },
     approuvee: { label: "Approuvée", variant: "success" },
     rejetee: { label: "Rejetée", variant: "danger" },
