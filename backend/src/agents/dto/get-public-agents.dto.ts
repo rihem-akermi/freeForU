@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive, Max } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, IsString, Max } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetPublicAgentsDto {
@@ -35,4 +35,12 @@ export class GetPublicAgentsDto {
   @IsInt()
   @IsPositive()
   category_id?: number;
+
+  @ApiPropertyOptional({
+    description: "Filtrer par ville",
+    example: "Sousse",
+  })
+  @IsOptional()
+  @IsString()
+  ville?: string;
 }

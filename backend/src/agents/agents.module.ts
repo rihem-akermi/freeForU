@@ -10,5 +10,6 @@ import { RedisModule } from 'src/redis/redis.module';
   imports : [AuthModule , UploadsModule ,RedisModule],
   providers: [AgentsService,AgentsRepository],
   controllers: [AgentsController],
+  exports:[AgentsService]
 })
 export class AgentsModule {}

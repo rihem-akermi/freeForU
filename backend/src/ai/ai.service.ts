@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import OpenAI from "openai";
 import { z } from "zod";
+import { AgentsService } from "../agents/agents.service";
+import { PrismaService } from "../prisma/prisma.service";
 
 const ServiceSchema = z.object({
   nom: z.string().min(3).max(150),
@@ -10,18 +12,46 @@ const ServiceSchema = z.object({
 const PublicationSchema = z.object({
   titre: z.string().min(3).max(150),
   description: z.string().min(10),
-})
+});
 
 export type Publication = z.infer<typeof PublicationSchema>;
 
 export type Service = z.infer<typeof ServiceSchema>;
+
+// TOOL :
+const searchAgentsTool = {
+  type: "function" as const,
+  function: {
+    name: "searchAgents",
+    description:
+      "Recherche des agents/prestataires FreeForU disponibles, filtrés par catégorie de service et/ou ville.",
+    parameters: {
+      type: "object",
+      properties: {
+        categoryId: {
+          type: "integer",
+          description:
+            "L'identifiant de la catégorie recherchée (voir la liste des catégories fournie).",
+        },
+        ville: {
+          type: "string",
+          description: "La ville où le client souhaite trouver un agent.",
+        },
+      },
+      required: [],
+    },
+  },
+};
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly groqClient: OpenAI;
 
-  constructor() {
+  constructor(
+    private agentsService: AgentsService,
+    private prisma: PrismaService
+  ) {
     this.groqClient = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
@@ -69,6 +99,26 @@ export class AiService {
     throw new Error("Échec après plusieurs tentatives");
   }
 
+  private async executeTool(name: string, args: any): Promise<any> {
+    if (name === "searchAgents") {
+      const result = await this.agentsService.getPublicAgents({
+        page: 1,
+        limit: 5,
+        category_id: args.categoryId,
+        ville: args.ville,
+      });
+      // On renvoie une version allégée au LLM (pas besoin de toute la pagination)
+      return result.data.map((a) => ({
+        nom: a.name,
+        ville: a.ville,
+        categorie: a.categories?.name,
+        bio: a.bio,
+      }));
+    }
+    throw new Error(`Tool inconnu: ${name}`);
+  }
+
+  //simple prompt no instrucion , LLM is free
   async ask(prompt: string): Promise<string> {
     return this.callGroq([{ role: "user", content: prompt }]);
   }
@@ -96,7 +146,8 @@ Règles :
         { role: "system", content: systemInstruction },
         { role: "user", content: rawInput },
       ],
-      {//ask LLM to return a specific JSON structure 
+      {
+        //ask LLM to return a specific JSON structure
         type: "json_schema",
         json_schema: {
           name: "service_schema",
@@ -125,43 +176,122 @@ Règles :
   }
 
   async generatePublication(rawInput: string): Promise<Publication> {
-  const systemInstruction = `Tu es un assistant qui transforme la description brute d'une publication FreeForU (post d'un agent, ex: avant/après d'un travail réalisé) en une fiche accrocheuse.
+    const systemInstruction = `Tu es un assistant qui transforme la description brute d'une publication FreeForU (post d'un agent, ex: avant/après d'un travail réalisé) en une fiche accrocheuse.
 
 Règles :
 - "titre" : court, accrocheur, orienté client (max 150 caractères)
 - "description" : 1 à 3 phrases, professionnelle
 - Ne JAMAIS inventer de détails absents du texte brut`;
 
-  const rawJson = await this.callGroq(
-    [
-      { role: 'system', content: systemInstruction },
-      { role: 'user', content: rawInput },
-    ],
-    {
-      type: 'json_schema',
-      json_schema: {
-        name: 'publication_schema',
-        strict: true,
-        schema: {
-          type: 'object',
-          properties: {
-            titre: { type: 'string' },
-            description: { type: 'string' },
+    const rawJson = await this.callGroq(
+      [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: rawInput },
+      ],
+      {
+        type: "json_schema",
+        json_schema: {
+          name: "publication_schema",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              titre: { type: "string" },
+              description: { type: "string" },
+            },
+            required: ["titre", "description"],
+            additionalProperties: false,
           },
-          required: ['titre', 'description'],
-          additionalProperties: false,
         },
-      },
-    },
-  );
+      }
+    );
 
-  //ZOD verifies the result of the LLM
-  const parsed = PublicationSchema.safeParse(JSON.parse(rawJson));
-  if (!parsed.success) {
-    this.logger.error(`Validation échouée: ${parsed.error.message}`);
-    throw new Error('La réponse générée ne respecte pas le format attendu');
+    //ZOD verifies the result of the LLM
+    const parsed = PublicationSchema.safeParse(JSON.parse(rawJson));
+    if (!parsed.success) {
+      this.logger.error(`Validation échouée: ${parsed.error.message}`);
+      throw new Error("La réponse générée ne respecte pas le format attendu");
+    }
+
+    return parsed.data;
   }
 
-  return parsed.data;
-}
+  async askAssistant(
+    userMessage: string,
+    history: { role: "user" | "assistant"; content: string }[] = []
+  ): Promise<{ reply: string; history: { role: string; content: string }[] }> {
+    const categories = await this.prisma.categories.findMany({
+      select: { id: true, name: true },
+    });
+    const categoriesList = categories
+      .map((c) => `${c.id}: ${c.name}`)
+      .join(", ");
+
+    const systemInstruction = `Tu es l'assistant FreeForU, une plateforme qui met en relation des clients avec des prestataires de services.
+Catégories disponibles (id: nom) : ${categoriesList}
+Utilise le tool searchAgents quand l'utilisateur cherche un professionnel.
+
+Style de réponse OBLIGATOIRE :
+- Réponds comme dans une conversation de chat, pas comme un rapport
+- 2 à 6 phrases maximum, sauf si tu dois lister des résultats concrets (agents trouvés)
+- Pas de titres markdown (##), pas de tableaux
+- Si tu listes des agents trouvés, utilise une simple liste à puces courte (nom, ville)
+- Pas de suggestions non demandées (villes voisines, notifications...) sauf si l'utilisateur les demande explicitement`;
+    const messages: any[] = [
+      { role: "system", content: systemInstruction },
+      ...history,
+      { role: "user", content: userMessage },
+    ];
+
+    const firstResponse = await this.groqClient.chat.completions.create({
+      model: process.env.GROQ_MODEL_NAME ?? "openai/gpt-oss-120b",
+      messages,
+      tools: [searchAgentsTool],
+      tool_choice: "auto",
+    });
+
+    const firstMessage = firstResponse.choices[0].message;
+    let finalReply: string;
+
+    if (!firstMessage.tool_calls || firstMessage.tool_calls.length === 0) {
+      finalReply =
+        firstMessage.content ?? "Désolé, je n'ai pas compris votre demande.";
+    } else {
+      messages.push(firstMessage);
+
+      for (const toolCall of firstMessage.tool_calls) {
+        if (toolCall.type !== "function") continue;
+
+        const args = JSON.parse(toolCall.function.arguments);
+        this.logger.log(
+          `Tool call: ${toolCall.function.name}(${JSON.stringify(args)})`
+        );
+        const toolResult = await this.executeTool(toolCall.function.name, args);
+
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(toolResult),
+        });
+      }
+
+      const secondResponse = await this.groqClient.chat.completions.create({
+        model: process.env.GROQ_MODEL_NAME ?? "openai/gpt-oss-120b",
+        messages,
+      });
+
+      finalReply =
+        secondResponse.choices[0].message.content ??
+        "Désolé, je n'ai pas pu formuler de réponse.";
+    }
+
+    // On renvoie l'historique mis à jour — LE CLIENT devra le renvoyer au prochain appel
+    const updatedHistory = [
+      ...history,
+      { role: "user" as const, content: userMessage },
+      { role: "assistant" as const, content: finalReply },
+    ];
+
+    return { reply: finalReply, history: updatedHistory };
+  }
 }
