@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AgentsService } from "../agents/agents.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { GoogleGenAI } from "@google/genai";
+import { FREEFORU_POLICY } from "./knowledge/freeforu-policy";
 
 const ServiceSchema = z.object({
   nom: z.string().min(3).max(150),
@@ -244,6 +245,9 @@ Règles :
 Catégories disponibles (id: nom) : ${categoriesList}
 Utilise le tool searchAgents quand l'utilisateur cherche un professionnel.
 
+Informations officielles sur les règles de la plateforme (utilise-les pour répondre aux questions sur l'annulation, le paiement, le support, etc. — ne JAMAIS inventer de règle qui n'est pas listée ici) :
+${FREEFORU_POLICY}
+
 Style de réponse OBLIGATOIRE :
 - Réponds comme dans une conversation de chat, pas comme un rapport
 - 2 à 6 phrases maximum, sauf si tu dois lister des résultats concrets (agents trouvés)
@@ -341,13 +345,14 @@ Style de réponse OBLIGATOIRE :
         nom: s.nom,
         description: s.description,
         prix: s.prix,
-        score: this.cosineSimilarity( //calcul similarité ici puisque sans pgvector dans postgres
+        score: this.cosineSimilarity(
+          //calcul similarité ici puisque sans pgvector dans postgres
           queryEmbedding,
           s.embedding as unknown as number[]
         ),
       }))
       .sort((a, b) => b.score - a.score) //on trie du + pertinent au - pertinent
-      .slice(0, limit);//le top
+      .slice(0, limit); //le top
 
     return scored;
   }
