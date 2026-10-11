@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { AgentsService } from "../agents/agents.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { GoogleGenAI } from "@google/genai";
 
 const ServiceSchema = z.object({
   nom: z.string().min(3).max(150),
@@ -47,6 +48,7 @@ const searchAgentsTool = {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly groqClient: OpenAI;
+  private readonly geminiClient: GoogleGenAI;
 
   constructor(
     private agentsService: AgentsService,
@@ -55,6 +57,9 @@ export class AiService {
     this.groqClient = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
       baseURL: "https://api.groq.com/openai/v1",
+    });
+    this.geminiClient = new GoogleGenAI({
+      apiKey: process.env.GOOGLE_AI_API_KEY!,
     });
   }
 
@@ -116,6 +121,14 @@ export class AiService {
       }));
     }
     throw new Error(`Tool inconnu: ${name}`);
+  }
+
+  // 🔑 Utilitaire de comparaison, réutilisé pour chaque recherche
+  cosineSimilarity(a: number[], b: number[]): number {
+    const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);
+    const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+    const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
   }
 
   //simple prompt no instrucion , LLM is free
@@ -293,5 +306,49 @@ Style de réponse OBLIGATOIRE :
     ];
 
     return { reply: finalReply, history: updatedHistory };
+  }
+
+  async embedText(
+    text: string,
+    taskType: "RETRIEVAL_DOCUMENT" | "RETRIEVAL_QUERY"
+  ): Promise<number[]> {
+    const result = await this.geminiClient.models.embedContent({
+      model: "gemini-embedding-001",
+      contents: text,
+      config: { taskType },
+    });
+    return result.embeddings![0].values!;
+  }
+
+  async searchServices(query: string, limit = 5) {
+    const queryEmbedding = await this.embedText(query, "RETRIEVAL_QUERY");
+
+    const services = await this.prisma.services.findMany({
+      where: { embedding: { not: null as any } },
+      select: {
+        id: true,
+        nom: true,
+        description: true,
+        prix: true,
+        agent_id: true,
+        embedding: true,
+      },
+    });
+
+    const scored = services
+      .map((s) => ({
+        id: s.id,
+        nom: s.nom,
+        description: s.description,
+        prix: s.prix,
+        score: this.cosineSimilarity( //calcul similarité ici puisque sans pgvector dans postgres
+          queryEmbedding,
+          s.embedding as unknown as number[]
+        ),
+      }))
+      .sort((a, b) => b.score - a.score) //on trie du + pertinent au - pertinent
+      .slice(0, limit);//le top
+
+    return scored;
   }
 }

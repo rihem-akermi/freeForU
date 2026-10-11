@@ -54,4 +54,8 @@ export class AiController {
       (body.history as any) ?? []
     );
   }
+  @Post("search-services")
+  async searchServices(@Body("query") query: string) {
+    return this.aiService.searchServices(query);
+  }
 }
