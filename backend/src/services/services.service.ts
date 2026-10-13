@@ -28,7 +28,6 @@ export class ServicesService {
       `${dto.nom}. ${dto.description ?? ""}`,
       "RETRIEVAL_DOCUMENT"
     );
-    console.log("🚀New Service + its embedding : ",embedding)
     return this.servicesRepository.create(agentId, dto, embedding);
   }
 

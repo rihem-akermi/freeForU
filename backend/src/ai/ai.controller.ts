@@ -43,17 +43,11 @@ export class AiController {
 
   @Post("assistant")
   async askAssistant(
-    @Body()
-    body: {
-      message: string;
-      history?: { role: string; content: string }[];
-    }
+    @Body() body: { message: string; conversationId?: string }
   ) {
-    return this.aiService.askAssistant(
-      body.message,
-      (body.history as any) ?? []
-    );
+    return this.aiService.askAssistant(body.message, body.conversationId);
   }
+
   @Post("search-services")
   async searchServices(@Body("query") query: string) {
     return this.aiService.searchServices(query);

@@ -5,6 +5,10 @@ import { AgentsService } from "../agents/agents.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { GoogleGenAI } from "@google/genai";
 import { FREEFORU_POLICY } from "./knowledge/freeforu-policy";
+import { randomUUID } from "crypto";
+import { RedisService } from "src/redis/redis.service";
+
+const CONVERSATION_TTL_SECONDS = 1800; // 30 minutes d'inactivité → expiration
 
 const ServiceSchema = z.object({
   nom: z.string().min(3).max(150),
@@ -53,7 +57,8 @@ export class AiService {
 
   constructor(
     private agentsService: AgentsService,
-    private prisma: PrismaService
+    private prisma: PrismaService,
+    private redisService: RedisService
   ) {
     this.groqClient = new OpenAI({
       apiKey: process.env.GROQ_API_KEY,
@@ -229,11 +234,19 @@ Règles :
 
     return parsed.data;
   }
-
   async askAssistant(
     userMessage: string,
-    history: { role: "user" | "assistant"; content: string }[] = []
-  ): Promise<{ reply: string; history: { role: string; content: string }[] }> {
+    conversationId?: string
+  ): Promise<{ reply: string; conversationId: string }> {
+    const id = conversationId ?? randomUUID();
+    const cacheKey = `chat:history:${id}`;
+
+    // Récupération de l'historique existant (ou tableau vide si nouvelle conversation)
+    const cached = await this.redisService.get(cacheKey);
+    const history: { role: "user" | "assistant"; content: string }[] = cached
+      ? JSON.parse(cached)
+      : [];
+
     const categories = await this.prisma.categories.findMany({
       select: { id: true, name: true },
     });
@@ -302,14 +315,15 @@ Style de réponse OBLIGATOIRE :
         "Désolé, je n'ai pas pu formuler de réponse.";
     }
 
-    // On renvoie l'historique mis à jour — LE CLIENT devra le renvoyer au prochain appel
+    // On met à jour Redis avec le nouvel échange, en RÉINITIALISANT le TTL
     const updatedHistory = [
       ...history,
-      { role: "user" as const, content: userMessage },
-      { role: "assistant" as const, content: finalReply },
+      { role: 'user' as const, content: userMessage },
+      { role: 'assistant' as const, content: finalReply },
     ];
+    await this.redisService.set(cacheKey, JSON.stringify(updatedHistory), CONVERSATION_TTL_SECONDS);
 
-    return { reply: finalReply, history: updatedHistory };
+    return { reply: finalReply, conversationId: id };
   }
 
   async embedText(
