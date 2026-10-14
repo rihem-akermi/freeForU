@@ -20,34 +20,61 @@ export class ServicesRepository {
     });
   }
 
-  async create(agentId: number, dto: CreateServiceDto, embedding: number[]) {
-  //
-    return this.prisma.services.create({
-    data: {
-      agent_id: agentId,
-      nom: dto.nom,
-      description: dto.description,
-      type_prix: dto.typePrix,
-      prix: dto.prix,
-      duree_estimee: dto.dureeEstimee,
-      embedding, // ← ajout
-    },
-  });
-}
+  async findCheapest(categoryId: number, ville?: string, limit = 5) {
+    return this.prisma.services.findMany({
+      where: {
+        agents: {
+          category_id: categoryId,
+          ...(ville && { ville: { equals: ville, mode: "insensitive" } }),
+        },
+      },
+      select: {
+        id: true,
+        nom: true,
+        description: true,
+        prix: true,
+        type_prix: true,
+        agents: { select: { id: true, name: true, ville: true } },
+      },
+      orderBy: { prix: "asc" },
+      take: limit,
+    });
+  }
 
-async update(id: number, dto: Partial<UpdateServiceDto>, embedding?: number[]) {
-  return this.prisma.services.update({
-    where: { id },
-    data: {
-      ...(dto.nom !== undefined && { nom: dto.nom }),
-      ...(dto.description !== undefined && { description: dto.description }),
-      ...(dto.typePrix !== undefined && { type_prix: dto.typePrix }),
-      ...(dto.prix !== undefined && { prix: dto.prix }),
-      ...(dto.dureeEstimee !== undefined && { duree_estimee: dto.dureeEstimee }),
-      ...(embedding && { embedding }), // ← ajout
-    },
-  });
-}
+  async create(agentId: number, dto: CreateServiceDto, embedding: number[]) {
+    //
+    return this.prisma.services.create({
+      data: {
+        agent_id: agentId,
+        nom: dto.nom,
+        description: dto.description,
+        type_prix: dto.typePrix,
+        prix: dto.prix,
+        duree_estimee: dto.dureeEstimee,
+        embedding, // ← ajout
+      },
+    });
+  }
+
+  async update(
+    id: number,
+    dto: Partial<UpdateServiceDto>,
+    embedding?: number[]
+  ) {
+    return this.prisma.services.update({
+      where: { id },
+      data: {
+        ...(dto.nom !== undefined && { nom: dto.nom }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.typePrix !== undefined && { type_prix: dto.typePrix }),
+        ...(dto.prix !== undefined && { prix: dto.prix }),
+        ...(dto.dureeEstimee !== undefined && {
+          duree_estimee: dto.dureeEstimee,
+        }),
+        ...(embedding && { embedding }), // ← ajout
+      },
+    });
+  }
 
   async delete(id: number) {
     return this.prisma.services.delete({

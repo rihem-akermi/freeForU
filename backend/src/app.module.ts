@@ -29,7 +29,7 @@ import { AiModule } from './ai/ai.module';
     AgentsModule,
     ReservationsModule,
     AuthModule,
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot(),//charger les variables d’environnement depuis .env
     ContactsModule,
     CategoriesModule,
     PublicationsModule,
@@ -40,7 +40,7 @@ import { AiModule } from './ai/ai.module';
     BlockedSlotsModule,
     AvailabilityModule,
     ServicesModule,
-    ScheduleModule.forRoot(),
+    ScheduleModule.forRoot(),//planification des taches Cron
     MailModule,
     OtpModule,
     RedisModule,

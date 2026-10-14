@@ -2,6 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -17,6 +19,7 @@ import { combineDateAndTime } from "src/common/utils/date.utils";
 export class ReservationsService {
   constructor(
     private reservationsRepository: reservationsRepository,
+    @Inject(forwardRef(() => ServicesRepository))
     private servicesRepository: ServicesRepository,
     private mailService: MailService
   ) {}
@@ -35,9 +38,13 @@ export class ReservationsService {
   async getAllReservations() {
     return await this.reservationsRepository.findAll();
   }
+  async findByReservationId(reservationId : number){
+    return await this.reservationsRepository.findByReservationId(reservationId);
+  }
   async getMyReservations(clientId: number) {
     return await this.reservationsRepository.findByClientId(clientId);
   }
+
   async getAgentDayReservations(agentId: number, dateStr: string) {
     const date = new Date(dateStr);
     return await this.reservationsRepository.findByAgentAndDate(agentId, date);

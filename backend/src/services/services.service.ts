@@ -1,5 +1,7 @@
 import {
   ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -12,7 +14,9 @@ import { AiService } from "src/ai/ai.service";
 export class ServicesService {
   constructor(
     private servicesRepository: ServicesRepository,
-    private aiService: AiService
+    
+    @Inject(forwardRef(() => AiService))
+    private aiService : AiService
   ) {}
 
   async getServicesByAgent(agentId: number) {
@@ -21,6 +25,10 @@ export class ServicesService {
 
   async getMyServices(agentId: number) {
     return this.servicesRepository.findByAgentId(agentId);
+  }
+
+  async getCheapestServices(categoryId: number, ville?: string) {
+    return this.servicesRepository.findCheapest(categoryId, ville);
   }
 
   async createService(agentId: number, dto: CreateServiceDto) {

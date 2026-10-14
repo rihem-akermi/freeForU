@@ -33,6 +33,19 @@ export class reservationsRepository {
     });
   }
 
+
+  async findByReservationId(reservationId : number){
+    return this.prisma.reservations.findUnique({
+      where: { id: reservationId },
+      include: {
+        agents: {
+          select: { id: true },
+        },
+      },
+    });
+  
+  }
+
   async findByClientId(clientId: number) {
     return this.prisma.reservations.findMany({
       where: { client_id: clientId }, // archived retiré

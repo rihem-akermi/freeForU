@@ -1,5 +1,6 @@
 import { Controller, Post, Body, BadRequestException } from "@nestjs/common";
 import { AiService } from "./ai.service";
+import { AskAssistantDto } from "./dto/ask-assistant.dto";
 
 @Controller("ai")
 export class AiController {
@@ -43,9 +44,9 @@ export class AiController {
 
   @Post("assistant")
   async askAssistant(
-    @Body() body: { message: string; conversationId?: string }
+    @Body() dto :AskAssistantDto
   ) {
-    return this.aiService.askAssistant(body.message, body.conversationId);
+    return this.aiService.askAssistant(dto.message, dto.conversationId);
   }
 
   @Post("search-services")
