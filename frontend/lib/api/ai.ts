@@ -10,6 +10,10 @@ export interface GeneratedPublication {
   description: string;
 }
 
+export interface AssistantResponse {
+  reply: string;
+  conversationId: string;
+}
 
 export async function generateAgentBio(rawBio: string): Promise<string> {
   const res = await api.post<{ bio: string }>("/ai/generate-bio", { rawBio });
@@ -25,13 +29,23 @@ export async function generateService(
   return res.data;
 }
 
-
-export async function generatePublication  (
+export async function generatePublication(
   rawInput: string,
-): Promise<GeneratedPublication>{
+): Promise<GeneratedPublication> {
   const res = await api.post<GeneratedPublication>(
     "/ai/generate-publication-infos",
     { rawInput },
   );
+  return res.data;
+}
+
+export const askAssistant = async (
+  message: string,
+  conversationId?: string,
+): Promise<AssistantResponse> => {
+  const res = await api.post<AssistantResponse>("/ai/assistant", {
+    message,
+    conversationId,
+  });
   return res.data;
 };

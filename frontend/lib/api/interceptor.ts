@@ -19,10 +19,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Ne jamais rediriger pour une simple vérification de session (visiteur anonyme normal)
+    if (originalRequest.url?.includes('/auth/me')) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       console.log("⏰ Access token expiré, tentative de refresh...");
 
+      
       try {
         await axios.post(
           `${backendUrl}/auth/refresh`,

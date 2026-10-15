@@ -1,4 +1,5 @@
-import Navbar from "@/components/vitrineComponents/Navbar";
+import { AuthProvider } from "@/context/AuthContext";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import "./globals.css";
 
 export const metadata = {
@@ -6,14 +7,15 @@ export const metadata = {
   description: "Page vitrine",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+          <AssistantWidget />
+        </AuthProvider>
+      </body>
     </html>
   );
 }
