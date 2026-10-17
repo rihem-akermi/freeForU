@@ -10,6 +10,7 @@ import {
 } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CreateCategoryDto } from "./dto/create-category.dto";
+import { UpdateCategoryDto } from "./dto/update-category.dto";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 
 @ApiTags("Categories")
@@ -58,10 +59,10 @@ export class CategoriesController {
   })
   @Patch(":id")
   async updateCtagory(
-    @Body() body: CreateCategoryDto,
+    @Body() body: UpdateCategoryDto,
     @Param("id", ParseIntPipe) id: number
   ) {
-    return await this.categoriesService.updateCategory(id, body.name);
+    return await this.categoriesService.updateCategory(id, body.name!);
   }
 
   @ApiOperation({
