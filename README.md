@@ -525,7 +525,7 @@ Opération atomique combinée : valide le code OTP fourni et applique immédiate
 
 ---
 
-## 🤖 Assistant IA FreeForU
+## 🤖 10. Assistant IA FreeForU
 
 FreeForU intègre un ensemble de fonctionnalités d'intelligence artificielle avancées conçues pour assister à la fois les prestataires indépendants (**Agents**) dans la valorisation de leurs offres et les **Clients / Visiteurs** dans leur recherche et leur parcours de réservation.
 
@@ -624,11 +624,9 @@ flowchart TD
     ResaServ --> PostgresDB
 ```
 
-
-
 ---
 
-### 6. Recherche Sémantique & Embeddings
+### 4. Recherche Sémantique & Embeddings
 
 Pour dépasser la recherche par simple correspondance de mots-clés, FreeForU implémente un système d'embeddings sémantiques basé sur Google Gemini.
 
@@ -654,7 +652,7 @@ sequenceDiagram
 
 ---
 
-## 📚 Sources de connaissance de l'assistant IA 
+## 📚 5.Sources de connaissance de l'assistant IA 
 
 ### 1. Politique officielle (`FREEFORU_POLICY`)
 
@@ -677,29 +675,9 @@ Les catégories sont récupérées depuis PostgreSQL via `AiService.getCategorie
 
 **Objectif :** permettre à l'IA d'associer les demandes des utilisateurs aux identifiants numériques `categoryId` corrects, utilisés par les outils `searchAgents` et `getCheapestServices`.
 
-
 ---
 
-### 12. Décisions d'Architecture, Limites Connues & Perspectives
-
-#### Choix Techniques Assumés
-- **Inférence Groq Cloud** : Sélectionné pour ses temps de réponse exceptionnels sur les architectures LPU, garantissant une fluidité de chat indispensable pour l'expérience utilisateur.
-- **Similarité Cosinus en Mémoire** : Choix pragmatique évitant la dépendance à un moteur vectoriel externe ou la configuration de l'extension `pgvector` dans PostgreSQL, adapté aux volumes de services actuels.
-- **Séparation stricte LLM / Décision Métier** : Le modèle IA suggère l'exécution d'un outil avec des paramètres, mais l'autorisation, la validation d'appartenance et la mise à jour des états restent sous le contrôle exclusif de la couche de services NestJS.
-
-#### Limites Actuelles Constatées dans le Code
-- **Transmission du contexte utilisateur dans le contrôleur** : Dans `AiController.askAssistant`, bien que `OptionalAuthGuard` valide le cookie `accessToken` et peuple `request.user`, l'identifiant de l'utilisateur connecté n'est pas encore transmis comme 3ᵉ argument à `this.aiService.askAssistant()`. Par conséquent, l'outil `cancelReservation` s'exécute actuellement toujours en mode non authentifié via l'API HTTP et rejette la demande (ce qui correspond précisément au cas testé dans le test d'évaluation n°5).
-- **Interface UI pour la recherche sémantique** : L'endpoint `POST /ai/search-services` est pleinement fonctionnel côté backend, mais n'est pas encore relié à une barre de recherche dédiée dans le frontend Next.js.
-- **Fraîcheur du cache des catégories** : Le cache Redis `ai:categories-list` repose sur un TTL fixe de 5 minutes et ne dispose pas d'invalidation événementielle immédiate en cas d'ajout ou de suppression de catégorie par un administrateur.
-
-#### Perspectives d'Évolution
-- Transmission du `req.user.sub` au service d'assistant afin de débloquer l'annulation autonome et la consultation des réservations personnelles pour les clients connectés.
-- Intégration d'un module de recherche sémantique avec suggestion instantanée dans le catalogue public.
-- Migration de la colonne `services.embedding` vers le type natif `vector` de `pgvector` avec index HNSW en cas de passage à l'échelle sur des dizaines de milliers de prestations.
-
----
-
-## 10. Base de Données & Modélisation
+## 11. Base de Données & Modélisation
 
 Schéma relationnel géré avec Prisma ORM sous PostgreSQL.
 
@@ -823,7 +801,7 @@ erDiagram
 
 ---
 
-## 11. Documentation API & Swagger
+## 12. Documentation API & Swagger
 
 Le backend embarque une documentation interactive conforme à OpenAPI via `@nestjs/swagger`.
 
@@ -843,7 +821,7 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
 
 ---
 
-## 12. Structure du Projet
+## 13. Structure du Projet
 
 ```text
 freeForU/
@@ -884,7 +862,8 @@ freeForU/
 │   │   └── main.ts            # Point d'entrée NestJS (CORS, Pipes, Swagger)
 │   └── test/                  # Tests unitaires et d'intégration Jest
 │
-├── usefulCommands.md          # Guide de référence des commandes fréquentes
+├── docs/
+│   └── AI.md                  # Documentation technique détaillée du module IA
 └── README.md                  # Documentation globale du projet
 ```
 
