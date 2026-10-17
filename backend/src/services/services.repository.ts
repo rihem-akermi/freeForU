@@ -1,5 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
+import { CreateServiceDto } from "./dto/create-service.dto";
+import { UpdateServiceDto } from "./dto/update-service.dto";
 
 @Injectable()
 export class ServicesRepository {
@@ -18,16 +20,29 @@ export class ServicesRepository {
     });
   }
 
-  async create(
-    agentId: number,
-    dto: {
-      nom: string;
-      description?: string;
-      typePrix: string;
-      prix: number;
-      dureeEstimee?: number;
-    }
-  ) {
+  async findCheapest(categoryId: number, ville?: string, limit = 5) {
+    return this.prisma.services.findMany({
+      where: {
+        agents: {
+          category_id: categoryId,
+          ...(ville && { ville: { equals: ville, mode: "insensitive" } }),
+        },
+      },
+      select: {
+        id: true,
+        nom: true,
+        description: true,
+        prix: true,
+        type_prix: true,
+        agents: { select: { id: true, name: true, ville: true } },
+      },
+      orderBy: { prix: "asc" },
+      take: limit,
+    });
+  }
+
+  async create(agentId: number, dto: CreateServiceDto, embedding: number[]) {
+    //
     return this.prisma.services.create({
       data: {
         agent_id: agentId,
@@ -36,19 +51,15 @@ export class ServicesRepository {
         type_prix: dto.typePrix,
         prix: dto.prix,
         duree_estimee: dto.dureeEstimee,
+        embedding, // ← ajout
       },
     });
   }
 
   async update(
     id: number,
-    dto: Partial<{
-      nom: string;
-      description: string;
-      typePrix: string;
-      prix: number;
-      dureeEstimee: number;
-    }>
+    dto: Partial<UpdateServiceDto>,
+    embedding?: number[]
   ) {
     return this.prisma.services.update({
       where: { id },
@@ -60,6 +71,7 @@ export class ServicesRepository {
         ...(dto.dureeEstimee !== undefined && {
           duree_estimee: dto.dureeEstimee,
         }),
+        ...(embedding && { embedding }), // ← ajout
       },
     });
   }

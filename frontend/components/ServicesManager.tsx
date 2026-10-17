@@ -20,6 +20,7 @@ import {
   IconAdd,
   IconEdit,
   IconDelete,
+  IconClose,
 } from "@/components/ui/UIComponents";
 import { generateService } from "@/lib/api/ai";
 import { AiSuggestionModal } from "./AiSuggestionModal";
@@ -29,6 +30,22 @@ import { AiRawInputModal } from "./AiRawInputModal";
 
 const FORM_ACCENT = "#7D6E8C"; // soft violet, matching "Profil professionnel" on the Infos page
 const SERVICE_ACCENT = "#46607D"; // soft navy
+
+type ServiceFormState = {
+  nom: string;
+  description: string;
+  typePrix: "fixe" | "a_partir_de";
+  prix: string;
+  dureeEstimee: string;
+};
+
+const emptyForm: ServiceFormState = {
+  nom: "",
+  description: "",
+  typePrix: "fixe",
+  prix: "",
+  dureeEstimee: "",
+};
 
 export default function ServicesManager() {
   const [services, setServices] = useState<Service[]>([]);
@@ -40,13 +57,8 @@ export default function ServicesManager() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [form, setForm] = useState({
-    nom: "",
-    description: "",
-    typePrix: "fixe" as "fixe" | "a_partir_de",
-    prix: "",
-    dureeEstimee: "",
-  });
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<ServiceFormState>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showAiInput, setShowAiInput] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -90,15 +102,16 @@ export default function ServicesManager() {
     loadServices();
   }, []);
 
-  const resetForm = () => {
-    setForm({
-      nom: "",
-      description: "",
-      typePrix: "fixe",
-      prix: "",
-      dureeEstimee: "",
-    });
+  const openCreateForm = () => {
     setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
   };
 
   const handleSubmit = async () => {
@@ -120,7 +133,7 @@ export default function ServicesManager() {
         setToast({ message: "Service créé", type: "success" });
       }
 
-      resetForm();
+      closeForm();
       loadServices();
     } catch (err: any) {
       setToast({
@@ -142,6 +155,8 @@ export default function ServicesManager() {
       prix: String(service.prix),
       dureeEstimee: service.duree_estimee ? String(service.duree_estimee) : "",
     });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id: number) => {
@@ -149,6 +164,8 @@ export default function ServicesManager() {
       await deleteService(id);
       setToast({ message: "Service supprimé", type: "success" });
       setConfirmDeleteId(null);
+      // Si on supprime le service en cours d'édition, on ferme le formulaire
+      if (editingId === id) closeForm();
       loadServices();
     } catch (err: any) {
       setToast({
@@ -169,104 +186,116 @@ export default function ServicesManager() {
         />
       )}
 
-      <Card
-        className="!p-6 sm:!p-8"
-        style={{ borderLeft: `4px solid ${FORM_ACCENT}` }}
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="font-serif text-lg font-bold text-foreground">
-            {editingId ? "Modifier le service" : "Ajouter un service"}
-          </h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAiInput(true)}
-          >
-            ✨ Nom et Description avec l'IA
-          </Button>
-        </div>
-
-        <div
-          className="rounded-xl border bg-background/60 p-5 sm:p-6"
-          style={{ borderColor: `${FORM_ACCENT}30` }}
+      {/* Barre d'action : bouton Ajouter / Annuler */}
+      <div className="flex justify-end">
+        <Button
+          variant={showForm ? "neutral" : "primary"}
+          onClick={showForm ? closeForm : openCreateForm}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input
-              label="Nom du service"
-              value={form.nom}
-              onChange={(e) => setForm({ ...form, nom: e.target.value })}
-            />
-            <Select
-              label="Type de prix"
-              value={form.typePrix}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  typePrix: e.target.value as "fixe" | "a_partir_de",
-                })
-              }
+          {showForm ? <IconClose /> : <IconAdd />}
+          {showForm ? "Annuler" : "Ajouter un service"}
+        </Button>
+      </div>
+
+      {showForm && (
+        <Card
+          className="!p-6 sm:!p-8"
+          style={{ borderLeft: `4px solid ${FORM_ACCENT}` }}
+        >
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="font-serif text-lg font-bold text-foreground">
+              {editingId ? "Modifier le service" : "Ajouter un service"}
+            </h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAiInput(true)}
             >
-              <option value="fixe">Prix fixe</option>
-              <option value="a_partir_de">À partir de</option>
-            </Select>
-            <Input
-              label="Prix (DT)"
-              type="number"
-              value={form.prix}
-              onChange={(e) => setForm({ ...form, prix: e.target.value })}
-            />
-            <Input
-              label="Durée estimée (minutes)"
-              helperText="Optionnel — surtout pour les services de plus d'1h"
-              type="number"
-              value={form.dureeEstimee}
-              onChange={(e) =>
-                setForm({ ...form, dureeEstimee: e.target.value })
-              }
-            />
+              ✨ Nom et Description avec l'IA
+            </Button>
           </div>
 
-          <div className="mt-4">
-            <Textarea
-              label="Description courte"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center gap-3">
-          <Button
-            variant="primary"
-            isLoading={submitting}
-            onClick={handleSubmit}
+          <div
+            className="rounded-xl border bg-background/60 p-5 sm:p-6"
+            style={{ borderColor: `${FORM_ACCENT}30` }}
           >
-            <IconAdd className="h-4 w-4" />
-            {editingId ? "Mettre à jour" : "Ajouter"}
-          </Button>
-          {editingId && (
-            <Button variant="neutral" onClick={resetForm}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="Nom du service"
+                value={form.nom}
+                onChange={(e) => setForm({ ...form, nom: e.target.value })}
+              />
+              <Select
+                label="Type de prix"
+                value={form.typePrix}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    typePrix: e.target.value as "fixe" | "a_partir_de",
+                  })
+                }
+              >
+                <option value="fixe">Prix fixe</option>
+                <option value="a_partir_de">À partir de</option>
+              </Select>
+              <Input
+                label="Prix (DT)"
+                type="number"
+                value={form.prix}
+                onChange={(e) => setForm({ ...form, prix: e.target.value })}
+              />
+              <Input
+                label="Durée estimée (minutes)"
+                helperText="Optionnel — surtout pour les services de plus d'1h"
+                type="number"
+                value={form.dureeEstimee}
+                onChange={(e) =>
+                  setForm({ ...form, dureeEstimee: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="mt-4">
+              <Textarea
+                label="Description courte"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            <Button
+              variant="primary"
+              isLoading={submitting}
+              onClick={handleSubmit}
+            >
+              <IconAdd className="h-4 w-4" />
+              {editingId ? "Mettre à jour" : "Ajouter"}
+            </Button>
+            <Button variant="neutral" onClick={closeForm}>
               Annuler
             </Button>
-          )}
-        </div>
-      </Card>
+          </div>
+        </Card>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : services.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Vous n'avez pas encore ajouté de service.
+          Vous n'avez pas encore ajouté de service. Cliquez sur "Ajouter un
+          service" pour commencer.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {services.map((s) => (
             <Card
               key={s.id}
-              className="group flex flex-col gap-3 !p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+              className="group relative flex flex-col gap-3 !p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               style={{ borderLeft: `4px solid ${SERVICE_ACCENT}` }}
             >
               <div className="flex items-start justify-between gap-3">

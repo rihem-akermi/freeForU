@@ -99,12 +99,20 @@ export class AgentsRepository {
       take: 10,
     });
   }
-  
-  // pagination dans l'accueil 
-  async findAllPublic(page: number, limit: number, categoryId?: number) {
-    console.log("Postgres a répond à cette requette 🏢")
+
+  // pagination dans l'accueil
+  async findAllPublic(
+    page: number,
+    limit: number,
+    categoryId?: number,
+    ville?: string
+  ) {
+    console.log("Postgres a répond à cette requette 🏢");
     return this.prisma.agents.findMany({
-      where: { ...(categoryId && { category_id: categoryId }) },
+      where: {
+        ...(categoryId && { category_id: categoryId }),
+        ...(ville && { ville: { equals: ville, mode: "insensitive" } }),
+      },
       select: {
         id: true,
         name: true,
@@ -120,9 +128,12 @@ export class AgentsRepository {
     });
   }
 
-  async countPublic(categoryId?: number) {
+  async countPublic(categoryId?: number, ville?: string) {
     return this.prisma.agents.count({
-      where: { ...(categoryId && { category_id: categoryId }) },
+      where: {
+        ...(categoryId && { category_id: categoryId }),
+        ...(ville && { ville: { equals: ville, mode: "insensitive" } }),//maj ou min ce n'est pas un probleme
+      },
     });
   }
 

@@ -71,10 +71,10 @@ export class AgentsService {
   }
 
   async getPublicAgents(query: GetPublicAgentsDto) {
-    const { page = 1, limit = 10, category_id } = query;
+    const { page = 1, limit = 10, category_id , ville } = query;
 
     // Étape 1 : construire la clé de cache
-    const cacheKey = `agents:category:${category_id ?? 'all'}:page:${page}:limit:${limit}`;
+    const cacheKey = `agents:category:${category_id ?? 'all'}:ville:${ville ?? 'all'}:page:${page}:limit:${limit}`;
 
     // Étape 2 : Redis GET
     const cached = await this.redisService.get(cacheKey);
@@ -85,8 +85,8 @@ export class AgentsService {
 
     // MISS 🔴 → flux normal avec postgres 
     const [agents, total] = await Promise.all([
-      this.agentsRepository.findAllPublic(page, limit, category_id),
-      this.agentsRepository.countPublic(category_id),
+      this.agentsRepository.findAllPublic(page, limit, category_id,ville),
+      this.agentsRepository.countPublic(category_id,ville),
     ]);
 
     const data = await Promise.all(
