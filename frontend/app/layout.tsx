@@ -3,7 +3,7 @@ import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import "./globals.css";
 
 export const metadata = {
-  title: "🏃‍♀️‍➡️ FreeForU",
+  title: "FreeForU",
   description: "Page vitrine",
 };
 
