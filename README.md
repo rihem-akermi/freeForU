@@ -55,6 +55,7 @@
 - **Gestion des disponibilités en temps réel** : Résolution des conflits de réservation et synchronisation des plannings hebdomadaires et des jours d'indisponibilité.
 - **Sécurisation des échanges et des réservations** : Double validation des interventions terminées, alertes automatiques et gestion des délais d'annulation (règle des 24h).
 - **Visibilité pour les artisans/professionnels** : Vitrine personnalisée, portfolio de publications avec modération et gestion de prestations personnalisées ou tarifées.
+- **Accompagnement et contrôle de la plateforme** : Vérification des adresses email par OTP, assistant IA, modération des contenus et gestion centralisée des contacts.
 
 ### 👥 Rôles Utilisateurs
 
@@ -74,6 +75,7 @@
 - **Calendrier Visuel Interactif** : Visualisation en direct des statuts de chaque jour (créneaux ouverts, fermés, demandes en attente, confirmées ou terminées).
 - **Gestion des Rendez-vous & Annulation** : Suivi des réservations et annulation autonome possible jusqu'à 24h avant le début de la prestation.
 - **Évaluation & Avis** : Notation (1 à 5 étoiles) et commentaire après réalisation conjointe de la prestation.
+- **Assistance IA** : Génération de contenu pour les profils, services et publications, avec validation par l'utilisateur avant utilisation.
 
 ### 🛠️ Espace Agent (Prestataire)
 
@@ -82,6 +84,7 @@
 - **Traitement des Demandes** : Acceptation ou refus des réservations reçues. L'acceptation d'un créneau rejette automatiquement les demandes concurrentes sur le même créneau.
 - **Gestion des Services** : Création, modification et suppression des offres de prestations (prix fixe ou sur devis).
 - **Portfolio de Publications** : Ajout de réalisations avec photographies stockées sur Cloudinary (soumises à modération).
+- **Profil professionnel enrichi** : Gestion de la zone d'intervention, du mode de déplacement, de l'expérience, des liens sociaux et des justificatifs de vérification.
 - **Double Clôture de Prestation** : Validation de la réalisation pour marquer la réservation comme `terminee`.
 
 ### 🛡️ Espace Administration
@@ -90,6 +93,7 @@
 - **Gestion des Utilisateurs & Agents** : Création manuelle, mise à jour des coordonnées et suppression de comptes.
 - **Gestion des Catégories** : Administration des catégories de métiers disponibles sur la plateforme.
 - **Pilotage Global des Réservations** : Visualisation transversale et création directe de réservations.
+- **Gestion des Contacts** : Consultation et suppression des messages envoyés depuis le formulaire de contact.
 
 ---
 
@@ -109,6 +113,8 @@
 | **Brevo (`@getbrevo/brevo`)**    | Backend               | Service d'envoi d'emails transactionnels (notifications et rappels de rendez-vous).                                           |
 | **Cloudinary & Multer**          | Backend               | Téléversement direct en flux mémoire (`Buffer` / `streamifier`) et hébergement optimisé des médias.                           |
 | **NestJS Schedule (Cron)**       | Backend               | Tâches d'arrière-plan automatisées (archivage, expiration des réservations et rappels 24h).                                   |
+| **Groq, Google Gemini & Zod**    | Backend (`ai`)        | Génération de contenu, assistant conversationnel, embeddings sémantiques et validation des sorties structurées.              |
+| **NestJS Config & Throttler**    | Backend               | Chargement du fichier `.env` et limitation des requêtes sur le module IA.                                                   |
 | **Swagger / OpenAPI**            | Backend               | Documentation interactive et test des endpoints de l'API REST via `/api/docs`.                                                |
 
 ---
@@ -129,7 +135,6 @@ flowchart TD
         Guard["AuthGuard & RolesGuard"]
         Controller["NestJS Controllers"]
         Service["Services Métier"]
-        AiServ["AiService (Groq, Gemini, Tool Calling)"]
         RedisServ["RedisService (Cache-Aside)"]
         Repo["Repositories Dédiés"]
         CronTask["ScheduleModule (Tâches Cron)"]
@@ -137,11 +142,9 @@ flowchart TD
         AxiosClient -->|"HTTP Requests + Cookies"| Guard
         Guard --> Controller
         Controller --> Service
-        Controller --> AiServ
         CronTask -.-> Service
         Service -->|"1. Vérification Cache HIT/MISS"| RedisServ
         Service -->|"2. Requête en cas de MISS"| Repo
-        AiServ -->|"Historique & Cache catégories"| RedisServ
     end
 
     subgraph Data["💾 Persistance & Cache"]
@@ -156,12 +159,16 @@ flowchart TD
     subgraph External["🌐 Services Tiers"]
         BrevoAPI["Brevo Transactional API"]
         CloudinaryAPI["Cloudinary CDN"]
-        GroqAPI["Groq Cloud (LLM)"]
-        GeminiAPI["Google Gemini (Embeddings)"]
         Service -->|"Envoi d'emails"| BrevoAPI
         Service -->|"Upload buffer (Stream)"| CloudinaryAPI
-        AiServ -->|"Complétion / Tool Calling"| GroqAPI
-        AiServ -->|"Embeddings vectoriels"| GeminiAPI
+    end
+
+    subgraph AI["🤖 Services IA"]
+        AiService["AiService (RAG, tool calling, embeddings)"]
+        GroqAPI["Groq Cloud API"]
+        GeminiAPI["Google Gemini API"]
+        AiService --> GroqAPI
+        AiService --> GeminiAPI
     end
 
     style Frontend fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af
@@ -174,7 +181,6 @@ flowchart TD
     style Guard fill:#ffffff,stroke:#ec4899,color:#831843
     style Controller fill:#ffffff,stroke:#ec4899,color:#831843
     style Service fill:#ffffff,stroke:#ec4899,color:#831843
-    style AiServ fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#831843
     style RedisServ fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b
     style Repo fill:#ffffff,stroke:#ec4899,color:#831843
     style CronTask fill:#ffffff,stroke:#a855f7,color:#6b21a8
@@ -183,8 +189,10 @@ flowchart TD
     style Postgres fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
     style BrevoAPI fill:#ffffff,stroke:#eab308,color:#713f12
     style CloudinaryAPI fill:#ffffff,stroke:#6366f1,color:#3730a3
-    style GroqAPI fill:#fefce8,stroke:#d97706,stroke-width:2px,color:#92400e
-    style GeminiAPI fill:#fefce8,stroke:#d97706,stroke-width:2px,color:#92400e
+    style AI fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#5b21b6
+    style AiService fill:#ffffff,stroke:#8b5cf6,color:#5b21b6
+    style GroqAPI fill:#ffffff,stroke:#8b5cf6,color:#5b21b6
+    style GeminiAPI fill:#ffffff,stroke:#8b5cf6,color:#5b21b6
 ```
 
 ### Mise en Cache Redis (Catalogue Public)
@@ -197,6 +205,7 @@ La consultation du catalogue d'agents (`GET /agents`) intègre une couche de cac
 - **Durée de rétention (TTL)** : Les réponses complètes paginées `{ data, meta }` sont conservées pendant **5 minutes (300 secondes)**.
 - **Gestion de la fraîcheur** : La synchronisation repose sur l'expiration automatique (TTL) sans invalidation active lors des mutations.
 - **Résilience (*Graceful Fallback*)** : En cas d'erreur ou d'indisponibilité de Redis, la requête bascule automatiquement et de manière transparente sur PostgreSQL.
+- **Mémoire IA** : Redis conserve également temporairement l'historique des conversations et le référentiel des catégories utilisé par l'assistant.
 
 ---
 
@@ -241,6 +250,8 @@ stateDiagram-v2
 - `expiree` : Demande restée en attente alors que la date/heure de prestation est passée (traitée par tâche Cron horaire).
 - `terminee` : Prestation effectuée et validée conjointement par les deux parties (`agent_confirmed = true` et `client_confirmed = true`).
 
+Lorsqu'une réservation confirmée occupe un créneau, les demandes en attente qui se chevauchent pour le même agent sont automatiquement rejetées. Les informations du service choisi (nom et prix au moment de la réservation) sont également conservées dans la réservation.
+
 ---
 
 ## 6. Calendrier & Gestion des Disponibilités
@@ -250,6 +261,8 @@ Le moteur de calcul des disponibilités (`AvailabilityService`) consolide trois 
 1. **Horaires réguliers (`agent_working_hours`)** : Définit les jours ouvrés de la semaine (`day_of_week` de 0 à 6) et les plages `start_time` / `end_time`.
 2. **Exceptions de planning (`agent_blocked_slots`)** : Jours marqués comme indisponibles (`off`) ou journées complètes (`full`).
 3. **Réservations actives (`reservations`)** : Analyse des rendez-vous existants sur la période demandée.
+
+Les calendriers exposent aussi le détail d'une journée (`ouvert`, `ferme` ou `sans_info`). Côté client, un jour passé sans réservation est affiché comme fermé ; côté agent, les statuts distinguent les demandes en attente, les réservations, les exceptions `full` et les jours `off`.
 
 ```mermaid
 flowchart TD
@@ -317,15 +330,17 @@ sequenceDiagram
 - ✅ **Réservation confirmée** : Notifie le client que l'agent a accepté sa demande.
 - ❌ **Réservation rejetée** : Informe le client du refus avec invitation à sélectionner un autre artisan disponible.
 - 🚫 **Réservation annulée par le client** : Notifie l'agent de la libération du créneau horaire.
-- 🔔 **Rappel 24h avant le rendez-vous** : Cron quotidien (`09:00 AM`) qui envoie un rappel simultané au client et à l'agent pour leur intervention du lendemain.
+- 🔔 **Rappel 24h avant le rendez-vous** : Tâche planifiée horaire qui recherche les réservations confirmées dans la fenêtre des prochaines 24 heures et envoie un rappel au client et à l'agent, une seule fois par réservation.
 - 🔐 **Codes de vérification OTP** : Envoi immédiat du code à 6 chiffres pour la validation d'inscription (`EMAIL_VERIFICATION`) ou la réinitialisation de mot de passe (`PASSWORD_RESET`).
 - ⚠️ **Publication retirée** : Informe l'agent lorsque sa réalisation est dépubliée par un administrateur.
+
+Le service Brevo utilise un délai d'attente de 30 secondes et jusqu'à trois tentatives pour les appels au fournisseur. Les erreurs d'envoi sont journalisées côté backend.
 
 ---
 
 ## 8. Gestion des Fichiers & Uploads
 
-Le téléversement de photographies (avatars de profil, portfolio de réalisations) s'effectue sans stockage persistant sur le disque local du serveur grâce au streaming direct vers Cloudinary.
+Le téléversement de photographies (avatars de profil et portfolio de réalisations) s'effectue sans stockage persistant sur le disque local du serveur grâce au streaming direct vers Cloudinary. Les fichiers sont reçus en mémoire avec Multer puis envoyés vers les dossiers Cloudinary correspondant à leur usage.
 
 ```mermaid
 flowchart LR
@@ -382,6 +397,7 @@ sequenceDiagram
 
 - `AuthGuard` : Extrait et vérifie la signature et l'expiration du cookie `accessToken`.
 - `RolesGuard` : Inspecte les métadonnées décorées via `@Roles('CLIENT' | 'AGENT' | 'ADMIN')` et restreint l'accès aux utilisateurs autorisés.
+- **CORS et cookies** : Le backend autorise le frontend local `http://localhost:3000` avec `credentials: true`, afin de permettre l'envoi des cookies `httpOnly`.
 
 ### Système OTP (Vérification d'Email & Réinitialisation de Mot de Passe)
 
@@ -395,7 +411,7 @@ Les comptes clients (`users`) et prestataires (`agents`) disposant d'espaces d'i
 
 #### 🔄 Flux Métier
 
-##### 1. Inscription & Vérification d'Email
+#### 1. Inscription & Vérification d'Email
 ```mermaid
 sequenceDiagram
     autonumber
@@ -417,7 +433,7 @@ sequenceDiagram
     API-->>UI: 200 OK (Email vérifié avec succès)
 ```
 
-##### 2. Réinitialisation de Mot de Passe Oublié
+#### 2. Réinitialisation de Mot de Passe Oublié
 ```mermaid
 sequenceDiagram
     autonumber
@@ -515,6 +531,7 @@ Opération atomique combinée : valide le code OTP fourni et applique immédiate
 #### 🛡️ Mesures de Sécurité
 
 - **Hachage cryptographique SHA-256** : Le code à 6 chiffres (généré via Node.js `crypto.randomInt`) n'est jamais stocké en clair ; seul son hash SHA-256 est persisté en base de données.
+- **Hachage des mots de passe** : Les mots de passe des utilisateurs et des agents sont hachés avec `bcrypt`.
 - **Expiration stricte (2 minutes)** : Tout code OTP expire après 120 secondes (`expires_at`).
 - **Limitation des tentatives (3 essais max)** : Après 3 échecs de validation, le code est immédiatement invalidé (`INVALIDATED`) pour bloquer les attaques par force brute.
 - **Délai d'attente / Cooldown (30 secondes)** : Un intervalle minimum de 30 secondes entre deux demandes de renvoi est contrôlé directement dans la logique métier (`OtpService`).
@@ -525,155 +542,23 @@ Opération atomique combinée : valide le code OTP fourni et applique immédiate
 
 ---
 
-## 🤖 10. Assistant IA FreeForU
+## 10. Assistant IA FreeForU
 
-FreeForU intègre un ensemble de fonctionnalités d'intelligence artificielle avancées conçues pour assister à la fois les prestataires indépendants (**Agents**) dans la valorisation de leurs offres et les **Clients / Visiteurs** dans leur recherche et leur parcours de réservation.
+FreeForU intègre des fonctionnalités d'intelligence artificielle pour accompagner les **Agents** dans la présentation de leurs services et les **Clients / Visiteurs** dans leur recherche et leur parcours de réservation.
 
-### 1. Vue d'Ensemble & Capacités
+### Capacités principales
 
-L'implémentation de l'IA dans FreeForU s'articule autour de trois piliers complémentaires :
+- **Assistance rédactionnelle pour les Agents** : génération et reformulation de biographies professionnelles, de fiches de prestations et de publications de portfolio à partir de descriptions brutes.
+- **Assistant conversationnel pour les Clients et Visiteurs** : le widget `AssistantWidget` répond aux questions sur les règles de la plateforme grâce au RAG et peut, selon l'authentification, rechercher des prestataires, comparer des tarifs et proposer des actions métier. Il est masqué pour les Agents et les Administrateurs.
+- **Recherche sémantique de prestations** : les embeddings Google Gemini permettent de retrouver des services pertinents même lorsque les termes employés diffèrent de leur intitulé exact.
 
-1. **Assistance à la Rédaction pour Artisans (Espace Agent)** : Génération et reformulation automatisée de profils professionnels, de fiches de services structurées et de publications de réalisations à partir de descriptions brutes en langage naturel.
-2. **Assistant Conversationnel Intelligent (Espace Client & Visiteurs)** : Widget interactif accessible 24/7 capable de répondre aux questions sur les règles de la plateforme (RAG), de rechercher des prestataires selon la localisation et le métier, de comparer les tarifs et d'exécuter des actions métier via *Function Tool Calling*.
-3. **Moteur de Recherche Sémantique de Services** : Indexation vectorielle des offres d'artisans permettant de retrouver des prestations adaptées même lorsque l'utilisateur utilise un vocabulaire différent du libellé exact du service.
+### Intégration dans la plateforme
 
----
+Le module IA est intégré au backend NestJS et réutilise les services métier existants pour les agents, les prestations et les réservations. **Groq Cloud** assure la génération de texte et le *tool calling*, **Google Gemini** les embeddings, **Redis** la mémoire conversationnelle et le cache des catégories, et **Zod** la validation des sorties structurées.
 
-### 2. Stack Technique IA
+Les gardes NestJS contrôlent l'accès aux fonctionnalités : les visiteurs non connectés peuvent consulter les connaissances générales de la plateforme, les clients authentifiés peuvent utiliser les outils autorisés et la génération de contenu est réservée aux Agents. Les règles d'autorisation et de réservation restent appliquées par les services métier.
 
-| Composant / Rôle | Technologie / Modèle | Utilité & Rationale |
-| :--- | :--- | :--- |
-| **LLM Génératif & Tool Calling** | **Groq Cloud** (`openai/gpt-oss-120b` ou via `GROQ_MODEL_NAME`) | Inférence à très faible latence (architecture Groq LPU) essentielle pour un assistant de chat réactif. Supporte le *Function Calling* multi-tours et le mode schéma JSON strict (`json_schema`). |
-| **Embeddings Vectoriels** | **Google Gemini** (`gemini-embedding-001` via `@google/genai`) | Vecteurs d'embeddings sémantiques haute précision (dimension 3072) avec modes adaptés aux tâches (`RETRIEVAL_DOCUMENT` pour les fiches services, `RETRIEVAL_QUERY` pour les requêtes de recherche). |
-| **Mémoire Conversationnelle & Cache** | **Redis** (`ioredis`) | Stockage temporaire des historiques de session (`chat:history:{id}`) avec expiration glissante de 30 min, et cache du référentiel des catégories (`ai:categories-list`). |
-| **Validation Structurée des Sorties** | **Zod** (`zod`) | Validation typée et stricte des objets JSON produits par le LLM pour garantir la conformité des données avant insertion ou retour API. |
-| **Protection Anti-Abus & Rate Limiting** | **NestJS Throttler** (`@nestjs/throttler`) | Limitation de débit globale sur le module IA (10 requêtes / minute par adresse IP). |
-| **Moteur de Similarité Vectorielle** | **Similarité Cosinus en Mémoire** (TypeScript natif) | Calcul vectoriel direct en mémoire applicative, évitant la dépendance et la complexité opérationnelle d'une extension comme `pgvector` pour le volume actuel. |
-
-#### Configuration & Variables d'Environnement
-
-Le module IA nécessite les variables d'environnement suivantes dans `backend/.env` :
-
-- `GROQ_API_KEY` : Clé secrète d'accès à l'API Groq Cloud.
-- `GROQ_MODEL_NAME` : Modèle utilisé pour les complétions de chat (valeur par défaut dans le code : `openai/gpt-oss-120b`).
-- `GOOGLE_AI_API_KEY` : Clé secrète de l'API Google AI Studio pour la génération des embeddings Gemini.
-
----
-
-### 3. Architecture & Flux de Traitement
-
-L'architecture IA s'intègre harmonieusement dans le backend NestJS et réutilise les services métier existants sans dupliquer la logique de gestion.
-
-```mermaid
-flowchart TD
-    subgraph Frontend["Interface Utilisateur"]
-        Widget["AssistantWidget (Clients & Visiteurs)"]
-        Modals["Modales Agent (AiRawInputModal / AiSuggestionModal)"]
-    end
-
-    subgraph Security["Gardes & Contrôle d'Accès"]
-        Throttler["ThrottlerGuard (10 req/min/IP)"]
-        Guards["AuthGuard & RolesGuard (AGENT) / OptionalAuthGuard"]
-    end
-
-    subgraph Controller["Contrôleur NestJS"]
-        AiCtrl["AiController (/ai/*)"]
-    end
-
-    subgraph Service["Service d'Orchestration IA"]
-        AiServ["AiService"]
-        PromptEngine["Moteur de Prompts & RAG (FREEFORU_POLICY)"]
-        ToolExecutor["Exécuteur de Tools (Boucle multi-tours max 4)"]
-    end
-
-    subgraph ExternalAI["Services IA Externes"]
-        Groq["Groq Cloud API (openai/gpt-oss-120b)"]
-        Gemini["Google Gemini (gemini-embedding-001)"]
-    end
-
-    subgraph Business["Services Métier Reutilisés"]
-        AgentsServ["AgentsService (getPublicAgents)"]
-        ServicesServ["ServicesService (getCheapestServices)"]
-        ResaServ["ReservationsService (cancelByClient / findById)"]
-    end
-
-    subgraph Storage["Cache & Persistance"]
-        RedisMem[("Redis (chat:history & ai:categories-list)")]
-        PostgresDB[("PostgreSQL (Prisma ORM + services.embedding Json)")]
-    end
-
-    Widget -->|"POST /ai/assistant"| Throttler
-    Modals -->|"POST /ai/generate-*"| Throttler
-    Throttler --> Guards
-    Guards --> AiCtrl
-    AiCtrl --> AiServ
-
-    AiServ --> PromptEngine
-    PromptEngine -->|"Historique (10 msgs max)"| RedisMem
-    PromptEngine -->|"Catégories mises en cache (300s)"| RedisMem
-    AiServ -->|"Complétion / Tool calling"| Groq
-    AiServ -->|"Embeddings (3072d)"| Gemini
-    
-    AiServ --> ToolExecutor
-    ToolExecutor -->|"Recherche d'artisans"| AgentsServ
-    ToolExecutor -->|"Comparaison tarifs"| ServicesServ
-    ToolExecutor -->|"Annulation sécurisée"| ResaServ
-
-    ServicesServ --> PostgresDB
-    AgentsServ --> PostgresDB
-    ResaServ --> PostgresDB
-```
-
----
-
-### 4. Recherche Sémantique & Embeddings
-
-Pour dépasser la recherche par simple correspondance de mots-clés, FreeForU implémente un système d'embeddings sémantiques basé sur Google Gemini.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as Client / Visiteur
-    participant API as POST /ai/search-services
-    participant Gemini as Google Gemini API
-    participant DB as PostgreSQL (services)
-    participant Mem as Similarité Cosinus (Mémoire)
-
-    Client->>API: Requête textuelle (ex: "panne d'ordinateur portable")
-    API->>Gemini: embedContent (modèle gemini-embedding-001, RETRIEVAL_QUERY)
-    Gemini-->>API: Vecteur requête (dimension 3072)
-    API->>DB: findMany (services avec embedding != null)
-    DB-->>API: Prestations et leurs vecteurs stockés en JSON
-    API->>Mem: Calcul de similarité cosinus pour chaque service
-    API->>Mem: Tri décroissant par score & extraction du Top 5
-    Mem-->>API: 5 services les plus pertinents
-    API-->>Client: Réponse JSON avec détails et scores
-```
-
----
-
-## 📚 5.Sources de connaissance de l'assistant IA 
-
-### 1. Politique officielle (`FREEFORU_POLICY`)
-
-Définit les règles permanentes de la plateforme FreeForU.
-
-| Règle | Description |
-|---|---|
-| ❌ **Annulation** | Gratuite jusqu'à 24 h avant le rendez-vous. Au-delà, contacter le support ou l'agent. |
-| 💳 **Paiement** | Aucun paiement en ligne ni frais de plateforme. Le règlement se fait directement auprès du prestataire. |
-| ✅ **Clôture** | Le client et l'agent doivent confirmer la fin du rendez-vous pour passer la réservation à `terminee`. |
-| 📩 **Support** | `contact@freeforu.tn` — du lundi au samedi, de 08:00 à 19:00. |
-
-### 2. Catégories dynamiques des métiers
-
-Les catégories sont récupérées depuis PostgreSQL via `AiService.getCategoriesList()`.
-
-- **Source :** `prisma.categories.findMany()`
-- **Cache Redis :** `ai:categories-list`
-- **Durée du cache :** 5 minutes (300 secondes)
-
-**Objectif :** permettre à l'IA d'associer les demandes des utilisateurs aux identifiants numériques `categoryId` corrects, utilisés par les outils `searchAgents` et `getCheapestServices`.
+Les routes IA sont regroupées sous `/ai` : `POST /ask`, `/generate-bio`, `/generate-service-infos`, `/generate-publication-infos`, `/assistant` et `/search-services`. Pour les flux détaillés, les endpoints, la configuration, les outils, la sécurité et l'évaluation, consulter la [documentation technique complète de l'IA](docs/AI.md).
 
 ---
 
@@ -705,6 +590,7 @@ erDiagram
         string phone
         string photo_url
         datetime created_at
+        datetime email_verified_at
     }
 
     agents {
@@ -721,6 +607,13 @@ erDiagram
         string verification_status
         string photo_url
         string bio
+        int age
+        string sexe
+        int experience_years
+        json social_links
+        string id_card_url
+        string work_certificate_url
+        datetime email_verified_at
     }
 
     reservations {
@@ -737,6 +630,10 @@ erDiagram
         boolean client_confirmed
         boolean reminder_sent
         boolean archived
+        string service_nom
+        float service_prix
+        datetime created_at
+        datetime updated_at
     }
 
     services {
@@ -745,7 +642,10 @@ erDiagram
         string nom
         string type_prix
         float prix
+        string description
         int duree_estimee
+        datetime created_at
+        json embedding
     }
 
     agent_working_hours {
@@ -774,6 +674,7 @@ erDiagram
         string status
         int likes_count
         int saved_count
+        datetime created_at
     }
 
     reviews {
@@ -797,6 +698,20 @@ erDiagram
         string message
         datetime created_at
     }
+
+    otp_verifications {
+        int id PK
+        string target_table
+        int target_id
+        string purpose
+        string code_hash
+        string status
+        datetime expires_at
+        int attempts
+        datetime consumed_at
+        datetime invalidated_at
+        datetime created_at
+    }
 ```
 
 ---
@@ -818,6 +733,9 @@ Le backend embarque une documentation interactive conforme à OpenAPI via `@nest
   - `Services` : CRUD des prestations proposées par les artisans.
   - `Reviews` : Dépôt et consultation des avis notés.
   - `Categories` & `Contacts` : Référentiels métiers et formulaires de contact.
+  - `AI` : Assistant conversationnel, génération de contenu pour les Agents et recherche sémantique sous le préfixe `/ai`.
+
+Les principales familles de routes sont `auth`, `agents`, `users`, `reservations`, `availability`, `working-hours`, `blocked-slots`, `services`, `publications`, `reviews`, `categories`, `contacts` et `ai`. Les droits sont appliqués au niveau des contrôleurs avec `AuthGuard`, `RolesGuard` ou `OptionalAuthGuard` selon le cas.
 
 ---
 
@@ -828,10 +746,16 @@ freeForU/
 ├── frontend/            # Application Frontend Next.js (App Router)
 │   ├── app/                   # Routes Next.js (admin, agent, client, auth: login, signup, verify-email, forgot-password, reset-password)
 │   ├── components/            # Composants UI modulaires et modales
+│   │   ├── assistant/          # Widget conversationnel IA
+│   │   ├── vitrineComponents/  # Composants de la vitrine publique
+│   │   ├── AiRawInputModal.tsx # Saisie libre pour les suggestions IA
+│   │   └── AiSuggestionModal.tsx # Résultat IA éditable avant utilisation
 │   ├── lib/                   # Utilitaires & configuration client
 │   │   ├── api/               # Modules d'appels API typés (Axios)
+│   │   │   ├── ai.ts          # Appels de l'assistant et de génération IA
 │   │   │   └── interceptor.ts # Client Axios avec gestion automatique du refresh token
 │   │   └── data.ts            # Interfaces TypeScript et modèles de données
+│   ├── context/               # Contexte d'authentification côté client
 │   ├── public/                # Ressources statiques et médias
 │   └── middleware.ts          # Middleware d'authentification et de redirection Next.js
 │
@@ -839,8 +763,13 @@ freeForU/
 │   ├── prisma/                # Schéma et migrations Prisma
 │   │   └── schema.prisma      # Définition des entités PostgreSQL
 │   ├── src/                   # Code source de l'application
+│   │   ├── ai/                # Module IA (RAG, outils métier et embeddings)
+│   │   │   ├── dto/        # DTOs des prompts et recherches IA
+│   │   │   ├── knowledge/  # Référentiel métier utilisé par le RAG
+│   │   │   ├── ai.controller.ts
+│   │   │   ├── ai.module.ts
+│   │   │   └── ai.service.ts
 │   │   ├── agents/            # Module de gestion des prestataires
-│   │   ├── ai/                # Assistant IA, génération de contenu et recherche sémantique
 │   │   ├── auth/              # Module d'authentification (JWT, Guards, Decorators)
 │   │   ├── availability/      # Moteur de calcul des disponibilités & calendriers
 │   │   ├── blocked-slots/     # Gestion des exceptions et jours d'indisponibilité
@@ -860,16 +789,15 @@ freeForU/
 │   │   ├── working-hours/     # Horaires de travail hebdomadaires
 │   │   ├── app.module.ts      # Module racine de l'application
 │   │   └── main.ts            # Point d'entrée NestJS (CORS, Pipes, Swagger)
+│   ├── scripts/               # Évaluation IA, embeddings et maintenance ponctuelle
 │   └── test/                  # Tests unitaires et d'intégration Jest
 │
-├── docs/
-│   └── AI.md                  # Documentation technique détaillée du module IA
 └── README.md                  # Documentation globale du projet
 ```
 
 ---
 
-## 13. Installation & Configuration Locale
+## 14. Installation & Configuration Locale
 
 ### Prérequis
 
@@ -890,11 +818,11 @@ cd backend
 npm install
 
 # Configurer les variables d'environnement
-cp .env.example .env # ou créer le fichier .env (voir section 14)
+# Créer le fichier .env (voir section 15)
 
 # Synchroniser le schéma Prisma avec votre base PostgreSQL
 npx prisma db push
-# ou générer le client Prisma
+# Générer le client Prisma (utile après une modification du schéma)
 npx prisma generate
 
 # Lancer le serveur backend en mode développement
@@ -902,6 +830,8 @@ npm run start:dev
 ```
 
 > Le backend démarre sur `http://localhost:3001` et Swagger est accessible sur `http://localhost:3001/api/docs`.
+
+Pour valider le backend sans mode watch : `npm run build`, `npm test` ou `npm run test:e2e` selon le niveau de vérification souhaité.
 
 ---
 
@@ -920,9 +850,11 @@ npm run dev
 
 > L'application frontend est accessible sur `http://localhost:3000`.
 
+Une version de production peut être vérifiée avec `npm run build`, puis lancée avec `npm run start`.
+
 ---
 
-## 14. Variables d'Environnement
+## 15. Variables d'Environnement
 
 Créez un fichier `.env` à la racine du dossier `backend/` avec les variables suivantes :
 
@@ -940,10 +872,15 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 | `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary                                         | `votre_api_secret_cloudinary`                        |
 | `BREVO_API_KEY`         | Clé d'API pour le service d'emails Brevo                             | `xkeysib-...`                                        |
 | `MAIL_FROM_BY_BREVO`    | Adresse email d'expéditeur validée dans Brevo                        | `contact@votre-domaine.com`                          |
+| `GROQ_API_KEY`          | Clé d'accès à l'API Groq pour la génération de texte et le *tool calling* | `gsk_...`                                         |
+| `GROQ_MODEL_NAME`       | Modèle Groq utilisé pour les complétions IA (optionnel)              | `openai/gpt-oss-120b`                                |
+| `GOOGLE_AI_API_KEY`     | Clé d'accès Google AI pour la génération des embeddings Gemini       | `AIza...`                                            |
+
+> Le frontend utilise actuellement l'URL backend `http://localhost:3001` configurée dans son client Axios. Aucune variable d'environnement frontend n'est nécessaire pour le démarrage décrit ci-dessus.
 
 ---
 
-## 15. Choix Techniques & Rationale
+## 16. Choix Techniques & Rationale
 
 - 🏗️ **NestJS** : Fournit une architecture d'entreprise modulaire et structurée (Controllers, Services, Repositories, DTOs et Pipes de validation) facilitant l'isolation du domaine métier et la maintenabilité à long terme.
 - 🗄️ **Prisma & PostgreSQL** : Prisma garantit une sécurité de type de bout en bout (Type-Safe queries) avec PostgreSQL, simplifiant la manipulation des types SQL précis tels que `DATE` et `TIME(6)` indispensables pour un calendrier de réservation.
@@ -955,11 +892,32 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 - 📬 **Brevo** : Sélectionné pour sa fiabilité dans la distribution d'emails transactionnels, son SDK TypeScript officiel et sa gestion robuste des templates transactionnels.
 - ☁️ **Cloudinary** : Permet de décharger le serveur backend de la gestion du système de fichiers en offrant un CDN global, une transformation d'image à la volée et une sécurisation des médias.
 - 🔄 **Axios avec Intercepteurs de Réponse** : Permet de gérer le cycle de vie du rafraîchissement des tokens de manière transparente pour l'utilisateur sans exposer les JWT dans le LocalStorage.
-- ⏰ **NestJS Schedule (@Cron)** : Automatise sans infrastructure externe complexe les règles de gestion temporelle (expiration des demandes non traitées, archivage et rappels automatiques 24h avant RDV).
+- ⏰ **NestJS Schedule (@Cron)** : Automatise sans infrastructure externe complexe les règles de gestion temporelle. Des tâches horaires traitent l'expiration des demandes non traitées, l'archivage des réservations et l'envoi des rappels dans la fenêtre des 24 heures. Le module OTP purge également chaque minute les codes expirés.
+- 🤖 **Module IA séparé** : Le découpage contrôleur/service/DTO, la validation Zod et les gardes NestJS permettent de réutiliser les services métier sans contourner leurs règles d'autorisation.
 
 ---
 
-## 16. Perspectives d'Évolution
+## 17. Captures d'Écran
+
+### 🖥️ Vitrine & Espace Client
+
+<!-- Ajouter ici une capture de la page d'accueil, de la recherche d'agents ou du catalogue des prestations. -->
+
+### 📅 Calendrier & Prise de Rendez-vous
+
+<!-- Ajouter ici une capture du calendrier des disponibilités ou de la modal de réservation. -->
+
+### 🛠️ Espace Prestataire (Agent)
+
+<!-- Ajouter ici une capture du tableau de bord agent et de la gestion des services. -->
+
+### 🛡️ Panneau d'Administration
+
+<!-- Ajouter ici une capture de la modération ou de la supervision des utilisateurs. -->
+
+---
+
+## 18. Perspectives d'Évolution
 
 _Fonctionnalités futures envisagées pour enrichir la plateforme :_
 
