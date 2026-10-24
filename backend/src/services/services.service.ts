@@ -14,9 +14,9 @@ import { AiService } from "src/ai/ai.service";
 export class ServicesService {
   constructor(
     private servicesRepository: ServicesRepository,
-    
+
     @Inject(forwardRef(() => AiService))
-    private aiService : AiService
+    private aiService: AiService
   ) {}
 
   async getServicesByAgent(agentId: number) {

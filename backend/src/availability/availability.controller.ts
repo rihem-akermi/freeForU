@@ -28,13 +28,19 @@ export class AvailabilityController {
 
   @ApiOperation({
     summary: "Consulter les disponibilités journalières d’un agent",
-    description: "Route publique calculant les créneaux disponibles pour une date donnée (YYYY-MM-DD).",
+    description:
+      "Route publique calculant les créneaux disponibles pour une date donnée (YYYY-MM-DD).",
   })
   @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
-  @ApiQuery({ name: "date", description: "Date ciblée (YYYY-MM-DD)", example: "2026-09-10" })
+  @ApiQuery({
+    name: "date",
+    description: "Date ciblée (YYYY-MM-DD)",
+    example: "2026-09-10",
+  })
   @ApiResponse({
     status: 200,
-    description: "Détail de la disponibilité (heures de travail, réservations, créneaux libres).",
+    description:
+      "Détail de la disponibilité (heures de travail, réservations, créneaux libres).",
   })
   @Get("agent/:agentId/day")
   async getDayAvailability(
@@ -79,9 +85,14 @@ export class AvailabilityController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Consulter son propre calendrier mensuel en tant qu’agent",
-    description: "Permet à l'agent connecté de visualiser son calendrier complet du mois.",
+    description:
+      "Permet à l'agent connecté de visualiser son calendrier complet du mois.",
   })
-  @ApiParam({ name: "agentId", description: "ID de l'agent (doit correspondre à l'agent connecté)", example: 1 })
+  @ApiParam({
+    name: "agentId",
+    description: "ID de l'agent (doit correspondre à l'agent connecté)",
+    example: 1,
+  })
   @ApiQuery({ name: "year", description: "Année (ex: 2026)", example: 2026 })
   @ApiQuery({ name: "month", description: "Mois (1 à 12)", example: 9 })
   @ApiResponse({
@@ -91,7 +102,8 @@ export class AvailabilityController {
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({
     status: 403,
-    description: "Rôle AGENT requis ou tentative de consulter le calendrier d'un autre agent.",
+    description:
+      "Rôle AGENT requis ou tentative de consulter le calendrier d'un autre agent.",
   })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
@@ -109,5 +121,4 @@ export class AvailabilityController {
     }
     return this.availabilityService.getAgentMonthCalendar(agentId, year, month);
   }
-
 }

@@ -28,7 +28,8 @@ export class WorkingHoursController {
 
   @ApiOperation({
     summary: "Consulter les horaires de travail d'un agent",
-    description: "Route publique retournant la configuration des jours travaillés et horaires de l'agent.",
+    description:
+      "Route publique retournant la configuration des jours travaillés et horaires de l'agent.",
   })
   @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
   @ApiResponse({
@@ -43,7 +44,8 @@ export class WorkingHoursController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Consulter mes horaires de travail (Agent connecté)",
-    description: "Retourne les horaires de travail de l'agent actuellement authentifié.",
+    description:
+      "Retourne les horaires de travail de l'agent actuellement authentifié.",
   })
   @ApiResponse({
     status: 200,
@@ -61,7 +63,8 @@ export class WorkingHoursController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Mettre à jour mes horaires de travail (Agent connecté)",
-    description: "Met à jour la configuration des 7 jours de la semaine pour l'agent connecté.",
+    description:
+      "Met à jour la configuration des 7 jours de la semaine pour l'agent connecté.",
   })
   @ApiResponse({
     status: 200,

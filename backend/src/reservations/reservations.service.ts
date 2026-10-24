@@ -38,7 +38,7 @@ export class ReservationsService {
   async getAllReservations() {
     return await this.reservationsRepository.findAll();
   }
-  async findByReservationId(reservationId : number){
+  async findByReservationId(reservationId: number) {
     return await this.reservationsRepository.findByReservationId(reservationId);
   }
   async getMyReservations(clientId: number) {
@@ -356,7 +356,6 @@ export class ReservationsService {
         reservation.heure_reservation.getSeconds(),
         0
       );
-
 
       //comparer le rendez-vous avec now.
       return rendezvous >= now && rendezvous <= targetTime;

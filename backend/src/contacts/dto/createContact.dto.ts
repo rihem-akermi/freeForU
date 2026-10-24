@@ -22,4 +22,4 @@ export class CreateContactDto {
   })
   @IsString()
   message!: string;
-} 
+}

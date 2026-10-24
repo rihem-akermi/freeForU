@@ -5,7 +5,10 @@ import * as streamifier from "streamifier";
 
 @Injectable()
 export class UploadsService {
-  async uploadImage(file: Express.Multer.File, folder: string): Promise<string> {
+  async uploadImage(
+    file: Express.Multer.File,
+    folder: string
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder },
@@ -19,6 +22,4 @@ export class UploadsService {
       streamifier.createReadStream(file.buffer).pipe(uploadStream);
     });
   }
-
-  
 }

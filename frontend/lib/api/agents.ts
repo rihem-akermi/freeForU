@@ -130,7 +130,6 @@ export async function searchAgents(name: string): Promise<AgentSearchResult[]> {
 
 export async function getMyProfile(): Promise<Agent> {
   const res = await api.get<Agent>("/agents/me");
-  console.log("profile : ", res.data);
   return res.data;
 }
 

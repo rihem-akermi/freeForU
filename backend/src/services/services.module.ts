@@ -6,9 +6,9 @@ import { AuthModule } from "src/auth/auth.module";
 import { AiModule } from "src/ai/ai.module";
 
 @Module({
-  imports: [AuthModule,forwardRef(() => AiModule)],//dependance circulaire 
+  imports: [AuthModule, forwardRef(() => AiModule)], //dependance circulaire
   providers: [ServicesService, ServicesRepository],
   controllers: [ServicesController],
-  exports: [ServicesRepository,ServicesService],
+  exports: [ServicesRepository, ServicesService],
 })
 export class ServicesModule {}

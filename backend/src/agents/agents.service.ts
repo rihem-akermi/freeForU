@@ -5,15 +5,14 @@ import { UpdatedAgentDto } from "./dto/update-agent.dto";
 import { UploadsService } from "src/uploads/uploads.service";
 import { Prisma } from "../../generated/prisma/client";
 import { GetPublicAgentsDto } from "./dto/get-public-agents.dto";
-import { RedisService } from 'src/redis/redis.service';
+import { RedisService } from "src/redis/redis.service";
 
 @Injectable()
 export class AgentsService {
   constructor(
     private agentsRepository: AgentsRepository,
     private uploadsService: UploadsService,
-        private redisService: RedisService,
-
+    private redisService: RedisService
   ) {}
 
   async getAllAgents() {
@@ -71,36 +70,43 @@ export class AgentsService {
   }
 
   async getPublicAgents(query: GetPublicAgentsDto) {
-    const { page = 1, limit = 10, category_id , ville } = query;
+    const { page = 1, limit = 10, category_id, ville } = query;
 
     // Étape 1 : construire la clé de cache
-    const cacheKey = `agents:category:${category_id ?? 'all'}:ville:${ville ?? 'all'}:page:${page}:limit:${limit}`;
+    const cacheKey = `agents:category:${category_id ?? "all"}:ville:${ville ?? "all"}:page:${page}:limit:${limit}`;
 
     // Étape 2 : Redis GET
     const cached = await this.redisService.get(cacheKey);
     if (cached) {
-      console.log("Redis a repond à cette requete 🙉")
+      console.log("Redis a repond à cette requete 🙉");
       return JSON.parse(cached); // HIT 🟢
     }
 
-    // MISS 🔴 → flux normal avec postgres 
+    // MISS 🔴 → flux normal avec postgres
     const [agents, total] = await Promise.all([
-      this.agentsRepository.findAllPublic(page, limit, category_id,ville),
-      this.agentsRepository.countPublic(category_id,ville),
+      this.agentsRepository.findAllPublic(page, limit, category_id, ville),
+      this.agentsRepository.countPublic(category_id, ville),
     ]);
 
     const data = await Promise.all(
       agents.map(async (agent) => {
         const rating = await this.agentsRepository.getRatingSummary(agent.id);
-        return { ...agent, rating_average: rating.average, rating_count: rating.count };
-      }),
+        return {
+          ...agent,
+          rating_average: rating.average,
+          rating_count: rating.count,
+        };
+      })
     );
 
     const totalPages = Math.ceil(total / limit);
     const result = {
       data,
       meta: {
-        page, limit, total, totalPages,
+        page,
+        limit,
+        total,
+        totalPages,
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
       },

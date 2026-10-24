@@ -1,11 +1,10 @@
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from "@nestjs/common";
 
-export const Roles = (...roles: string[]) => SetMetadata('roles', roles); 
+export const Roles = (...roles: string[]) => SetMetadata("roles", roles);
 
 //...roles: string[] means : Accept any number of roles.
 
-
-//on ajoute une etiquette : 
-//@Roles('ADMIN') 
+//on ajoute une etiquette :
+//@Roles('ADMIN')
 //"cette route nécessite le rôle ADMIN".
-// va agir RolesGuard apres 
+// va agir RolesGuard apres

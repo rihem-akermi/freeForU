@@ -1,21 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { CreateContactDto } from './dto/createContact.dto';
-import { ContactsRepository } from './contacts.repository';
+import { Injectable } from "@nestjs/common";
+import { CreateContactDto } from "./dto/createContact.dto";
+import { ContactsRepository } from "./contacts.repository";
 
 @Injectable()
 export class ContactsService {
-    constructor(private contactRepository : ContactsRepository){}
+  constructor(private contactRepository: ContactsRepository) {}
 
-    async addContact (contact : CreateContactDto){
-        const newContact = await this.contactRepository.createContact(contact)
-        return newContact
-    }
+  async addContact(contact: CreateContactDto) {
+    const newContact = await this.contactRepository.createContact(contact);
+    return newContact;
+  }
 
-    async getContacts (){
-        return await this.contactRepository.getContacts()
-    }
+  async getContacts() {
+    return await this.contactRepository.getContacts();
+  }
 
-    async deleteContact(id : number){
-        return await this.contactRepository.deleteContact(id) 
-    }
+  async deleteContact(id: number) {
+    return await this.contactRepository.deleteContact(id);
+  }
 }

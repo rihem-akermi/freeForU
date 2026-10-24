@@ -31,7 +31,8 @@ export class AiController {
 
   @ApiOperation({
     summary: "Poser une question libre à l'IA",
-    description: "Envoie un prompt au modèle LLM et retourne la réponse brute générée.",
+    description:
+      "Envoie un prompt au modèle LLM et retourne la réponse brute générée.",
   })
   @ApiResponse({
     status: 201,
@@ -47,7 +48,8 @@ export class AiController {
 
   @ApiCookieAuth("accessToken")
   @ApiOperation({
-    summary: "Générer une biographie professionnelle pour agent (Agent connecté)",
+    summary:
+      "Générer une biographie professionnelle pour agent (Agent connecté)",
     description:
       "Transforme une description brute du parcours de l'agent en une biographie claire, engageante et professionnelle.",
   })
@@ -133,12 +135,15 @@ export class AiController {
   })
   @ApiResponse({
     status: 201,
-    description: "Réponse générée par l'assistant et ID de session conversationnelle.",
+    description:
+      "Réponse générée par l'assistant et ID de session conversationnelle.",
   })
   @UseGuards(OptionalAuthGuard)
   @Post("assistant")
   async askAssistant(@Body() dto: AskAssistantDto, @Req() req?: any) {
-    const authenticatedUserId = req?.user?.sub ? Number(req.user.sub) : undefined;
+    const authenticatedUserId = req?.user?.sub
+      ? Number(req.user.sub)
+      : undefined;
     return this.aiService.askAssistant(
       dto.message,
       dto.conversationId,

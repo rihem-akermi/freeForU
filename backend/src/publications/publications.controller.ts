@@ -39,9 +39,13 @@ export class PublicationsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Lister mes publications (Agent connecté)",
-    description: "Retourne toutes les publications créées par l'agent authentifié.",
+    description:
+      "Retourne toutes les publications créées par l'agent authentifié.",
   })
-  @ApiResponse({ status: 200, description: "Liste des publications de l'agent." })
+  @ApiResponse({
+    status: 200,
+    description: "Liste des publications de l'agent.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle AGENT requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -53,10 +57,15 @@ export class PublicationsController {
 
   @ApiCookieAuth("accessToken")
   @ApiOperation({
-    summary: "Lister mes publications en attente de modération (Agent connecté)",
-    description: "Retourne les publications de l'agent ayant le statut `en_attente`.",
+    summary:
+      "Lister mes publications en attente de modération (Agent connecté)",
+    description:
+      "Retourne les publications de l'agent ayant le statut `en_attente`.",
   })
-  @ApiResponse({ status: 200, description: "Liste des publications en attente de l'agent." })
+  @ApiResponse({
+    status: 200,
+    description: "Liste des publications en attente de l'agent.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle AGENT requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -69,7 +78,8 @@ export class PublicationsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Créer une publication avec photo (Agent connecté)",
-    description: "Upload une image et crée une publication en attente de validation administrateur.",
+    description:
+      "Upload une image et crée une publication en attente de validation administrateur.",
   })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -78,7 +88,10 @@ export class PublicationsController {
       required: ["titre", "description", "photo"],
       properties: {
         titre: { type: "string", example: "Rénovation salle de bain" },
-        description: { type: "string", example: "Pose de carrelage et robinetterie moderne." },
+        description: {
+          type: "string",
+          example: "Pose de carrelage et robinetterie moderne.",
+        },
         photo: { type: "string", format: "binary" },
       },
     },
@@ -102,9 +115,13 @@ export class PublicationsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Lister toutes les publications en attente de modération (Admin)",
-    description: "Retourne l'ensemble des publications de la plateforme nécessitant une validation.",
+    description:
+      "Retourne l'ensemble des publications de la plateforme nécessitant une validation.",
   })
-  @ApiResponse({ status: 200, description: "Liste des publications en attente." })
+  @ApiResponse({
+    status: 200,
+    description: "Liste des publications en attente.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle ADMIN requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -117,10 +134,14 @@ export class PublicationsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Mettre à jour le statut d'une publication (Admin)",
-    description: "Permet à un administrateur d'approuver ou rejeter une publication.",
+    description:
+      "Permet à un administrateur d'approuver ou rejeter une publication.",
   })
   @ApiParam({ name: "id", description: "ID de la publication", example: 1 })
-  @ApiResponse({ status: 200, description: "Statut de la publication mis à jour." })
+  @ApiResponse({
+    status: 200,
+    description: "Statut de la publication mis à jour.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle ADMIN requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -136,7 +157,8 @@ export class PublicationsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Modifier une de ses publications (Agent connecté)",
-    description: "Permet à l'agent de modifier le titre, la description ou la photo de sa publication.",
+    description:
+      "Permet à l'agent de modifier le titre, la description ou la photo de sa publication.",
   })
   @ApiParam({ name: "id", description: "ID de la publication", example: 1 })
   @ApiConsumes("multipart/form-data")
@@ -150,9 +172,15 @@ export class PublicationsController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: "Publication mise à jour avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Publication mise à jour avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
-  @ApiResponse({ status: 403, description: "Rôle AGENT requis ou publication non détenue." })
+  @ApiResponse({
+    status: 403,
+    description: "Rôle AGENT requis ou publication non détenue.",
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Patch(":id")
@@ -177,9 +205,15 @@ export class PublicationsController {
     description: "Permet à l'agent de supprimer définitivement sa publication.",
   })
   @ApiParam({ name: "id", description: "ID de la publication", example: 1 })
-  @ApiResponse({ status: 200, description: "Publication supprimée avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Publication supprimée avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
-  @ApiResponse({ status: 403, description: "Rôle AGENT requis ou publication non détenue." })
+  @ApiResponse({
+    status: 403,
+    description: "Rôle AGENT requis ou publication non détenue.",
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Delete(":id")
@@ -189,7 +223,8 @@ export class PublicationsController {
 
   @ApiOperation({
     summary: "Consulter le portfolio public d'un agent",
-    description: "Route publique listant toutes les publications approuvées de l'agent.",
+    description:
+      "Route publique listant toutes les publications approuvées de l'agent.",
   })
   @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
   @ApiResponse({ status: 200, description: "Portfolio de l'agent." })

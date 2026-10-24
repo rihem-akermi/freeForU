@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyEmail, resendOtp } from "@/lib/api/auth";
 import { Button } from "@/components/ui/UIComponents";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/UIComponents";
 const OTP_DURATION = 120; // 2-minute expiry
 const OTP_LENGTH = 6;
 
-export default function VerifyEmailPage() {
+function VerifyEmailComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -44,7 +44,10 @@ export default function VerifyEmailPage() {
     }
   }
 
-  function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) {
     if (e.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -52,7 +55,10 @@ export default function VerifyEmailPage() {
 
   function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, OTP_LENGTH);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/[^0-9]/g, "")
+      .slice(0, OTP_LENGTH);
     if (!pasted) return;
     setCode(pasted);
     const focusIndex = Math.min(pasted.length, OTP_LENGTH - 1);
@@ -108,7 +114,10 @@ export default function VerifyEmailPage() {
         />
         <div
           className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-25"
-          style={{ background: "radial-gradient(circle, var(--color-accent), transparent 70%)" }}
+          style={{
+            background:
+              "radial-gradient(circle, var(--color-accent), transparent 70%)",
+          }}
           aria-hidden="true"
         />
 
@@ -137,7 +146,9 @@ export default function VerifyEmailPage() {
             {digits.map((digit, i) => (
               <input
                 key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
+                ref={(el) => {
+                  inputRefs.current[i] = el;
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
@@ -157,7 +168,10 @@ export default function VerifyEmailPage() {
                 Code expiré, veuillez en redemander un.
               </span>
             ) : (
-              <>Ce code expire dans {minutes}:{seconds.toString().padStart(2, "0")}</>
+              <>
+                Ce code expire dans {minutes}:
+                {seconds.toString().padStart(2, "0")}
+              </>
             )}
           </p>
 
@@ -186,5 +200,13 @@ export default function VerifyEmailPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailComponent />
+    </Suspense>
   );
 }

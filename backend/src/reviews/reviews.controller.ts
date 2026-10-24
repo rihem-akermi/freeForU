@@ -31,7 +31,8 @@ export class ReviewsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Lister tous les avis (Admin)",
-    description: "Retourne la liste complète de tous les avis déposés sur la plateforme.",
+    description:
+      "Retourne la liste complète de tous les avis déposés sur la plateforme.",
   })
   @ApiResponse({
     status: 200,
@@ -68,7 +69,8 @@ export class ReviewsController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Déposer un avis sur une réservation terminée (Client)",
-    description: "Permet au client connecté de noter (1-5) et commenter une réservation terminée.",
+    description:
+      "Permet au client connecté de noter (1-5) et commenter une réservation terminée.",
   })
   @ApiResponse({
     status: 201,
@@ -76,7 +78,10 @@ export class ReviewsController {
   })
   @ApiResponse({ status: 400, description: "Données d'avis invalides." })
   @ApiResponse({ status: 401, description: "Non authentifié." })
-  @ApiResponse({ status: 403, description: "Rôle CLIENT requis ou réservation non terminée." })
+  @ApiResponse({
+    status: 403,
+    description: "Rôle CLIENT requis ou réservation non terminée.",
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("CLIENT")
   @Post()
@@ -86,7 +91,8 @@ export class ReviewsController {
 
   @ApiOperation({
     summary: "Obtenir le récapitulatif des notes d'un agent",
-    description: "Route publique retournant la note moyenne et le nombre total d'avis pour un agent.",
+    description:
+      "Route publique retournant la note moyenne et le nombre total d'avis pour un agent.",
   })
   @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
   @ApiResponse({
@@ -100,7 +106,8 @@ export class ReviewsController {
 
   @ApiOperation({
     summary: "Lister les avis d'un agent",
-    description: "Route publique listant tous les avis et commentaires reçus par un agent.",
+    description:
+      "Route publique listant tous les avis et commentaires reçus par un agent.",
   })
   @ApiParam({ name: "agentId", description: "ID de l'agent", example: 1 })
   @ApiResponse({

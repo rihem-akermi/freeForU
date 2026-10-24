@@ -15,7 +15,8 @@ export class CreatePublicationDto {
 
   @ApiProperty({
     description: "Description détaillée de la réalisation",
-    example: "Installation complète de plomberie et pose de carrelage en 3 jours.",
+    example:
+      "Installation complète de plomberie et pose de carrelage en 3 jours.",
   })
   @IsString()
   @IsNotEmpty()

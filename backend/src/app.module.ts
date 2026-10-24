@@ -17,19 +17,18 @@ import { BlockedSlotsModule } from "./blocked-slots/blocked-slots.module";
 import { AvailabilityModule } from "./availability/availability.module";
 import { ServicesModule } from "./services/services.module";
 import { ScheduleModule } from "@nestjs/schedule";
-import { MailModule } from './mail/mail.module';
-import { OtpModule } from './otp/otp.module';
-import { RedisModule } from './redis/redis.module';
-import { AiModule } from './ai/ai.module';
+import { MailModule } from "./mail/mail.module";
+import { OtpModule } from "./otp/otp.module";
+import { RedisModule } from "./redis/redis.module";
+import { AiModule } from "./ai/ai.module";
 
 @Module({
   imports: [
-    
     UsersModule,
     AgentsModule,
     ReservationsModule,
     AuthModule,
-    ConfigModule.forRoot(),//charger les variables d’environnement depuis .env
+    ConfigModule.forRoot(), //charger les variables d’environnement depuis .env
     ContactsModule,
     CategoriesModule,
     PublicationsModule,
@@ -40,7 +39,7 @@ import { AiModule } from './ai/ai.module';
     BlockedSlotsModule,
     AvailabilityModule,
     ServicesModule,
-    ScheduleModule.forRoot(),//planification des taches Cron
+    ScheduleModule.forRoot(), //planification des taches Cron
     MailModule,
     OtpModule,
     RedisModule,

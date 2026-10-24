@@ -35,7 +35,8 @@ export class BlockedSlotsController {
   })
   @ApiResponse({
     status: 200,
-    description: "Liste des créneaux bloqués et exceptions retournée avec succès.",
+    description:
+      "Liste des créneaux bloqués et exceptions retournée avec succès.",
   })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle AGENT requis." })
@@ -48,7 +49,8 @@ export class BlockedSlotsController {
 
   @ApiOperation({
     summary: "Créer un créneau ou jour bloqué",
-    description: "Bloque une date pour l'agent connecté (jour de repos ou journée pleine).",
+    description:
+      "Bloque une date pour l'agent connecté (jour de repos ou journée pleine).",
   })
   @ApiResponse({
     status: 201,
@@ -87,7 +89,8 @@ export class BlockedSlotsController {
 
   @ApiOperation({
     summary: "Supprimer une exception ou un créneau bloqué",
-    description: "Supprime le blocage correspondant à l'ID pour l'agent connecté.",
+    description:
+      "Supprime le blocage correspondant à l'ID pour l'agent connecté.",
   })
   @ApiParam({
     name: "id",

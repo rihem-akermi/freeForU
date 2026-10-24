@@ -35,7 +35,7 @@ export class OtpRepository {
       },
     });
   }
-  // so ONLY otp code is pending mode / attempts limits is reached 
+  // so ONLY otp code is pending mode / attempts limits is reached
   async markInvalidated(id: number) {
     return this.prisma.otp_verifications.update({
       where: { id },
@@ -77,21 +77,24 @@ export class OtpRepository {
   }
 
   // cooldown : to send less resend mails /min
-  async findLatestByTarget(target_table: string, target_id: number, purpose: string) {
-  return this.prisma.otp_verifications.findFirst({
-    where: { target_table, target_id, purpose },
-    orderBy: { created_at: 'desc' },
-  });
-}
+  async findLatestByTarget(
+    target_table: string,
+    target_id: number,
+    purpose: string
+  ) {
+    return this.prisma.otp_verifications.findFirst({
+      where: { target_table, target_id, purpose },
+      orderBy: { created_at: "desc" },
+    });
+  }
 
-async expireOldPending() {
-  return this.prisma.otp_verifications.updateMany({
-    where: {
-      status: 'PENDING',
-      expires_at: { lt: new Date() },
-    },
-    data: { status: 'EXPIRED' },
-  });
-}
-
+  async expireOldPending() {
+    return this.prisma.otp_verifications.updateMany({
+      where: {
+        status: "PENDING",
+        expires_at: { lt: new Date() },
+      },
+      data: { status: "EXPIRED" },
+    });
+  }
 }

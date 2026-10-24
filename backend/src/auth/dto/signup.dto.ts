@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsEmail,
   IsIn,
@@ -7,28 +7,28 @@ import {
   IsString,
   MinLength,
   IsInt,
-} from 'class-validator';
+} from "class-validator";
 
 export class SignupDto {
   @ApiProperty({
-    example: 'Ahmed Ben Ali',
-    description: 'Full name of the user',
+    example: "Ahmed Ben Ali",
+    description: "Full name of the user",
   })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
   @ApiProperty({
-    example: 'ahmed@example.com',
-    description: 'User email address',
+    example: "ahmed@example.com",
+    description: "User email address",
   })
   @IsEmail()
   @IsNotEmpty()
   email!: string;
 
   @ApiProperty({
-    example: 'password123',
-    description: 'User password',
+    example: "password123",
+    description: "User password",
   })
   @IsString()
   @IsNotEmpty()
@@ -36,32 +36,32 @@ export class SignupDto {
   password!: string;
 
   @ApiProperty({
-    example: 'Sousse',
-    description: 'User city',
+    example: "Sousse",
+    description: "User city",
   })
   @IsString()
   @IsNotEmpty()
   ville!: string;
 
   @ApiProperty({
-    example: '20 123 456',
-    description: 'User phone number',
+    example: "20 123 456",
+    description: "User phone number",
   })
   @IsString()
   @IsNotEmpty()
   phone!: string;
 
   @ApiProperty({
-    example: 'CLIENT',
-    enum: ['CLIENT', 'AGENT'],
-    description: 'Account role',
+    example: "CLIENT",
+    enum: ["CLIENT", "AGENT"],
+    description: "Account role",
   })
-  @IsIn(['CLIENT', 'AGENT'])
-  role!: 'CLIENT' | 'AGENT';
+  @IsIn(["CLIENT", "AGENT"])
+  role!: "CLIENT" | "AGENT";
 
   @ApiPropertyOptional({
     example: 3,
-    description: 'Category ID, required when registering as an agent',
+    description: "Category ID, required when registering as an agent",
   })
   @IsOptional()
   @IsInt()

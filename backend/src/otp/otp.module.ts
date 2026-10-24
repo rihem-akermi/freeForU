@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
-import { OtpService } from './otp.service';
-import { OtpController } from './otp.controller';
-import { OtpRepository } from './otp.repository';
+import { Module } from "@nestjs/common";
+import { OtpService } from "./otp.service";
+import { OtpController } from "./otp.controller";
+import { OtpRepository } from "./otp.repository";
 
 @Module({
-  providers: [OtpService,OtpRepository],
+  providers: [OtpService, OtpRepository],
   controllers: [OtpController],
-  exports:[OtpService],
+  exports: [OtpService],
 })
 export class OtpModule {}

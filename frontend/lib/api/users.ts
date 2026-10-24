@@ -17,7 +17,6 @@ export type UpdateMyProfileData = Partial<
 export async function getUsers(): Promise<User[]> {
   const response = await api.get<User[]>("/users");
   const Users = response.data;
-  console.log(Users);
   return Users;
 }
 

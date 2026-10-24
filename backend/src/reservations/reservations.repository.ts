@@ -33,8 +33,7 @@ export class reservationsRepository {
     });
   }
 
-
-  async findByReservationId(reservationId : number){
+  async findByReservationId(reservationId: number) {
     return this.prisma.reservations.findUnique({
       where: { id: reservationId },
       include: {
@@ -43,7 +42,6 @@ export class reservationsRepository {
         },
       },
     });
-  
   }
 
   async findByClientId(clientId: number) {

@@ -1,16 +1,30 @@
 // dto/update-working-hours.dto.ts
-import { IsInt, IsBoolean, IsOptional, IsString, Matches, ValidateNested, Min, Max, ArrayMinSize, ArrayMaxSize } from "class-validator";
+import {
+  IsInt,
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateNested,
+  Min,
+  Max,
+  ArrayMinSize,
+  ArrayMaxSize,
+} from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class DayHoursDto {
   @ApiProperty({
-    description: "Jour de la semaine (0 = dimanche, 1 = lundi, ..., 6 = samedi)",
+    description:
+      "Jour de la semaine (0 = dimanche, 1 = lundi, ..., 6 = samedi)",
     example: 1,
     minimum: 0,
     maximum: 6,
   })
-  @IsInt() @Min(0) @Max(6)
+  @IsInt()
+  @Min(0)
+  @Max(6)
   dayOfWeek!: number;
 
   @ApiProperty({

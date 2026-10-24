@@ -6,7 +6,7 @@ import { UploadsModule } from "src/uploads/uploads.module";
 import { MailModule } from "src/mail/mail.module";
 
 @Module({
-  imports: [UploadsModule,MailModule],
+  imports: [UploadsModule, MailModule],
   providers: [PublicationsService, PublicationsRepository],
   controllers: [PublicationsController],
 })

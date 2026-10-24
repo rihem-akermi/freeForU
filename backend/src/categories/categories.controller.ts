@@ -20,7 +20,8 @@ export class CategoriesController {
 
   @ApiOperation({
     summary: "Lister toutes les catégories de métier",
-    description: "Route publique listant l'ensemble des catégories disponibles.",
+    description:
+      "Route publique listant l'ensemble des catégories disponibles.",
   })
   @ApiResponse({
     status: 200,
@@ -67,7 +68,8 @@ export class CategoriesController {
 
   @ApiOperation({
     summary: "Supprimer une catégorie",
-    description: "Supprime la catégorie. Échoue si des agents y sont rattachés.",
+    description:
+      "Supprime la catégorie. Échoue si des agents y sont rattachés.",
   })
   @ApiParam({
     name: "id",

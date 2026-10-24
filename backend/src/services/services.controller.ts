@@ -65,7 +65,8 @@ export class ServicesController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Créer un nouveau service (Agent connecté)",
-    description: "Permet à l'agent connecté d'ajouter un service à son catalogue.",
+    description:
+      "Permet à l'agent connecté d'ajouter un service à son catalogue.",
   })
   @ApiResponse({ status: 201, description: "Service créé avec succès." })
   @ApiResponse({ status: 400, description: "Données de service invalides." })
@@ -86,7 +87,10 @@ export class ServicesController {
   @ApiParam({ name: "id", description: "ID du service", example: 1 })
   @ApiResponse({ status: 200, description: "Service mis à jour avec succès." })
   @ApiResponse({ status: 401, description: "Non authentifié." })
-  @ApiResponse({ status: 403, description: "Rôle AGENT requis ou service non détenu par l'agent." })
+  @ApiResponse({
+    status: 403,
+    description: "Rôle AGENT requis ou service non détenu par l'agent.",
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Patch(":id")
@@ -106,7 +110,10 @@ export class ServicesController {
   @ApiParam({ name: "id", description: "ID du service", example: 1 })
   @ApiResponse({ status: 200, description: "Service supprimé avec succès." })
   @ApiResponse({ status: 401, description: "Non authentifié." })
-  @ApiResponse({ status: 403, description: "Rôle AGENT requis ou service non détenu par l'agent." })
+  @ApiResponse({
+    status: 403,
+    description: "Rôle AGENT requis ou service non détenu par l'agent.",
+  })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles("AGENT")
   @Delete(":id")

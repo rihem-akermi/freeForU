@@ -1,5 +1,12 @@
 // base-reservation.dto.ts
-import { IsInt, IsDateString, IsString, IsOptional, Matches, MinLength } from "class-validator";
+import {
+  IsInt,
+  IsDateString,
+  IsString,
+  IsOptional,
+  Matches,
+  MinLength,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class BaseReservationDto {
@@ -11,7 +18,8 @@ export class BaseReservationDto {
   agentId!: number;
 
   @ApiPropertyOptional({
-    description: "Identifiant du service choisi (optionnel si demande personnalisée)",
+    description:
+      "Identifiant du service choisi (optionnel si demande personnalisée)",
     example: 2,
   })
   @IsOptional()

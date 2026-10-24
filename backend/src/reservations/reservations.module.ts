@@ -7,11 +7,13 @@ import { ServicesModule } from "src/services/services.module";
 import { MailModule } from "src/mail/mail.module";
 
 @Module({
-  imports: [AuthModule,
-     forwardRef(() => ServicesModule), // dependance ciculaire indirecte 
-     MailModule],
+  imports: [
+    AuthModule,
+    forwardRef(() => ServicesModule), // dependance ciculaire indirecte
+    MailModule,
+  ],
   providers: [ReservationsService, reservationsRepository],
   controllers: [ReservationsController],
-  exports: [reservationsRepository,ReservationsService],
+  exports: [reservationsRepository, ReservationsService],
 })
 export class ReservationsModule {}

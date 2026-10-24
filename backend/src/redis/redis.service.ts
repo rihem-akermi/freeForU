@@ -7,9 +7,18 @@ export class RedisService implements OnModuleDestroy {
   private readonly client: Redis;
 
   constructor() {
-      const redisUrl = process.env.REDIS_URL;
+    console.log("Redis URL exists:", !!process.env.REDIS_URL); //!! : truthy or flasy ?
+    this.client = new Redis(process.env.REDIS_URL!);
 
-    this.client = redisUrl
+    this.client.on("connect", () => this.logger.log("Redis connecté ✅"));
+
+    this.client.on("error", (err) =>
+      this.logger.warn(`Erreur Redis : ${err.message}`)
+    );
+    /* const redisUrl = process.env.REDIS_URL;
+      
+
+   this.client = redisUrl
     ? new Redis(redisUrl)
     : new Redis({
         host: process.env.REDIS_HOST || 'localhost',
@@ -21,6 +30,7 @@ export class RedisService implements OnModuleDestroy {
     this.client.on("error", (err) =>
       this.logger.warn(`Erreur Redis : ${err.message}`)
     );
+    */
   }
 
   async get(key: string): Promise<string | null> {

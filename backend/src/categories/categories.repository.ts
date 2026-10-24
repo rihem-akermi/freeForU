@@ -11,27 +11,24 @@ export class CategoriesRepository {
         id: "asc",
       },
     });
-
-  
-
   }
 
   async addCategory(name: string) {
-  return this.prisma.categories.create({
-    data: {
-      name,
-    },
-  });
-}
+    return this.prisma.categories.create({
+      data: {
+        name,
+      },
+    });
+  }
 
- async updateCategory(id: number, name: string) {
-  return this.prisma.categories.update({
-    where: { id },
-    data: {
-      name,
-    },
-  });
-}
+  async updateCategory(id: number, name: string) {
+    return this.prisma.categories.update({
+      where: { id },
+      data: {
+        name,
+      },
+    });
+  }
   async delete(id: number) {
     return this.prisma.categories.delete({
       where: {

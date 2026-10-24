@@ -132,7 +132,7 @@ export class AgentsRepository {
     return this.prisma.agents.count({
       where: {
         ...(categoryId && { category_id: categoryId }),
-        ...(ville && { ville: { equals: ville, mode: "insensitive" } }),//maj ou min ce n'est pas un probleme
+        ...(ville && { ville: { equals: ville, mode: "insensitive" } }), //maj ou min ce n'est pas un probleme
       },
     });
   }

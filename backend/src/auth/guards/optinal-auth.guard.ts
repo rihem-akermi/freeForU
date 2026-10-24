@@ -1,6 +1,5 @@
-
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class OptionalAuthGuard implements CanActivate {
@@ -8,7 +7,7 @@ export class OptionalAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = request.cookies?.['accessToken'];
+    const token = request.cookies?.["accessToken"];
 
     if (!token) {
       return true; // 🔑 pas de token = visiteur anonyme, on LAISSE PASSER (pas d'erreur)

@@ -3,7 +3,8 @@ import { IsNotEmpty, IsString } from "class-validator";
 
 export class SearchServicesDto {
   @ApiProperty({
-    description: "Requête de recherche textuelle pour trouver des prestations similaires par embedding",
+    description:
+      "Requête de recherche textuelle pour trouver des prestations similaires par embedding",
     example: "réparation fuite lavabo",
   })
   @IsString()

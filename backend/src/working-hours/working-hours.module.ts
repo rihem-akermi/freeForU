@@ -4,7 +4,7 @@ import { WorkingHoursService } from "./working-hours.service";
 import { WorkingHoursRepository } from "./working-hours.repository";
 
 @Module({
-  exports:[WorkingHoursRepository],
+  exports: [WorkingHoursRepository],
   controllers: [WorkingHoursController],
   providers: [WorkingHoursService, WorkingHoursRepository],
 })

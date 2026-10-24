@@ -1,4 +1,10 @@
-import { IsDateString, IsOptional, IsString, IsIn, MaxLength } from "class-validator";
+import {
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsIn,
+  MaxLength,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateBlockedSlotDto {

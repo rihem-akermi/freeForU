@@ -1,6 +1,6 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive, IsString, Max } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from "class-transformer";
+import { IsInt, IsOptional, IsPositive, IsString, Max } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 
 export class GetPublicAgentsDto {
   @ApiPropertyOptional({

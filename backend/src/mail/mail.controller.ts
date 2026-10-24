@@ -10,7 +10,8 @@ export class MailController {
 
   @ApiOperation({
     summary: "Envoyer un email de test (Utilitaire)",
-    description: "Route utilitaire pour tester le bon fonctionnement du service d'envoi d'emails via Brevo.",
+    description:
+      "Route utilitaire pour tester le bon fonctionnement du service d'envoi d'emails via Brevo.",
   })
   @ApiResponse({
     status: 201,
@@ -18,6 +19,11 @@ export class MailController {
   })
   @Post()
   testEmail() {
-    return this.mailService.sendMail("akermirihem16@gmail.com", "💖", "<p>hi</p>", "rahouma");
+    return this.mailService.sendMail(
+      "akermirihem16@gmail.com",
+      "💖",
+      "<p>hi</p>",
+      "rahouma"
+    );
   }
 }

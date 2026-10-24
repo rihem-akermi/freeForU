@@ -9,8 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule); // fabrique les constructeurs des objets
   app.use(cookieParser());
 
+  // frontend allowed ports/urls
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"; //deployed ||local
+
   app.enableCors({
-    origin: "http://localhost:3000", // seul ton frontend Next.js a le droit d'appeler ce backend
+    origin: frontendUrl, // seul ton frontend Next.js a le droit d'appeler ce backend
     credentials: true, //autorise l'envoi/réception de cookies entre les deux domaines
   });
   console.log("🔓🔓 CORS activé pour http://localhost:3000 🔓🔓");
@@ -31,7 +34,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api/docs", app, document);
 
-  await app.listen(3001);
+  const port = Number(process.env.PORT) || 3001; // production || local
+
+  await app.listen(port);
   console.log("✅✅ Backend started on http://localhost:3001 ✅✅");
   //port different de next.js : 3000
   // onmoduleInit() declenche par app.init() declenché par app.listen(port)

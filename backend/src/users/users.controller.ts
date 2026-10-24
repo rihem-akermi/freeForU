@@ -41,7 +41,10 @@ export class UsersController {
     summary: "Consulter mon profil client (Client connecté)",
     description: "Retourne les informations du compte du client authentifié.",
   })
-  @ApiResponse({ status: 200, description: "Profil client retourné avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Profil client retourné avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle CLIENT requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -64,7 +67,8 @@ export class UsersController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Créer un utilisateur (Admin)",
-    description: "Permet aux administrateurs de créer un utilisateur manuellement.",
+    description:
+      "Permet aux administrateurs de créer un utilisateur manuellement.",
   })
   @ApiResponse({ status: 201, description: "Utilisateur créé avec succès." })
   @ApiResponse({ status: 400, description: "Données utilisateur invalides." })
@@ -80,7 +84,8 @@ export class UsersController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Mettre à jour mon profil client avec photo (Client connecté)",
-    description: "Permet au client connecté de modifier ses informations et photo de profil.",
+    description:
+      "Permet au client connecté de modifier ses informations et photo de profil.",
   })
   @ApiConsumes("multipart/form-data")
   @ApiBody({
@@ -95,7 +100,10 @@ export class UsersController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: "Profil client mis à jour avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Profil client mis à jour avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle CLIENT requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -113,10 +121,14 @@ export class UsersController {
   @ApiCookieAuth("accessToken")
   @ApiOperation({
     summary: "Modifier un utilisateur par son ID (Admin)",
-    description: "Permet aux administrateurs de mettre à jour le compte d'un utilisateur.",
+    description:
+      "Permet aux administrateurs de mettre à jour le compte d'un utilisateur.",
   })
   @ApiParam({ name: "id", description: "ID de l'utilisateur", example: 1 })
-  @ApiResponse({ status: 200, description: "Utilisateur mis à jour avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Utilisateur mis à jour avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle ADMIN requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -135,7 +147,10 @@ export class UsersController {
     description: "Supprime définitivement un utilisateur de la plateforme.",
   })
   @ApiParam({ name: "id", description: "ID de l'utilisateur", example: 1 })
-  @ApiResponse({ status: 200, description: "Utilisateur supprimé avec succès." })
+  @ApiResponse({
+    status: 200,
+    description: "Utilisateur supprimé avec succès.",
+  })
   @ApiResponse({ status: 401, description: "Non authentifié." })
   @ApiResponse({ status: 403, description: "Rôle ADMIN requis." })
   @UseGuards(AuthGuard, RolesGuard)
@@ -149,8 +164,15 @@ export class UsersController {
     summary: "Rechercher des clients par nom",
     description: "Recherche les clients correspondants au nom fourni.",
   })
-  @ApiQuery({ name: "name", description: "Nom du client recherché", example: "Amira" })
-  @ApiResponse({ status: 200, description: "Résultats de recherche des clients." })
+  @ApiQuery({
+    name: "name",
+    description: "Nom du client recherché",
+    example: "Amira",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Résultats de recherche des clients.",
+  })
   @Get("search")
   async searchClients(@Query("name") name: string) {
     return this.usersService.searchClients(name);

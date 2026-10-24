@@ -7,8 +7,6 @@ type newCategory = {
 
 export async function getCategories(): Promise<Category[]> {
   const response = await api.get<Category[]>("/categories");
-  console.log("the categories for AgentsTable : ", response);
-
   return response.data;
 }
 

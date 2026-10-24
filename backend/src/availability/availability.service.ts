@@ -15,8 +15,6 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-
-
 @Injectable()
 export class AvailabilityService {
   constructor(
@@ -24,7 +22,6 @@ export class AvailabilityService {
     private blockedSlotsRepository: BlockedSlotsRepository,
     private reservationsRepository: reservationsRepository
   ) {}
-
 
   // détail d'un jour (horaires) pour DayAvailabilityModal
   async getDayAvailability(agentId: number, dateStr: string) {
@@ -37,13 +34,25 @@ export class AvailabilityService {
       this.blockedSlotsRepository.findByAgentAndDate(agentId, date),
     ]);
 
-    const workingHour = allWorkingHours.find((wh) => wh.day_of_week === dayOfWeek);
+    const workingHour = allWorkingHours.find(
+      (wh) => wh.day_of_week === dayOfWeek
+    );
 
     if (!workingHour) {
-      return { date: dateStr, status: "sans_info" as DayStatus, start_time: null, end_time: null };
+      return {
+        date: dateStr,
+        status: "sans_info" as DayStatus,
+        start_time: null,
+        end_time: null,
+      };
     }
     if (!workingHour.is_working || blockedDay) {
-      return { date: dateStr, status: "ferme" as DayStatus, start_time: null, end_time: null };
+      return {
+        date: dateStr,
+        status: "ferme" as DayStatus,
+        start_time: null,
+        end_time: null,
+      };
     }
     return {
       date: dateStr,
@@ -53,51 +62,80 @@ export class AvailabilityService {
     };
   }
 
- // calendrier CLIENT 
-async getClientMonthCalendar(agentId: number, clientId: number, year: number, month: number) {
-  const from = new Date(year, month - 1, 1);
-  const to = new Date(year, month, 0);
+  // calendrier CLIENT
+  async getClientMonthCalendar(
+    agentId: number,
+    clientId: number,
+    year: number,
+    month: number
+  ) {
+    const from = new Date(year, month - 1, 1);
+    const to = new Date(year, month, 0);
 
-  const [allWorkingHours, blockedDays, myReservations] = await Promise.all([
-    this.workingHoursRepository.findByAgentId(agentId),
-    this.blockedSlotsRepository.findByAgentAndDateRange(agentId, from, to),
-    this.reservationsRepository.findByClientAndAgentInRange(clientId, agentId, from, to),
-  ]);
+    const [allWorkingHours, blockedDays, myReservations] = await Promise.all([
+      this.workingHoursRepository.findByAgentId(agentId),
+      this.blockedSlotsRepository.findByAgentAndDateRange(agentId, from, to),
+      this.reservationsRepository.findByClientAndAgentInRange(
+        clientId,
+        agentId,
+        from,
+        to
+      ),
+    ]);
 
-  const blockedDateKeys = new Set(blockedDays.map((b) => toDateKey(b.date)));
-  const statusPriority: Record<string, number> = { en_attente: 3, confirmee: 2, terminee: 1 };
-  const myStatusByDate = new Map<string, string>();
-  for (const r of myReservations) {
-    const key = toDateKey(r.date_reservation);
-    const current = myStatusByDate.get(key);
-    if (!current || statusPriority[r.status] > statusPriority[current]) {
-      myStatusByDate.set(key, r.status);
+    const blockedDateKeys = new Set(blockedDays.map((b) => toDateKey(b.date)));
+    const statusPriority: Record<string, number> = {
+      en_attente: 3,
+      confirmee: 2,
+      terminee: 1,
+    };
+    const myStatusByDate = new Map<string, string>();
+    for (const r of myReservations) {
+      const key = toDateKey(r.date_reservation);
+      const current = myStatusByDate.get(key);
+      if (!current || statusPriority[r.status] > statusPriority[current]) {
+        myStatusByDate.set(key, r.status);
+      }
     }
+
+    const todayKey = toDateKey(new Date());
+
+    const result: { date: string; status: ClientDayStatus }[] = [];
+    for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+      const dateKey = toDateKey(d);
+      const myStatus = myStatusByDate.get(dateKey);
+
+      // Le jaune/violet/bleu reste prioritaire même sur un jour passé —
+      // le client garde une trace visuelle de ce qui s'est passé ce jour-là
+      if (myStatus === "en_attente") {
+        result.push({ date: dateKey, status: "jaune" });
+        continue;
+      }
+      if (myStatus === "confirmee") {
+        result.push({ date: dateKey, status: "violet" });
+        continue;
+      }
+      if (myStatus === "terminee") {
+        result.push({ date: dateKey, status: "bleu" });
+        continue;
+      }
+
+      // Jour passé sans historique → gris (bloqué), comme un jour fermé
+      if (dateKey < todayKey) {
+        result.push({ date: dateKey, status: "gris" });
+        continue;
+      } // ← ajouté
+
+      const dayOfWeek = d.getDay();
+      const workingHour = allWorkingHours.find(
+        (wh) => wh.day_of_week === dayOfWeek
+      );
+      const isClosed =
+        !workingHour || !workingHour.is_working || blockedDateKeys.has(dateKey);
+      result.push({ date: dateKey, status: isClosed ? "gris" : "neutre" });
+    }
+    return result;
   }
-
-  const todayKey = toDateKey(new Date()); 
-
-  const result: { date: string; status: ClientDayStatus }[] = [];
-  for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-    const dateKey = toDateKey(d);
-    const myStatus = myStatusByDate.get(dateKey);
-
-    // Le jaune/violet/bleu reste prioritaire même sur un jour passé — 
-    // le client garde une trace visuelle de ce qui s'est passé ce jour-là
-    if (myStatus === "en_attente") { result.push({ date: dateKey, status: "jaune" }); continue; }
-    if (myStatus === "confirmee") { result.push({ date: dateKey, status: "violet" }); continue; }
-    if (myStatus === "terminee") { result.push({ date: dateKey, status: "bleu" }); continue; }
-
-    // Jour passé sans historique → gris (bloqué), comme un jour fermé
-    if (dateKey < todayKey) { result.push({ date: dateKey, status: "gris" }); continue; } // ← ajouté
-
-    const dayOfWeek = d.getDay();
-    const workingHour = allWorkingHours.find((wh) => wh.day_of_week === dayOfWeek);
-    const isClosed = !workingHour || !workingHour.is_working || blockedDateKeys.has(dateKey);
-    result.push({ date: dateKey, status: isClosed ? "gris" : "neutre" });
-  }
-  return result;
-}
 
   // calendrier AGENT (agrégé), corrigé pour inclure les horaires hebdo
   async getAgentMonthCalendar(agentId: number, year: number, month: number) {
@@ -107,10 +145,16 @@ async getClientMonthCalendar(agentId: number, clientId: number, year: number, mo
     const [allWorkingHours, blockedDays, reservations] = await Promise.all([
       this.workingHoursRepository.findByAgentId(agentId),
       this.blockedSlotsRepository.findByAgentAndDateRange(agentId, from, to),
-      this.reservationsRepository.findByAgentInRangeForCalendar(agentId, from, to),
+      this.reservationsRepository.findByAgentInRangeForCalendar(
+        agentId,
+        from,
+        to
+      ),
     ]);
 
-    const typeByDate = new Map(blockedDays.map((b) => [toDateKey(b.date), b.type]));
+    const typeByDate = new Map(
+      blockedDays.map((b) => [toDateKey(b.date), b.type])
+    );
     const hasPending = new Set<string>();
     const hasAny = new Set<string>();
     for (const r of reservations) {
@@ -123,14 +167,28 @@ async getClientMonthCalendar(agentId: number, clientId: number, year: number, mo
     for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
       const dateKey = toDateKey(d);
       const dayOfWeek = d.getDay();
-      const workingHour = allWorkingHours.find((wh) => wh.day_of_week === dayOfWeek);
+      const workingHour = allWorkingHours.find(
+        (wh) => wh.day_of_week === dayOfWeek
+      );
       const isWeeklyClosed = !workingHour || !workingHour.is_working;
       const exceptionType = typeByDate.get(dateKey);
 
-      if (hasPending.has(dateKey)) { result.push({ date: dateKey, status: "jaune" }); continue; }
-      if (exceptionType === "full") { result.push({ date: dateKey, status: "bleu" }); continue; }
-      if (hasAny.has(dateKey)) { result.push({ date: dateKey, status: "violet" }); continue; }
-      if (isWeeklyClosed || exceptionType === "off") { result.push({ date: dateKey, status: "rouge" }); continue; }
+      if (hasPending.has(dateKey)) {
+        result.push({ date: dateKey, status: "jaune" });
+        continue;
+      }
+      if (exceptionType === "full") {
+        result.push({ date: dateKey, status: "bleu" });
+        continue;
+      }
+      if (hasAny.has(dateKey)) {
+        result.push({ date: dateKey, status: "violet" });
+        continue;
+      }
+      if (isWeeklyClosed || exceptionType === "off") {
+        result.push({ date: dateKey, status: "rouge" });
+        continue;
+      }
       result.push({ date: dateKey, status: "neutre" });
     }
     return result;
