@@ -3,8 +3,8 @@ import { User, Agent, Reservation } from "../data";
 
 export type { User, Agent, Reservation };
 
-const backendUrl = process.env.backendUrl || "http://localhost:3001";
-
+const backendUrl =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 // on crée une instance axios
 const api = axios.create({
   baseURL: backendUrl,
