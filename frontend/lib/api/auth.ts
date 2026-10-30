@@ -21,15 +21,15 @@ export async function login(email: string, password: string) {
   return validUser;
 }
 
+export async function getMe() {
+  const response = await api.get("/auth/me");
+  return response.data;
+}
+
 export async function logout() {
   console.log("👋 Déconnexion...");
   await api.post("/auth/logout", {}, { withCredentials: true });
   window.location.href = "/auth/login";
-}
-
-export async function getMe() {
-  const response = await api.get("/auth/me");
-  return response.data;
 }
 
 export async function verifyEmail(email: string, code: string) {

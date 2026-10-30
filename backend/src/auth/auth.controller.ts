@@ -53,6 +53,7 @@ export class AuthController {
     @Body() body: LoginDto,
     @Res({ passthrough: true }) res: Response
   ) {
+    console.log("la requete login est dans le controller login ");
     if (!body.email || !body.password) {
       console.log("❌ no body in the request");
       throw new BadRequestException("❌ no mail or no password in the request");
@@ -62,17 +63,24 @@ export class AuthController {
         body.password
       );
       const tokens = this.authService.generateTokens(user.id, user.role);
+      console.log("Tokens generé ");
+
+      const isProduction = process.env.NODE_ENV === "production";
+
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      };
 
       res.cookie("accessToken", tokens.accessToken, {
-        httpOnly: true,
-        maxAge: 15 * 60 * 1000, // 15 min en millisecondes
-        sameSite: "lax", //?
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000,
       });
 
       res.cookie("refreshToken", tokens.refreshToken, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
-        sameSite: "lax",
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       console.log("🍪 Cookies httpOnly posés");
