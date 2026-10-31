@@ -43,7 +43,7 @@ async function bootstrap() {
   const port = Number(process.env.PORT) || 3001; // production || local
 
   await app.listen(port);
-  console.log("✅✅ Backend started on http://localhost:3001 ✅✅");
+  console.log("✅✅ Backend started ✅✅");
   //port different de next.js : 3000
   // onmoduleInit() declenche par app.init() declenché par app.listen(port)
 }

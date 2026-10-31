@@ -25,10 +25,15 @@ import { ResendOtpDto } from "./dto/resend-email.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { ForgotPasswordDto } from "./dto/forget-password.dto";
 
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+
 @ApiTags("Auth")
 @Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {
+  }
 
   @ApiOperation({
     summary: "Connexion utilisateur ou agent",
@@ -64,8 +69,6 @@ export class AuthController {
       );
       const tokens = this.authService.generateTokens(user.id, user.role);
       console.log("Tokens generé ");
-
-      const isProduction = process.env.NODE_ENV === "production";
 
       const cookieOptions = {
         httpOnly: true,
