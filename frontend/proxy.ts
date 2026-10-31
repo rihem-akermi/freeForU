@@ -6,6 +6,7 @@ export function proxy(request: NextRequest) {
 
   if (!token) {
     console.log("❌ Pas de token, redirection vers /auth/login");
+    console.log("Frontend proxy accessToken:", !!token);
     return NextResponse.redirect(new URL("/auth/login", request.url)); //a complete URL not just a path
   }
 
