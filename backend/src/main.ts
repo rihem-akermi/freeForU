@@ -10,13 +10,19 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // frontend allowed ports/urls
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000"; //deployed ||local
+  const frontendUrl = process.env.FRONTEND_URL ; //deployed ||local
 
-  app.enableCors({
+  if (!frontendUrl){
+    console.log("No frontendUrl ❌")
+  }
+  else{
+    app.enableCors({
     origin: frontendUrl, // seul ton frontend Next.js a le droit d'appeler ce backend
     credentials: true, //autorise l'envoi/réception de cookies entre les deux domaines
   });
-  console.log("🔓🔓 CORS activé pour http://localhost:3000 🔓🔓");
+  console.log("🔓🔓 CORS activé pour https://freeforu-n1u7.onrender.com 🔓🔓");
+  }
+  
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

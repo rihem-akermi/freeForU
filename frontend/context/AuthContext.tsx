@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     getMe()
       .then(setUser)
-      .catch(() => setUser(null)) // visiteur non connecté → pas une erreur à afficher
+      .catch(() => setUser(null)) // visiteur non connecté → sans erreur 
       .finally(() => setLoading(false));
   }, []);
 

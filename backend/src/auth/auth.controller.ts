@@ -120,8 +120,9 @@ export class AuthController {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
       maxAge: 15 * 60 * 1000,
-      sameSite: "lax",
     });
 
     console.log("🍪 Nouveau cookie accessToken posé");
@@ -162,8 +163,17 @@ export class AuthController {
   @Post("logout")
   async logout(@Res({ passthrough: true }) res: Response) {
     console.log("🌐 POST /auth/logout reçu");
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    const isProduction = process.env.NODE_ENV === "production";
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      path: "/",
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
     console.log("🍪 Cookies supprimés");
     return { message: "Déconnexion réussie" };
   }

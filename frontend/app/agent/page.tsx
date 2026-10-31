@@ -75,7 +75,7 @@ export default function AgentDashboard() {
         const [reservations, publications, summary] = await Promise.all([
           getMyPendingReservations(),
           getMyPendingPublications(),
-          getAgentRatingSummary(me.id), // ← ajouté
+          getAgentRatingSummary(me.id), 
         ]);
         setCards([
           {
