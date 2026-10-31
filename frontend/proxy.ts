@@ -1,22 +1,52 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-  const token = request.cookies.get("accessToken");
+const BACKEND_URL = process.env.BACKEND_URL!;
 
-  if (!token) {
-    console.log("❌ Pas de token, redirection vers /auth/login");
-    console.log("Frontend proxy accessToken:", !!token);
-    return NextResponse.redirect(new URL("/auth/login", request.url)); //a complete URL not just a path
+function redirectToLogin(request: NextRequest, clearCookies = true) {
+  const response = NextResponse.redirect(new URL("/auth/login", request.url));
+  if (clearCookies) {
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
   }
+  return response;
+}
 
-  console.log("✅ Token présent, accès autorisé");
-  return NextResponse.next(); //laisse passer vers la page demandée
+export async function proxy(request: NextRequest) {
+  const accessToken = request.cookies.get("accessToken")?.value;
+  if (accessToken) return NextResponse.next();
+
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+  if (!refreshToken) return redirectToLogin(request);
+
+  try {
+    const refreshRes = await fetch(`${BACKEND_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { cookie: `refreshToken=${refreshToken}` },
+      cache: "no-store",
+    });
+
+    // Refresh token invalid/expired → real logout
+    if (refreshRes.status === 401 || refreshRes.status === 403) {
+      return redirectToLogin(request);
+    }
+
+    // Backend down, cold start, 500... → redirect, but keep the cookies
+    if (!refreshRes.ok) {
+      return redirectToLogin(request, false);
+    }
+
+    // Success → forward the new cookies to the browser
+    const response = NextResponse.next();
+    for (const setCookie of refreshRes.headers.getSetCookie()) {
+      response.headers.append("set-cookie", setCookie);
+    }
+    return response;
+  } catch {
+    return redirectToLogin(request, false);
+  }
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/agent/:path*", "/client/:path*"], //le middleware ne s'applique QUE sur les routes commençant par /admin
-
-  // : signifie un paramètre (varie)
-  // * signifie zéro ou plusieurs segments
+  matcher: ["/admin/:path*", "/agent/:path*", "/client/:path*"],
 };

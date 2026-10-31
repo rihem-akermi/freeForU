@@ -73,7 +73,7 @@ export class AuthController {
       const cookieOptions = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? ("none" as const) : ("lax" as const),
+        sameSite: "lax" as const,
       };
 
       res.cookie("accessToken", tokens.accessToken, {

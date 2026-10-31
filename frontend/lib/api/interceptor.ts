@@ -4,10 +4,10 @@ import { User, Agent, Reservation } from "../data";
 export type { User, Agent, Reservation };
 
 const backendUrl =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  process.env.BACKEND_URL || "http://localhost:3001";
 // on crée une instance axios
 const api = axios.create({
-  baseURL: backendUrl,
+  baseURL: "/api",
   withCredentials: true,
   // dit à axios d'envoyer automatiquement les cookies avec chaque requête
 });
