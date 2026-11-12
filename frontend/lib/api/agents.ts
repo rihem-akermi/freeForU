@@ -1,5 +1,7 @@
 import api from "./interceptor";
 import { Agent } from "../data";
+import { serverApi } from "./server";
+
 
 export type { Agent };
 
@@ -97,6 +99,7 @@ export async function getPublicAgents(
 }
 
 export async function getAgents(): Promise<Agent[]> {
+  const api = await serverApi();
   const res = await api.get<Agent[]>("/agents/all");
   return res.data;
 }

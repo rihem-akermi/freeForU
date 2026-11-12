@@ -3,50 +3,30 @@ import { User, Agent, Reservation } from "../data";
 
 export type { User, Agent, Reservation };
 
-const backendUrl =
-  process.env.BACKEND_URL || "http://localhost:3001";
-// on crée une instance axios
-const api = axios.create({
+const    api = axios.create({
   baseURL: "/api",
   withCredentials: true,
-  // dit à axios d'envoyer automatiquement les cookies avec chaque requête
 });
 
-// le token est dans le cookie
-// Plus besoin d'intercepteur de REQUÊTE pour ajouter le token à la main !
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Ne jamais rediriger pour une simple vérification de session (visiteur anonyme normal)
-    if (originalRequest.url?.includes('/auth/me')) {
+    // no config = not a normal HTTP error, nothing to retry
+    if (!originalRequest) return Promise.reject(error);
+
+    if (originalRequest.url?.includes("/auth/me")) {
       return Promise.reject(error);
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.log("⏰ Access token expiré, tentative de refresh...");
-
-      
       try {
-        await axios.post(
-          `${backendUrl}/auth/refresh`,
-          {},
-          { withCredentials: true },
-        );
-        console.log("✅ Nouveau access token obtenu, on rejoue la requête");
-
-        // Forcer la recréation propre de la requête
-        return api({
-          method: originalRequest.method,
-          url: originalRequest.url,
-          data: originalRequest.data,
-          params: originalRequest.params,
-          withCredentials: true,
-        });
+        // same-origin, goes through the rewrite
+        await api.post("/auth/refresh");
+        return api(originalRequest);
       } catch (refreshError) {
-        console.log("❌ Refresh échoué, redirection login");
         if (typeof window !== "undefined") {
           window.location.href = "/auth/login";
         }
