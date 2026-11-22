@@ -74,6 +74,7 @@ export class AuthController {
         httpOnly: true,
         secure: isProduction,
         sameSite: "lax" as const,
+        path: "/",
       };
 
       res.cookie("accessToken", tokens.accessToken, {
@@ -126,6 +127,7 @@ export class AuthController {
       secure: isProduction,
       sameSite: isProduction ? ("none" as const) : ("lax" as const),
       maxAge: 15 * 60 * 1000,
+      path: "/",
     });
 
     console.log("🍪 Nouveau cookie accessToken posé");

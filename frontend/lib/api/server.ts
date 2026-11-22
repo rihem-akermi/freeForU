@@ -1,11 +1,18 @@
 import "server-only";
 import axios from "axios";
 import { cookies } from "next/headers";
+import type { Agent } from "../data";
 
-export async function serverApi() {
+async function serverApi() {
   const cookieStore = await cookies();
   return axios.create({
-    baseURL: process.env.BACKEND_URL, // absolute URL, no /api prefix
-    headers: { cookie: cookieStore.toString() }, // forward the user's cookies
+    baseURL: process.env.BACKEND_URL,
+    headers: { cookie: cookieStore.toString() },
   });
+}
+
+export async function getAgentsForPage(): Promise<Agent[]> {
+  const api = await serverApi();
+  const response = await api.get<Agent[]>("/agents/all");
+  return response.data;
 }

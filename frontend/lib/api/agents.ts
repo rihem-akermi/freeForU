@@ -1,9 +1,13 @@
 import api from "./interceptor";
 import { Agent } from "../data";
-import { serverApi } from "./server";
 
 
 export type { Agent };
+
+export async function getAgents(): Promise<Agent[]> {
+  const response = await api.get<Agent[]>("/agents/all");
+  return response.data;
+}
 
 export type CreateAgentData = {
   name: string;
@@ -96,12 +100,6 @@ export async function getPublicAgents(
     `/agents?${searchParams.toString()}`,
   );
   return result.data;
-}
-
-export async function getAgents(): Promise<Agent[]> {
-  const api = await serverApi();
-  const res = await api.get<Agent[]>("/agents/all");
-  return res.data;
 }
 
 export async function addAgent(agent: CreateAgentData): Promise<Agent> {

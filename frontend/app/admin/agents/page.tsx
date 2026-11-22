@@ -1,7 +1,10 @@
 import AgentsTable from "@/components/AgentsTable";
-import { getAgents } from "@/lib/api/agents";
+import { getAgentsForPage } from "@/lib/api/server";
+
+export const dynamic = "force-dynamic";
+
 
 export default async function AgentsPage() {
-  const initialAgents = await getAgents();
+  const initialAgents = await getAgentsForPage();
   return <AgentsTable initialAgents={initialAgents} />;
 }

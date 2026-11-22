@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login } from "@/lib/api/auth";
-import Cookies from "js-cookie";
 import { Button, Input } from "@/components/ui/UIComponents";
 
 export default function LoginPage() {
