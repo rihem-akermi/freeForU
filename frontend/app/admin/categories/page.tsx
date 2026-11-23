@@ -1,7 +1,7 @@
 import CategoriesTable from "@/components/CategoriesTable";
-import { getCategories } from "@/lib/api/categories";
+import { getCategoriesForPage } from "@/lib/api/server";
 
 export default async function Category() {
-  const initialCategories = await getCategories();
+  const initialCategories = await getCategoriesForPage();
   return <CategoriesTable initialCategories={initialCategories} />;
 }

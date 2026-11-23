@@ -1,7 +1,7 @@
 import ContactsTable from "@/components/ContactsTable";
-import { getContacts } from "@/lib/api/contacts";
+import { getContactsForPage } from "@/lib/api/server";
 
 export default async function Contact() {
-  const initialContacts = await getContacts();
+  const initialContacts = await getContactsForPage();
   return <ContactsTable initialContacts={initialContacts} />;
 }

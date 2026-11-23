@@ -1,7 +1,7 @@
 import ReservationsTable from "@/components/ReservationsTable";
-import { getReservations } from "@/lib/api/reservations";
+import { getReservationsForPage } from "@/lib/api/server";
 
 export default async function ReservationsPage() {
-  const reservations = await getReservations();
+  const reservations = await getReservationsForPage();
   return <ReservationsTable initialReservations={reservations} />;
 }
