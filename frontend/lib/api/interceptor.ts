@@ -8,6 +8,8 @@ const    api = axios.create({
   withCredentials: true,
 });
 
+let refreshPromise: Promise<void> | null = null;
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -16,15 +18,24 @@ api.interceptors.response.use(
     // no config = not a normal HTTP error, nothing to retry
     if (!originalRequest) return Promise.reject(error);
 
-    if (originalRequest.url?.includes("/auth/me")) {
+    // Auth endpoints (especially refresh itself) must never recursively retry.
+    if (originalRequest.url?.includes("/auth/")) {
       return Promise.reject(error);
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // same-origin, goes through the rewrite
-        await api.post("/auth/refresh");
+        // Share a single rotation request when several API calls fail together.
+        if (!refreshPromise) {
+          refreshPromise = api
+            .post("/auth/refresh")
+            .then(() => undefined)
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
+        await refreshPromise;
         return api(originalRequest);
       } catch (refreshError) {
         if (typeof window !== "undefined") {

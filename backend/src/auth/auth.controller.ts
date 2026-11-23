@@ -67,7 +67,10 @@ export class AuthController {
         body.email,
         body.password
       );
-      const tokens = this.authService.generateTokens(user.id, user.role);
+      const tokens = await this.authService.createSessionTokens(
+        user.id,
+        user.role,
+      );
       console.log("Tokens generé ");
 
       const cookieOptions = {
@@ -119,15 +122,23 @@ export class AuthController {
       throw new UnauthorizedException("Refresh token manquant");
     }
 
-    const { accessToken } =
+    const { accessToken, refreshToken: nextRefreshToken } =
       await this.authService.refreshAccessToken(refreshToken);
 
-    res.cookie("accessToken", accessToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? ("none" as const) : ("lax" as const),
-      maxAge: 15 * 60 * 1000,
+      sameSite: "lax" as const,
       path: "/",
+    };
+
+    res.cookie("accessToken", accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie("refreshToken", nextRefreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     console.log("🍪 Nouveau cookie accessToken posé");
@@ -166,14 +177,18 @@ export class AuthController {
     description: "Déconnexion réussie et cookies supprimés.",
   })
   @Post("logout")
-  async logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     console.log("🌐 POST /auth/logout reçu");
+    await this.authService.revokeRefreshToken(req.cookies?.["refreshToken"]);
     const isProduction = process.env.NODE_ENV === "production";
 
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? ("none" as const) : ("lax" as const),
+      sameSite: "lax" as const,
       path: "/",
     };
 

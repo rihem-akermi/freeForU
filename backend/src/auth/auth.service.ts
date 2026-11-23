@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import * as bcrypt from "bcrypt";
+import { createHash, randomUUID } from "crypto";
 import { AuthRepository } from "./auth.repository";
 import { JwtService } from "@nestjs/jwt";
 
@@ -57,18 +58,44 @@ export class AuthService {
       role,
     }; //convention JWT pour "subject"
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: "15m",
-    });
+    const accessToken = this.jwtService.sign(
+      { ...payload, jti: randomUUID() },
+      {
+        secret: process.env.JWT_ACCESS_SECRET,
+        expiresIn: "15m",
+      },
+    );
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: "7d",
-    });
+    const refreshToken = this.jwtService.sign(
+      { ...payload, jti: randomUUID() },
+      {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: "7d",
+      },
+    );
 
     console.log("✅ Tokens générés");
     return { accessToken, refreshToken };
+  }
+
+  async createSessionTokens(userId: number, role: string) {
+    const tokens = this.generateTokens(userId, role);
+    await this.authRepository.createRefreshSession(
+      this.hashRefreshToken(tokens.refreshToken),
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    );
+    return tokens;
+  }
+
+  async revokeRefreshToken(refreshToken: string | undefined) {
+    if (!refreshToken) return;
+    await this.authRepository.revokeRefreshSession(
+      this.hashRefreshToken(refreshToken),
+    );
+  }
+
+  private hashRefreshToken(refreshToken: string) {
+    return createHash("sha256").update(refreshToken).digest("hex");
   }
 
   async refreshAccessToken(refreshToken: string) {
@@ -81,13 +108,19 @@ export class AuthService {
 
       console.log("✅ Refresh token valide, payload :", payload);
 
-      // 👇 on génère UNIQUEMENT un nouvel access token, pas un nouveau refresh
-      const newAccessToken = this.jwtService.sign(
-        { sub: payload.sub, role: payload.role },
-        { secret: process.env.JWT_ACCESS_SECRET, expiresIn: "15m" }
+      // Each successful refresh rotates both tokens and revokes the old session.
+      const tokens = this.generateTokens(payload.sub, payload.role);
+      const rotated = await this.authRepository.rotateRefreshSession(
+        this.hashRefreshToken(refreshToken),
+        this.hashRefreshToken(tokens.refreshToken),
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       );
 
-      return { accessToken: newAccessToken };
+      if (!rotated) {
+        throw new UnauthorizedException("Refresh token already used or revoked");
+      }
+
+      return tokens;
     } catch (error) {
       console.log("❌ Refresh token invalide ou expiré");
       throw new UnauthorizedException(

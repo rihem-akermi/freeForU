@@ -33,6 +33,7 @@
 - [7. Système de Notifications Email](#7-système-de-notifications-email)
 - [8. Gestion des Fichiers & Uploads](#8-gestion-des-fichiers--uploads)
 - [9. Authentification & Sécurité](#9-authentification--sécurité)
+  - [Proxy inverse Next.js](#proxy-inverse-nextjs)
   - [9.1. Système OTP (Vérification & Réinitialisation)](#système-otp-vérification-demail--réinitialisation-de-mot-de-passe)
 - [10. Assistant IA FreeForU](#10-assistant-ia-freeforu)
 - [11. Base de Données & Modélisation](#11-base-de-données--modélisation)
@@ -363,35 +364,55 @@ flowchart LR
 
 ## 9. Authentification & Sécurité
 
-L'authentification est totalement stateless côté backend et sécurisée via deux tokens JWT transmis par **cookies `httpOnly`** :
+L'authentification utilise deux tokens JWT transmis par **cookies `httpOnly`**. Les requêtes API sont validées avec l'access token, tandis que les sessions de refresh sont suivies côté backend pour permettre la rotation et la révocation :
 
 - **`accessToken`** : Validité courte (15 minutes). Protège les routes de l'API.
-- **`refreshToken`** : Validité longue (7 jours). Utilisé exclusivement sur `/auth/refresh` pour régénérer un nouvel `accessToken`.
+- **`refreshToken`** : Validité longue (7 jours). Utilisé exclusivement sur `/auth/refresh` ; chaque rafraîchissement le remplace par un nouveau token.
+
+Les refresh tokens sont stockés en base uniquement sous forme de hash. Leur rotation invalide l'ancien token, et la déconnexion révoque le refresh token de la session.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant UI as Client Web
     participant Axios as Intercepteur Axios
+    participant Next as Frontend Next.js (/api)
     participant Backend as NestJS Backend (AuthGuard)
     participant DB as PostgreSQL
 
-    UI->>Backend: POST /auth/login { email, password }
+    UI->>Next: POST /api/auth/login { email, password }
+    Next->>Backend: Réécriture vers /auth/login
     Backend->>DB: Recherche utilisateur/agent + bcrypt.compare()
-    Backend-->>UI: 201 Created + Set-Cookie: accessToken, refreshToken (httpOnly)
+    Backend-->>Next: 201 Created + Set-Cookie (httpOnly)
+    Next-->>UI: Réponse + Set-Cookie
 
     Note over UI,Backend: Requêtes API normales
-    UI->>Backend: GET /agents/me (Cookie accessToken envoyé automatiquement)
-    Backend-->>UI: 200 OK (Données)
+    UI->>Next: GET /api/agents/me (Cookie envoyé automatiquement)
+    Next->>Backend: Réécriture vers /agents/me
+    Backend-->>Next: 200 OK (Données)
+    Next-->>UI: 200 OK (Données)
 
     Note over UI,Backend: Expiration du token d'accès
-    UI->>Backend: GET /reservations/me (Token expiré)
+    UI->>Next: GET /api/reservations/me (Token expiré)
+    Next->>Backend: Réécriture vers /reservations/me
     Backend-->>Axios: 401 Unauthorized
-    Axios->>Backend: POST /auth/refresh (Cookie refreshToken)
-    Backend-->>Axios: 201 Created + Nouveau Cookie accessToken
-    Axios->>Backend: Rejeu transparent de la requête initiale
-    Backend-->>UI: 200 OK
+    Axios->>Next: POST /api/auth/refresh (Cookie refreshToken)
+    Next->>Backend: Réécriture vers /auth/refresh
+    Backend-->>Next: 201 Created + nouveaux cookies accessToken et refreshToken
+    Next-->>Axios: Réponse + Set-Cookie
+    Axios->>Next: Rejeu de la requête initiale
+    Next->>Backend: Réécriture de la requête
+    Backend-->>Next: 200 OK
+    Next-->>UI: 200 OK
 ```
+
+### Proxy inverse Next.js
+
+En production, le navigateur envoie les appels API vers le domaine du frontend sous `/api/...`. La règle de réécriture de `frontend/next.config.ts` les transmet au backend NestJS défini par `BACKEND_URL`. Le navigateur communique ainsi avec son propre domaine, ce qui évite de dépendre de cookies tiers entre les deux domaines Render.
+
+Les cookies `accessToken` et `refreshToken` restent `httpOnly` : JavaScript ne peut pas les lire. Le navigateur les envoie automatiquement aux requêtes du frontend, et la réécriture transmet la requête au backend avec ses cookies ainsi que les réponses `Set-Cookie` dans l'autre sens. Les cookies sont configurés avec `Path=/` et sans attribut `Domain` afin qu'ils soient associés au domaine du frontend qui répond au navigateur.
+
+Configurez `BACKEND_URL` dans l'environnement du service frontend (par exemple `https://freeforu.onrender.com`). Les appels effectués par des composants serveur utilisent un client serveur distinct : il appelle cette URL absolue et transmet les cookies de la requête entrante. Les appels effectués dans le navigateur continuent d'utiliser `/api`.
 
 ### Gardes & Rôles
 
@@ -876,7 +897,7 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 | `GROQ_MODEL_NAME`       | Modèle Groq utilisé pour les complétions IA (optionnel)              | `openai/gpt-oss-120b`                                |
 | `GOOGLE_AI_API_KEY`     | Clé d'accès Google AI pour la génération des embeddings Gemini       | `AIza...`                                            |
 
-> Le frontend utilise actuellement l'URL backend `http://localhost:3001` configurée dans son client Axios. Aucune variable d'environnement frontend n'est nécessaire pour le démarrage décrit ci-dessus.
+> Le client Axios du navigateur utilise le chemin relatif `/api`. La variable frontend `BACKEND_URL` configure la destination de la réécriture Next.js et les appels API côté serveur. En local, définissez-la par exemple sur `http://localhost:3001`; en production, utilisez l'URL HTTPS du backend.
 
 ---
 

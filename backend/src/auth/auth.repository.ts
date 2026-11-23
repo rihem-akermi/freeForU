@@ -82,4 +82,48 @@ export class AuthRepository {
   async updateAgentPassword(id: number, password: string) {
     return this.prisma.agents.update({ where: { id }, data: { password } });
   }
+
+  async createRefreshSession(refreshTokenHash: string, expiresAt: Date) {
+    await this.prisma.auth_sessions.deleteMany({
+      where: { expires_at: { lt: new Date() } },
+    });
+    return this.prisma.auth_sessions.create({
+      data: { refresh_token_hash: refreshTokenHash, expires_at: expiresAt },
+    });
+  }
+
+  async rotateRefreshSession(
+    currentTokenHash: string,
+    nextTokenHash: string,
+    expiresAt: Date,
+  ) {
+    return this.prisma.$transaction(async (transaction) => {
+      await transaction.auth_sessions.deleteMany({
+        where: { expires_at: { lt: new Date() } },
+      });
+
+      const revoked = await transaction.auth_sessions.updateMany({
+        where: {
+          refresh_token_hash: currentTokenHash,
+          revoked_at: null,
+          expires_at: { gt: new Date() },
+        },
+        data: { revoked_at: new Date() },
+      });
+
+      if (revoked.count !== 1) return false;
+
+      await transaction.auth_sessions.create({
+        data: { refresh_token_hash: nextTokenHash, expires_at: expiresAt },
+      });
+      return true;
+    });
+  }
+
+  async revokeRefreshSession(refreshTokenHash: string) {
+    await this.prisma.auth_sessions.updateMany({
+      where: { refresh_token_hash: refreshTokenHash, revoked_at: null },
+      data: { revoked_at: new Date() },
+    });
+  }
 }
