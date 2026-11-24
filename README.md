@@ -113,7 +113,7 @@
 | **JWT (`@nestjs/jwt`) & bcrypt** | Backend               | Chiffrement des mots de passe et sécurisation des routes par tokens d'accès et de rafraîchissement via cookies `httpOnly`.    |
 | **Brevo (`@getbrevo/brevo`)**    | Backend               | Service d'envoi d'emails transactionnels (notifications et rappels de rendez-vous).                                           |
 | **Cloudinary & Multer**          | Backend               | Téléversement direct en flux mémoire (`Buffer` / `streamifier`) et hébergement optimisé des médias.                           |
-| **NestJS Schedule (Cron)**       | Backend               | Tâches d'arrière-plan automatisées (archivage, expiration des réservations et rappels 24h).                                   |
+| **NestJS Schedule (Cron)**       | Backend               | Tâches d'arrière-plan : expiration et archivage des réservations toutes les heures, rappels de rendez-vous toutes les heures et purge OTP chaque minute. |
 | **Groq, Google Gemini & Zod**    | Backend (`ai`)        | Génération de contenu, assistant conversationnel, embeddings sémantiques et validation des sorties structurées.              |
 | **NestJS Config & Throttler**    | Backend               | Chargement du fichier `.env` et limitation des requêtes sur le module IA.                                                   |
 | **Swagger / OpenAPI**            | Backend               | Documentation interactive et test des endpoints de l'API REST via `/api/docs`.                                                |
@@ -122,7 +122,7 @@
 
 ## 4. Architecture Globale
 
-Le projet repose sur une architecture découplée frontend/backend communicant via une API REST sécurisée par cookies `httpOnly`.
+Le projet repose sur un frontend Next.js découplé d'une API REST NestJS. Dans le navigateur, Axios envoie les appels vers le chemin `/api` du frontend ; la règle de réécriture Next.js les transmet au backend. Les pages qui chargent leurs données côté serveur appellent directement l'API NestJS. L'authentification utilise des cookies `httpOnly`.
 
 ```mermaid
 flowchart TD
@@ -140,10 +140,10 @@ flowchart TD
         Repo["Repositories Dédiés"]
         CronTask["ScheduleModule (Tâches Cron)"]
 
-        AxiosClient -->|"HTTP Requests + Cookies"| Guard
+        AxiosClient -->|"/api via rewrite + cookies"| Guard
         Guard --> Controller
         Controller --> Service
-        CronTask -.-> Service
+        CronTask -.->|"Tâches planifiées dans le backend"| Service
         Service -->|"1. Vérification Cache HIT/MISS"| RedisServ
         Service -->|"2. Requête en cas de MISS"| Repo
     end
@@ -154,7 +154,7 @@ flowchart TD
         Postgres[(PostgreSQL DB)]
         RedisServ --> Redis
         Repo --> Prisma
-        Prisma --> Postgres
+        Prisma -->|"Connexion PostgreSQL"| Postgres
     end
 
     subgraph External["🌐 Services Tiers"]
@@ -201,12 +201,12 @@ flowchart TD
 La consultation du catalogue d'agents (`GET /agents`) intègre une couche de cache en mémoire Redis pour optimiser les performances de lecture :
 
 - **Stratégie Cache-Aside** : Le serveur interroge Redis en priorité (*Cache HIT*) ; en cas d'absence (*Cache MISS*), les données sont récupérées depuis PostgreSQL puis stockées dans Redis.
-- **Clés de cache granulaires** : Les clés dépendent du filtre de catégorie et de la pagination :
-  `agents:category:{categoryId|all}:page:{page}:limit:{limit}`
+- **Clés de cache granulaires** : Les clés dépendent de la catégorie, de la ville et de la pagination :
+  `agents:category:{categoryId|all}:ville:{ville|all}:page:{page}:limit:{limit}`
 - **Durée de rétention (TTL)** : Les réponses complètes paginées `{ data, meta }` sont conservées pendant **5 minutes (300 secondes)**.
 - **Gestion de la fraîcheur** : La synchronisation repose sur l'expiration automatique (TTL) sans invalidation active lors des mutations.
-- **Résilience (*Graceful Fallback*)** : En cas d'erreur ou d'indisponibilité de Redis, la requête bascule automatiquement et de manière transparente sur PostgreSQL.
-- **Mémoire IA** : Redis conserve également temporairement l'historique des conversations et le référentiel des catégories utilisé par l'assistant.
+- **Comportement si Redis est indisponible** : Les méthodes `get` et `set` de `RedisService` journalisent les erreurs ; `get` renvoie un cache miss. Le catalogue public poursuit alors sa lecture depuis PostgreSQL. Les autres fonctions qui dépendent de Redis, comme la mémoire de conversation, n'ont pas ce même mécanisme de repli garanti.
+- **Mémoire IA** : Redis conserve temporairement l'historique des conversations et le référentiel des catégories utilisé par l'assistant.
 
 ---
 
@@ -251,7 +251,7 @@ stateDiagram-v2
 - `expiree` : Demande restée en attente alors que la date/heure de prestation est passée (traitée par tâche Cron horaire).
 - `terminee` : Prestation effectuée et validée conjointement par les deux parties (`agent_confirmed = true` et `client_confirmed = true`).
 
-Lorsqu'une réservation confirmée occupe un créneau, les demandes en attente qui se chevauchent pour le même agent sont automatiquement rejetées. Les informations du service choisi (nom et prix au moment de la réservation) sont également conservées dans la réservation.
+Les tâches d'expiration et d'archivage sont exécutées toutes les heures. Les réservations en attente dont l'horaire est passé sont marquées expirées ; les réservations rejetées, annulées ou expirées sont archivées après une heure. Lorsqu'une réservation confirmée occupe un créneau, les demandes en attente qui se chevauchent pour le même agent sont automatiquement rejetées. Les informations du service choisi (nom et prix au moment de la réservation) sont également conservées dans la réservation.
 
 ---
 
@@ -331,7 +331,7 @@ sequenceDiagram
 - ✅ **Réservation confirmée** : Notifie le client que l'agent a accepté sa demande.
 - ❌ **Réservation rejetée** : Informe le client du refus avec invitation à sélectionner un autre artisan disponible.
 - 🚫 **Réservation annulée par le client** : Notifie l'agent de la libération du créneau horaire.
-- 🔔 **Rappel 24h avant le rendez-vous** : Tâche planifiée horaire qui recherche les réservations confirmées dans la fenêtre des prochaines 24 heures et envoie un rappel au client et à l'agent, une seule fois par réservation.
+- 🔔 **Rappel de rendez-vous** : Tâche planifiée toutes les heures qui recherche les réservations confirmées dans la fenêtre des prochaines 24 heures et envoie un rappel au client et à l'agent, une seule fois par réservation.
 - 🔐 **Codes de vérification OTP** : Envoi immédiat du code à 6 chiffres pour la validation d'inscription (`EMAIL_VERIFICATION`) ou la réinitialisation de mot de passe (`PASSWORD_RESET`).
 - ⚠️ **Publication retirée** : Informe l'agent lorsque sa réalisation est dépubliée par un administrateur.
 
@@ -374,51 +374,55 @@ Les refresh tokens sont stockés en base uniquement sous forme de hash. Leur rot
 ```mermaid
 sequenceDiagram
     autonumber
-    participant UI as Client Web
-    participant Axios as Intercepteur Axios
-    participant Next as Frontend Next.js (/api)
-    participant Backend as NestJS Backend (AuthGuard)
+    participant UI as Navigateur
+    participant Axios as Axios (baseURL /api)
+    participant Next as Réécriture Next.js
+    participant Backend as NestJS Backend
     participant DB as PostgreSQL
 
-    UI->>Next: POST /api/auth/login { email, password }
+    UI->>Axios: POST /auth/login { email, password }
+    Axios->>Next: POST /api/auth/login
     Next->>Backend: Réécriture vers /auth/login
-    Backend->>DB: Recherche utilisateur/agent + bcrypt.compare()
-    Backend-->>Next: 201 Created + Set-Cookie (httpOnly)
-    Next-->>UI: Réponse + Set-Cookie
-
-    Note over UI,Backend: Requêtes API normales
-    UI->>Next: GET /api/agents/me (Cookie envoyé automatiquement)
-    Next->>Backend: Réécriture vers /agents/me
-    Backend-->>Next: 200 OK (Données)
-    Next-->>UI: 200 OK (Données)
-
-    Note over UI,Backend: Expiration du token d'accès
-    UI->>Next: GET /api/reservations/me (Token expiré)
-    Next->>Backend: Réécriture vers /reservations/me
-    Backend-->>Axios: 401 Unauthorized
-    Axios->>Next: POST /api/auth/refresh (Cookie refreshToken)
-    Next->>Backend: Réécriture vers /auth/refresh
-    Backend-->>Next: 201 Created + nouveaux cookies accessToken et refreshToken
+    Backend->>DB: Recherche du compte + bcrypt.compare()
+    Backend-->>Next: 201 Created + Set-Cookie
     Next-->>Axios: Réponse + Set-Cookie
-    Axios->>Next: Rejeu de la requête initiale
-    Next->>Backend: Réécriture de la requête
+    Axios-->>UI: Réponse de connexion
+
+    UI->>Axios: GET /agents/me
+    Axios->>Next: GET /api/agents/me + cookies
+    Next->>Backend: Réécriture vers /agents/me + cookies
+    Backend->>DB: Authentification et lecture des données
     Backend-->>Next: 200 OK
-    Next-->>UI: 200 OK
+    Next-->>Axios: 200 OK
+    Axios-->>UI: Données
+
+    Note over UI,Backend: Renouvellement après une réponse 401
+    Backend-->>Axios: 401 Unauthorized
+    Axios->>Next: POST /api/auth/refresh + refreshToken
+    Next->>Backend: Réécriture vers /auth/refresh
+    Backend->>DB: Vérifie et renouvelle la session
+    Backend-->>Next: 201 Created + nouveaux cookies
+    Next-->>Axios: Réponse + Set-Cookie
+    Axios->>Next: Rejeu de la requête initiale via /api
+    Next->>Backend: Réécriture de la requête
+    Backend-->>Next: Réponse API
+    Next-->>Axios: Réponse API
+    Axios-->>UI: Résultat après renouvellement
 ```
 
-### Proxy inverse Next.js
+### Réécriture API et requêtes serveur Next.js
 
-En production, le navigateur envoie les appels API vers le domaine du frontend sous `/api/...`. La règle de réécriture de `frontend/next.config.ts` les transmet au backend NestJS défini par `BACKEND_URL`. Le navigateur communique ainsi avec son propre domaine, ce qui évite de dépendre de cookies tiers entre les deux domaines Render.
+Dans le navigateur, Axios utilise le chemin relatif `/api`. La règle de réécriture de `frontend/next.config.ts` transmet les appels `/api/...` au backend NestJS défini par `BACKEND_URL`. Les pages qui chargent des données côté serveur utilisent `frontend/lib/api/server.ts` pour appeler directement le backend et lui transmettre les cookies de la requête entrante. `frontend/proxy.ts` protège les pages `/admin`, `/agent` et `/client` : il accepte un access token présent ou tente de renouveler la session avec le refresh token avant de laisser accéder à la page.
 
-Les cookies `accessToken` et `refreshToken` restent `httpOnly` : JavaScript ne peut pas les lire. Le navigateur les envoie automatiquement aux requêtes du frontend, et la réécriture transmet la requête au backend avec ses cookies ainsi que les réponses `Set-Cookie` dans l'autre sens. Les cookies sont configurés avec `Path=/` et sans attribut `Domain` afin qu'ils soient associés au domaine du frontend qui répond au navigateur.
+Les cookies `accessToken` et `refreshToken` restent `httpOnly` : JavaScript ne peut pas les lire. Le navigateur les envoie aux requêtes du domaine frontend et la réécriture `/api` transmet les cookies au backend ainsi que ses réponses `Set-Cookie`. Les cookies ne définissent pas de `Domain`, et le frontend et le backend de production utilisent des domaines Render distincts ; le navigateur accède donc au backend via la réécriture du frontend.
 
-Configurez `BACKEND_URL` dans l'environnement du service frontend (par exemple `https://freeforu.onrender.com`). Les appels effectués par des composants serveur utilisent un client serveur distinct : il appelle cette URL absolue et transmet les cookies de la requête entrante. Les appels effectués dans le navigateur continuent d'utiliser `/api`.
+Configurez `BACKEND_URL` dans l'environnement du service frontend (en production : `https://freeforu.onrender.com`). Cette variable sert à la réécriture, au contrôle de session dans `proxy.ts` et aux appels côté serveur. Les appels effectués dans le navigateur continuent d'utiliser `/api`.
 
 ### Gardes & Rôles
 
 - `AuthGuard` : Extrait et vérifie la signature et l'expiration du cookie `accessToken`.
 - `RolesGuard` : Inspecte les métadonnées décorées via `@Roles('CLIENT' | 'AGENT' | 'ADMIN')` et restreint l'accès aux utilisateurs autorisés.
-- **CORS et cookies** : Le backend autorise le frontend local `http://localhost:3000` avec `credentials: true`, afin de permettre l'envoi des cookies `httpOnly`.
+- **CORS** : Le backend autorise l'origine exacte définie par `FRONTEND_URL` avec `credentials: true`. Définissez cette variable sur `http://localhost:3000` en développement et sur le domaine frontend Render en production. Les appels du navigateur passent par la réécriture `/api` du frontend.
 
 ### Système OTP (Vérification d'Email & Réinitialisation de Mot de Passe)
 
@@ -570,16 +574,16 @@ FreeForU intègre des fonctionnalités d'intelligence artificielle pour accompag
 ### Capacités principales
 
 - **Assistance rédactionnelle pour les Agents** : génération et reformulation de biographies professionnelles, de fiches de prestations et de publications de portfolio à partir de descriptions brutes.
-- **Assistant conversationnel pour les Clients et Visiteurs** : le widget `AssistantWidget` répond aux questions sur les règles de la plateforme grâce au RAG et peut, selon l'authentification, rechercher des prestataires, comparer des tarifs et proposer des actions métier. Il est masqué pour les Agents et les Administrateurs.
+- **Assistant conversationnel pour les Clients et Visiteurs** : le widget `AssistantWidget` répond aux questions sur les règles de la plateforme grâce au contexte de politique intégré au backend. Pour les clients authentifiés, il peut rechercher des prestataires, comparer des tarifs et demander l'annulation d'une réservation via les outils métier disponibles. Il est masqué pour les Agents et les Administrateurs.
 - **Recherche sémantique de prestations** : les embeddings Google Gemini permettent de retrouver des services pertinents même lorsque les termes employés diffèrent de leur intitulé exact.
 
 ### Intégration dans la plateforme
 
-Le module IA est intégré au backend NestJS et réutilise les services métier existants pour les agents, les prestations et les réservations. **Groq Cloud** assure la génération de texte et le *tool calling*, **Google Gemini** les embeddings, **Redis** la mémoire conversationnelle et le cache des catégories, et **Zod** la validation des sorties structurées.
+Le module IA est intégré au backend NestJS et réutilise les services métier existants pour les agents, les prestations et les réservations. **Groq Cloud** assure la génération de texte et le *tool calling*, **Google Gemini** les embeddings, **Redis** la mémoire conversationnelle et le cache des catégories, et **Zod** la validation des sorties structurées. La politique utilisée par l'assistant est définie statiquement dans `backend/src/ai/knowledge/freeforu-policy.ts` et insérée dans son instruction système ; les embeddings des services sont calculés à partir de leur nom et de leur description et stockés dans la colonne `services.embedding` de PostgreSQL. La recherche calcule la similarité cosinus côté application, sans base vectorielle séparée.
 
 Les gardes NestJS contrôlent l'accès aux fonctionnalités : les visiteurs non connectés peuvent consulter les connaissances générales de la plateforme, les clients authentifiés peuvent utiliser les outils autorisés et la génération de contenu est réservée aux Agents. Les règles d'autorisation et de réservation restent appliquées par les services métier.
 
-Les routes IA sont regroupées sous `/ai` : `POST /ask`, `/generate-bio`, `/generate-service-infos`, `/generate-publication-infos`, `/assistant` et `/search-services`. Pour les flux détaillés, les endpoints, la configuration, les outils, la sécurité et l'évaluation, consulter la [documentation technique complète de l'IA](docs/AI.md).
+Les routes IA sont regroupées sous `/ai` : `POST /ai/ask`, `/ai/generate-bio`, `/ai/generate-service-infos`, `/ai/generate-publication-infos`, `/ai/assistant` et `/ai/search-services`. L'assistant ne transmet aucun outil aux visiteurs anonymes ; pour un client connecté, ses outils permettent la recherche d'agents, la comparaison des tarifs et la demande d'annulation d'une réservation. Pour les flux détaillés, la configuration, la sécurité et l'évaluation, consulter la [documentation technique complète de l'IA](docs/AI.md).
 
 ---
 
@@ -778,7 +782,8 @@ freeForU/
 │   │   └── data.ts            # Interfaces TypeScript et modèles de données
 │   ├── context/               # Contexte d'authentification côté client
 │   ├── public/                # Ressources statiques et médias
-│   └── middleware.ts          # Middleware d'authentification et de redirection Next.js
+│   ├── proxy.ts               # Protection des pages admin, agent et client / renouvellement de session
+│   └── next.config.ts         # Réécriture des requêtes /api vers le backend
 │
 ├── backend/                   # API Backend NestJS
 │   ├── prisma/                # Schéma et migrations Prisma
@@ -822,9 +827,9 @@ freeForU/
 
 ### Prérequis
 
-- **Node.js** (v20+ recommandé)
+- **Node.js** (version compatible avec les versions courantes de Next.js 16 et NestJS 11 ; Node.js 20+)
 - **PostgreSQL** (en local ou distant)
-- **Redis** (serveur local ou hébergement managé type Upstash)
+- **Redis** (requis par le catalogue mis en cache et la mémoire conversationnelle ; URI fournie via `REDIS_URL`)
 - Gestionnaire de paquets **npm**
 
 ---
@@ -879,25 +884,32 @@ Une version de production peut être vérifiée avec `npm run build`, puis lanc�
 
 Créez un fichier `.env` à la racine du dossier `backend/` avec les variables suivantes :
 
-| Variable                | Description                                                          | Exemple / Format                                     |
-| :---------------------- | :------------------------------------------------------------------- | :--------------------------------------------------- |
-| `DATABASE_URL`          | Chaîne de connexion PostgreSQL                                       | `postgresql://user:password@localhost:5432/freeforu` |
-| `REDIS_URL`             | URL de connexion Redis complète (Upstash ou cloud managé)            | `redis://default:token@host:6379`                    |
-| `REDIS_HOST`            | Hôte du serveur Redis local (si `REDIS_URL` n'est pas défini)        | `localhost`                                          |
-| `REDIS_PORT`            | Port d'écoute Redis local                                            | `6379`                                               |
-| `REDIS_PASSWORD`        | Mot de passe Redis (optionnel pour Redis local)                      | `votre_mot_de_passe_redis`                           |
-| `JWT_ACCESS_SECRET`     | Clé secrète pour signer les Access Tokens (15 min)                   | `votre_cle_secrete_jwt_access`                       |
-| `JWT_REFRESH_SECRET`    | Clé secrète pour signer les Refresh Tokens (7 jours)                 | `votre_cle_secrete_jwt_refresh`                      |
-| `CLOUDINARY_CLOUD_NAME` | Nom du compte Cloudinary pour le stockage des photos                 | `votre_cloud_name`                                   |
-| `CLOUDINARY_API_KEY`    | Clé d'API publique Cloudinary                                        | `123456789012345`                                    |
-| `CLOUDINARY_API_SECRET` | Clé secrète d'API Cloudinary                                         | `votre_api_secret_cloudinary`                        |
-| `BREVO_API_KEY`         | Clé d'API pour le service d'emails Brevo                             | `xkeysib-...`                                        |
-| `MAIL_FROM_BY_BREVO`    | Adresse email d'expéditeur validée dans Brevo                        | `contact@votre-domaine.com`                          |
-| `GROQ_API_KEY`          | Clé d'accès à l'API Groq pour la génération de texte et le *tool calling* | `gsk_...`                                         |
-| `GROQ_MODEL_NAME`       | Modèle Groq utilisé pour les complétions IA (optionnel)              | `openai/gpt-oss-120b`                                |
-| `GOOGLE_AI_API_KEY`     | Clé d'accès Google AI pour la génération des embeddings Gemini       | `AIza...`                                            |
+| Variable                | Service | Description                                                          | Exemple / Format                                     |
+| Variable | Service | Description | Exemple / Format |
+| :--- | :--- | :--- | :--- |
+| `DATABASE_URL` | Backend | Chaîne de connexion PostgreSQL (Neon en production). | `postgresql://user:password@host/db?sslmode=require` |
+| `REDIS_URL` | Backend | URI de connexion Redis (obligatoire pour les fonctionnalités Redis utilisées). | `redis://default:token@host:6379` |
+| `FRONTEND_URL` | Backend | Origine frontend autorisée par CORS. | `http://localhost:3000` |
+| `BACKEND_URL` | Frontend | URL absolue du backend pour les réécritures, le proxy de session et les appels serveur. | `http://localhost:3001` |
+| `JWT_ACCESS_SECRET` | Backend | Clé de signature des tokens d'accès (15 min). | Secret aléatoire |
+| `JWT_REFRESH_SECRET` | Backend | Clé de signature des tokens de rafraîchissement (7 jours). | Secret aléatoire |
+| `CLOUDINARY_CLOUD_NAME` | Backend | Nom du compte Cloudinary pour les médias. | `votre_cloud_name` |
+| `CLOUDINARY_API_KEY` | Backend | Clé d'API Cloudinary. | Valeur fournie par Cloudinary |
+| `CLOUDINARY_API_SECRET` | Backend | Secret d'API Cloudinary. | Secret fourni par Cloudinary |
+| `BREVO_API_KEY` | Backend | Clé d'API pour l'envoi des emails transactionnels. | `xkeysib-...` |
+| `MAIL_FROM_BY_BREVO` | Backend | Adresse expéditeur validée dans Brevo. | `contact@votre-domaine.com` |
+| `GROQ_API_KEY` | Backend | Clé d'accès Groq pour la génération de texte et le *tool calling*. | `gsk_...` |
+| `GROQ_MODEL_NAME` | Backend | Modèle Groq utilisé (facultatif, valeur par défaut dans le code : `openai/gpt-oss-120b`). | Nom de modèle Groq |
+| `GOOGLE_AI_API_KEY` | Backend | Clé Google AI utilisée pour les embeddings Gemini. | Clé API Google AI |
 
-> Le client Axios du navigateur utilise le chemin relatif `/api`. La variable frontend `BACKEND_URL` configure la destination de la réécriture Next.js et les appels API côté serveur. En local, définissez-la par exemple sur `http://localhost:3001`; en production, utilisez l'URL HTTPS du backend.
+Les variables listées sont celles lues directement par le code de l'application. Configurez `BACKEND_URL` dans le service frontend et les autres variables dans le backend. En production, `BACKEND_URL` vaut `https://freeforu.onrender.com`, `FRONTEND_URL` vaut `https://freeforu-n1u7.onrender.com`, et `DATABASE_URL` pointe vers Neon PostgreSQL. Gardez les secrets uniquement dans l'environnement de déploiement ou dans des fichiers `.env` non suivis par Git. Les variables Redis séparées `REDIS_HOST`, `REDIS_PORT` et `REDIS_PASSWORD` ne sont pas utilisées par le constructeur Redis actif ; celui-ci lit `REDIS_URL`.
+
+### Déploiement en production
+
+- **Frontend (Render)** : [https://freeforu-n1u7.onrender.com](https://freeforu-n1u7.onrender.com)
+- **Backend API (Render)** : [https://freeforu.onrender.com](https://freeforu.onrender.com)
+- **Base de données** : PostgreSQL hébergé sur Neon.
+- **Documentation API** : `https://freeforu.onrender.com/api/docs`.
 
 ---
 
@@ -907,13 +919,13 @@ Créez un fichier `.env` à la racine du dossier `backend/` avec les variables s
 - 🗄️ **Prisma & PostgreSQL** : Prisma garantit une sécurité de type de bout en bout (Type-Safe queries) avec PostgreSQL, simplifiant la manipulation des types SQL précis tels que `DATE` et `TIME(6)` indispensables pour un calendrier de réservation.
 - ⚡ **Pagination & Cache-Aside Redis (Catalogue des Agents)** :
   - 📄 *Pagination native SQL* : La route publique `GET /agents` implémente `GetPublicAgentsDto` (`page`, `limit` plafonné à 20, `category_id`) avec `skip`/`take` et tri déterministe (`orderBy: { id: 'asc' }`) directement dans PostgreSQL, indexé sur `category_id`.
-  - 🧠 *Stratégie Cache-Aside* : La réponse complète `{ data, meta }` est mise en cache dans Redis sous la clé `agents:category:{categoryId|all}:page:{page}:limit:{limit}` pour une durée (TTL) de 5 minutes (300 secondes).
-  - 🛡️ *Résilience (Graceful Fallback)* : En cas d'erreur ou d'indisponibilité de Redis, l'application bascule automatiquement sur PostgreSQL sans interruption de service.
+  - 🧠 *Stratégie Cache-Aside* : La réponse complète `{ data, meta }` est mise en cache dans Redis sous la clé `agents:category:{categoryId|all}:ville:{ville|all}:page:{page}:limit:{limit}` pour une durée (TTL) de 5 minutes (300 secondes).
+  - 🛡️ *Repli du catalogue* : Si la lecture Redis échoue, le service traite la requête comme un cache miss et lit les agents depuis PostgreSQL. Les erreurs d'écriture Redis sont journalisées et n'annulent pas la réponse du catalogue ; cette tolérance n'est pas un repli général garanti pour les autres fonctions Redis.
   - ⚖️ *Compromis assumés* : La fraîcheur repose sur l'expiration TTL (sans invalidation active à ce stade), et la pagination limite l'impact du calcul des notes agrégées au strict nombre d'agents affichés par page.
 - 📬 **Brevo** : Sélectionné pour sa fiabilité dans la distribution d'emails transactionnels, son SDK TypeScript officiel et sa gestion robuste des templates transactionnels.
 - ☁️ **Cloudinary** : Permet de décharger le serveur backend de la gestion du système de fichiers en offrant un CDN global, une transformation d'image à la volée et une sécurisation des médias.
 - 🔄 **Axios avec Intercepteurs de Réponse** : Permet de gérer le cycle de vie du rafraîchissement des tokens de manière transparente pour l'utilisateur sans exposer les JWT dans le LocalStorage.
-- ⏰ **NestJS Schedule (@Cron)** : Automatise sans infrastructure externe complexe les règles de gestion temporelle. Des tâches horaires traitent l'expiration des demandes non traitées, l'archivage des réservations et l'envoi des rappels dans la fenêtre des 24 heures. Le module OTP purge également chaque minute les codes expirés.
+- ⏰ **NestJS Schedule (@Cron)** : Automatise les règles de gestion temporelle dans le backend. Les réservations en attente expirées et les réservations rejetées, annulées ou expirées à archiver sont traitées toutes les heures ; les rappels recherchent également toutes les heures les rendez-vous confirmés dans la fenêtre des prochaines 24 heures. Le module OTP purge chaque minute les codes expirés.
 - 🤖 **Module IA séparé** : Le découpage contrôleur/service/DTO, la validation Zod et les gardes NestJS permettent de réutiliser les services métier sans contourner leurs règles d'autorisation.
 
 ---
